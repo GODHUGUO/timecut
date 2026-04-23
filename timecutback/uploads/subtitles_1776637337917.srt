@@ -1,0 +1,819 @@
+1
+00:00:00,000 --> 00:00:01,039
+How much money do you make?
+
+2
+00:00:01,039 --> 00:00:02,880
+Make $1 million every month.
+
+3
+00:00:02,880 --> 00:00:03,519
+How old are you?
+
+4
+00:00:03,519 --> 00:00:04,320
+I'm 17.
+
+5
+00:00:04,320 --> 00:00:05,679
+Okay. What do you do? What is it?
+
+6
+00:00:05,679 --> 00:00:10,159
+I build mobile consumer apps. Specifically, this one is CalAI.
+
+7
+00:00:10,159 --> 00:00:10,800
+Okay.
+
+8
+00:00:10,800 --> 00:00:16,799
+So today we will be editing a podcast style reel. So let's begin. First of all,
+
+9
+00:00:16,799 --> 00:00:23,440
+what you can see over here is the whole, you know, tone of the video is bouncy animations.
+
+10
+00:00:24,079 --> 00:00:29,120
+So we need to remember that whatever animations we use, be it text or image,
+
+11
+00:00:29,920 --> 00:00:33,759
+we need to make it a bit bouncy. I have got the raw video over here.
+
+12
+00:00:33,759 --> 00:00:38,000
+Everything will be there in the description. So you'll be able to practice along.
+
+13
+00:00:38,000 --> 00:00:41,840
+Now, as you can see over here in the start, how much money do you make?
+
+14
+00:00:41,840 --> 00:00:49,520
+Okay. This text is here. So what we need to do is first bring in a default text and write the text.
+
+15
+00:00:53,439 --> 00:00:58,560
+Then I'll bring this.
+
+16
+00:01:01,200 --> 00:01:07,120
+Make it smaller like this and put it over here. Let me zoom this in for better visibility.
+
+17
+00:01:08,319 --> 00:01:13,919
+Bring this money bag and put it inside this.
+
+18
+00:01:15,279 --> 00:01:20,160
+Simply need to make this bigger and hit Alt plus G for a compound clip.
+
+19
+00:01:20,879 --> 00:01:23,279
+Then this, do you make?
+
+20
+00:01:29,519 --> 00:01:37,360
+I'll head on to stickers, select shapes, bring this line over here and increase the weight.
+
+21
+00:01:38,400 --> 00:01:42,800
+Head on to cap and click around to get this shape.
+
+22
+00:01:43,120 --> 00:01:44,160
+To get the shape.
+
+23
+00:01:49,120 --> 00:01:55,599
+Let's decrease the scaling to make it smaller and let's make this blue.
+
+24
+00:01:56,160 --> 00:02:06,400
+Copy this and place this over here. Rotate this and finally bring this square.
+
+25
+00:02:09,600 --> 00:02:13,600
+Increase the width, decrease the height. Zoom this in again.
+
+26
+00:02:15,119 --> 00:02:18,399
+Put this behind the text of do you make?
+
+27
+00:02:18,800 --> 00:02:25,199
+Select this same color, but you have to decrease the opacity.
+
+28
+00:02:25,919 --> 00:02:33,199
+Okay. So we have created this. As you can see over here, there are two boxes, but we'll make that.
+
+29
+00:02:34,720 --> 00:02:37,199
+So first let's do the animation. How much money do you make?
+
+30
+00:02:38,080 --> 00:02:45,199
+So I'm going to make this blue and then I'm going to increase the height to make it smaller.
+
+31
+00:02:45,839 --> 00:02:46,800
+How much money do you make?
+
+32
+00:02:47,679 --> 00:02:51,279
+So in the first part, he's saying, how much money do you make?
+
+33
+00:02:52,559 --> 00:02:58,800
+So I have to cut everything till here because this is where it ends.
+
+34
+00:03:01,360 --> 00:03:08,080
+In the starting of the video, I advised you to do all the animations in a bouncy manner.
+
+35
+00:03:08,160 --> 00:03:15,360
+So for the text animations, these are some of the bouncy text animations, which I found.
+
+36
+00:03:15,360 --> 00:03:22,559
+Okay. Not this like wiggle landing, ocean bounce, leap in, wave bounce, wave in.
+
+37
+00:03:22,559 --> 00:03:26,800
+Okay. You can use whichever you want. So how much money?
+
+38
+00:03:29,919 --> 00:03:34,160
+I'm randomly choosing them because everything is bouncy animation.
+
+39
+00:03:34,160 --> 00:03:34,800
+How much money?
+
+40
+00:03:40,960 --> 00:03:46,880
+Okay. And after that, let's do this animation. So this animation to make it bouncy,
+
+41
+00:03:46,880 --> 00:03:59,039
+what we have to do first is now go 15 frames ahead and again, click on the transform keyframe.
+
+42
+00:03:59,919 --> 00:04:04,399
+Now at the first keyframe, just drag this down a bit like this.
+
+43
+00:04:05,279 --> 00:04:13,600
+And the second keyframe, overshoot it, meaning drag this up from the original or the finished
+
+44
+00:04:13,600 --> 00:04:24,239
+position, just a bit more up. Then go 10 frames ahead and I'll bring this down now. Okay.
+
+45
+00:04:25,200 --> 00:04:31,359
+This is the finished position, but a bit below that. Then I'll go eight frames ahead
+
+46
+00:04:32,640 --> 00:04:40,320
+and this time again, drag this up a little bit and then go a bit down.
+
+47
+00:04:43,279 --> 00:04:51,679
+Then after three frames, just finish the animation at the fixed position. So as you can see,
+
+48
+00:04:51,679 --> 00:04:58,160
+it is going up, then down, then up and down and up. And finally it is stable at the final position.
+
+49
+00:04:59,119 --> 00:05:08,160
+Okay. So as you can see, first I have used the gap of 15 frames, then 10 frames, eight, five,
+
+50
+00:05:08,160 --> 00:05:16,959
+three. Okay. This is because with each bounce, the height becomes smaller. This is a simple
+
+51
+00:05:16,959 --> 00:05:23,600
+animation rule of DK. Okay. So with each bounce, the height becomes smaller. You can also see this
+
+52
+00:05:23,600 --> 00:05:29,600
+in a ball. So when you drop the ball, after first bounce, it will go to a certain height. Then when
+
+53
+00:05:29,600 --> 00:05:34,559
+the second bounce is there, it will bounce a little bit lower than the first. And then with the third
+
+54
+00:05:34,559 --> 00:05:41,440
+bounce, a little bit lower than the second and like that. Now hit Alt plus K. And as you can see,
+
+55
+00:05:42,239 --> 00:05:48,480
+this is the graph in the Y coordinate. Select them and make them auto curve like this.
+
+56
+00:05:55,119 --> 00:06:02,720
+So you can see. This is the animation, but it's too slow. Okay.
+
+57
+00:06:03,600 --> 00:06:08,720
+So what we have to do is basically head on to speed and increase the speed like this.
+
+58
+00:06:11,600 --> 00:06:18,880
+So now just head on to blend keyframe. Go ahead. Again, click on the blend keyframe.
+
+59
+00:06:19,839 --> 00:06:28,160
+And at the starting, make this opacity zero. Now hit Alt plus K and open this blend and make
+
+60
+00:06:28,160 --> 00:06:41,279
+this cubic out. Now simply just copy this, hit Alt plus G to compound clip it
+
+61
+00:06:41,279 --> 00:06:48,799
+again and drag this up like this. Offset this a bit. Simply select the shape. Okay.
+
+62
+00:06:56,799 --> 00:07:01,119
+And simply select bounce in. So you will get the bounce animation.
+
+63
+00:07:03,440 --> 00:07:04,959
+And for this one.
+
+64
+00:07:04,959 --> 00:07:13,200
+How much money? Again, bounce in. How much money do you make? And as you can see in the starting.
+
+65
+00:07:13,200 --> 00:07:19,440
+How much money do you make? So what we can also do is head on to effects, search for blur.
+
+66
+00:07:21,359 --> 00:07:28,160
+And add blur on top of everything. Head on to mask, add mask.
+
+67
+00:07:28,880 --> 00:07:38,160
+And make this selection and reverse it. Add feathering. Okay. To get that edge blur.
+
+68
+00:07:39,279 --> 00:07:50,239
+And again, just search for vignette. Bring this over here. And also I'll add,
+
+69
+00:07:50,239 --> 00:07:58,079
+head on to filters and add glow effect over here. Simply select everything and hit B to
+
+70
+00:07:58,079 --> 00:08:00,160
+cut it. Okay.
+
+71
+00:08:00,024 --> 00:08:05,384
+Except these three. Let's extend these and now as you can see over here make
+
+72
+00:08:06,543 --> 00:08:10,103
+and then so this number counting animation I
+
+73
+00:08:11,223 --> 00:08:13,704
+Provided this animation you can directly use this
+
+74
+00:08:13,704 --> 00:08:20,503
+Okay, because in CapCut it will take too much time to create this manually. So I've given you the
+
+75
+00:08:21,423 --> 00:08:24,423
+Animation make 1 million dollars every month. How
+
+76
+00:08:25,224 --> 00:08:27,743
+How much money do you make make 1 million dollars?
+
+77
+00:08:28,103 --> 00:08:30,503
+And then simply I'll just
+
+78
+00:08:33,104 --> 00:08:37,183
+Copy put this text over here type here mate
+
+79
+00:08:42,224 --> 00:08:44,224
+Put it over here
+
+80
+00:08:44,384 --> 00:08:46,384
+head on to animation
+
+81
+00:08:46,424 --> 00:08:48,424
+Select we will make one
+
+82
+00:08:49,224 --> 00:08:54,744
+It make 1 million dollars and these bounce animations. Okay now
+
+83
+00:08:55,384 --> 00:08:57,024
+remember this
+
+84
+00:08:57,024 --> 00:08:59,183
+Compound clip which you made copy this over here
+
+85
+00:08:59,904 --> 00:09:02,104
+Head on inside and I'll increase this
+
+86
+00:09:02,704 --> 00:09:09,263
+Again, head on inside delete these and bring the stripe message over here now head back on out
+
+87
+00:09:09,824 --> 00:09:14,443
+Now you can see the bounce animation has been replicated. Let's increase this
+
+88
+00:09:15,024 --> 00:09:16,784
+Make 1 million
+
+89
+00:09:16,784 --> 00:09:18,784
+Put this over here
+
+90
+00:09:19,064 --> 00:09:21,263
+Copy this and again
+
+91
+00:09:22,784 --> 00:09:24,784
+Copy this
+
+92
+00:09:25,504 --> 00:09:27,504
+Second one put it below
+
+93
+00:09:28,824 --> 00:09:30,824
+The third one at the last
+
+94
+00:09:31,784 --> 00:09:38,104
+As you can see these are coming together, which we don't want. So first we want the top one, okay
+
+95
+00:09:39,543 --> 00:09:45,384
+Which is this then offset the second one and the third one like this make 1 million dollars every month
+
+96
+00:09:45,623 --> 00:09:51,223
+Let's see the first two animations. How much money do you make make 1 million dollars every month Howard?
+
+97
+00:09:52,024 --> 00:09:54,024
+now for this animation
+
+98
+00:09:54,784 --> 00:10:02,144
+So this is the message pop-up animation again will use the same method which we used in the stripe messages
+
+99
+00:10:02,583 --> 00:10:04,583
+so basically just
+
+100
+00:10:05,343 --> 00:10:07,184
+Copy them over here
+
+101
+00:10:07,184 --> 00:10:12,143
+The first message will be how old are you? So just head on inside this
+
+102
+00:10:12,423 --> 00:10:17,464
+Okay, delete this and bring this message head back on out
+
+103
+00:10:19,344 --> 00:10:21,344
+How are you
+
+104
+00:10:22,663 --> 00:10:24,663
+Simply just bring this over here
+
+105
+00:10:24,863 --> 00:10:26,863
+Make this smaller
+
+106
+00:10:27,464 --> 00:10:29,464
+How are you sir?
+
+107
+00:10:29,783 --> 00:10:31,783
+How are you sir?
+
+108
+00:10:43,063 --> 00:10:45,063
+So when this comes
+
+109
+00:10:46,184 --> 00:10:48,783
+You simply select these two, okay
+
+110
+00:10:50,384 --> 00:10:52,384
+Transform keyframe on both of them
+
+111
+00:10:53,264 --> 00:10:55,264
+Go ahead
+
+112
+00:10:58,583 --> 00:11:04,024
+Like this and again a transform keyframe select both of them and drag them up
+
+113
+00:11:06,904 --> 00:11:08,904
+Select all plus K
+
+114
+00:11:10,223 --> 00:11:12,223
+Give it out, okay
+
+115
+00:11:16,863 --> 00:11:18,104
+Okay
+
+116
+00:11:18,143 --> 00:11:24,184
+For you, I'm 17. Okay. What do you and for the last animation also, so what do you do?
+
+117
+00:11:28,503 --> 00:11:30,503
+Select these all okay, so
+
+118
+00:11:31,904 --> 00:11:33,904
+Somewhere around here
+
+119
+00:11:34,104 --> 00:11:41,943
+To select the transform keyframe on all of these three. Okay, not the last one only these three then go ahead
+
+120
+00:11:42,264 --> 00:11:48,303
+Select all of these and drag them up hit R plus K
+
+121
+00:11:51,344 --> 00:11:53,344
+You do what
+
+122
+00:11:57,024 --> 00:11:59,024
+You do what
+
+123
+00:12:01,544 --> 00:12:05,423
+You do what are you 17, okay, what do you do? What is it?
+
+124
+00:12:05,423 --> 00:12:10,544
+I how much money do you make make 1 million dollars every month. How old are you? I'm 17
+
+125
+00:12:10,544 --> 00:12:12,544
+Okay, what do you do? What is it? I build
+
+126
+00:12:13,744 --> 00:12:20,464
+Now for this part of the animation, so this will be interesting. This is a full-scale animation
+
+127
+00:12:20,464 --> 00:12:25,143
+What we have to do here is simply first head on to stickers. Bring this in
+
+128
+00:12:27,423 --> 00:12:28,543
+And
+
+129
+00:12:28,543 --> 00:12:35,303
+Use it for the whole duration make this 600 to cover the whole screen and now just make the color
+
+130
+00:12:35,823 --> 00:12:37,344
+white
+
+131
+00:12:38,303 --> 00:12:40,303
+Also, we need to
+
+132
+00:12:40,624 --> 00:12:47,863
+Delete all these three. Okay, because this is a full-screen animation. Okay, you don't need blur and those all things
+
+133
+00:12:48,784 --> 00:12:52,143
+Okay, maybe I think let's keep the blur
+
+134
+00:12:54,624 --> 00:12:55,784
+So
+
+135
+00:12:55,784 --> 00:13:00,224
+This image is there the circle is there. So what we need to do is
+
+136
+00:13:00,983 --> 00:13:03,383
+first bring this image
+
+137
+00:13:08,344 --> 00:13:11,543
+Make it smaller at the center
+
+138
+00:13:12,464 --> 00:13:16,143
+Now mask add mask make the circle
+
+139
+00:13:17,224 --> 00:13:22,064
+Select this. I'll decrease the opacity. So you'll be able to make circle properly
+
+140
+00:13:22,303 --> 00:13:29,423
+Okay, after making the circle we need to head on to stickers and in shapes. I'll bring this circle again and
+
+141
+00:13:30,383 --> 00:13:33,064
+simply delete the fill make the stroke and
+
+142
+00:13:33,103 --> 00:13:34,703
+And
+
+143
+00:13:34,703 --> 00:13:37,303
+Make sure that it fits the
+
+144
+00:13:38,024 --> 00:13:46,103
+Boundary of this image increase the weight of the stroke and make the color black and again bring another circle
+
+145
+00:13:47,624 --> 00:13:49,624
+Scale this up
+
+146
+00:13:49,823 --> 00:13:51,823
+Okay, decrease the opacity
+
+147
+00:13:52,983 --> 00:13:58,904
+Make sure the color is blue. Okay, and also include a stroke
+
+148
+00:13:59,504 --> 00:14:01,504
+Let me see the reference
+
+149
+00:14:02,184 --> 00:14:07,143
+So, yeah, the stroke is also blue, okay make this blue
+
+150
+00:14:09,904 --> 00:14:11,904
+Decrease the weight to
+
+151
+00:14:12,064 --> 00:14:14,064
+two and
+
+152
+00:14:14,583 --> 00:14:20,744
+Finally make another circle first this image circle then this one. Okay
+
+153
+00:14:21,383 --> 00:14:26,823
+Gray circle or black and then this blue one. So one two and three now just
+
+154
+00:14:27,863 --> 00:14:29,863
+after copying this
+
+155
+00:14:30,664 --> 00:14:32,664
+Simply delete the fill
+
+156
+00:14:33,464 --> 00:14:35,464
+Make the stroke to black
+
+157
+00:14:35,904 --> 00:14:37,904
+okay, so you get this and
+
+158
+00:14:38,983 --> 00:14:41,823
+Increase this weight increase the scale
+
+159
+00:14:42,543 --> 00:14:47,823
+Now we need to attach these images in the outer circle and then bring this image
+
+160
+00:14:51,543 --> 00:14:57,863
+Put it over here, let me just head on back to our background and increase back the opacity
+
+161
+00:14:59,863 --> 00:15:01,863
+You
+
+162
+00:15:04,184 --> 00:15:09,143
+Okay now after attaching these simply just select these all
+
+163
+00:15:10,344 --> 00:15:14,543
+Images and the last circle hit or press G to make a compound clip
+
+164
+00:15:15,944 --> 00:15:21,784
+Now if you rotate them, you can see it is rotating somewhere from around here
+
+165
+00:15:24,024 --> 00:15:29,624
+First as you can see you have to bounce this in okay like this
+
+166
+00:15:29,983 --> 00:15:32,744
+Select these two images hit or plus G
+
+167
+00:15:33,383 --> 00:15:36,103
+Okay to get this click on the
+
+168
+00:15:37,103 --> 00:15:38,464
+scale
+
+169
+00:15:38,464 --> 00:15:43,664
+Go ahead and again scale now go to the start now again
+
+170
+00:15:43,664 --> 00:15:48,784
+We have to do the same thing, but this time by using only scale go ahead 15 frames
+
+171
+00:15:51,583 --> 00:15:54,064
+Bring the keyframe over here, okay and
+
+172
+00:15:55,064 --> 00:15:58,624
+Increase the scale a bit then go ahead 10 frames
+
+173
+00:15:59,863 --> 00:16:02,863
+You
+
+174
+00:16:00,011 --> 00:16:02,212
+Decrease the scale.
+
+175
+00:16:02,212 --> 00:16:11,211
+Okay, go below 100% Okay, at the first you can see it is 100 Sorry, it should be zero,
+
+176
+00:16:11,211 --> 00:16:16,011
+but I'll tell you and the second it should be above 100 in the third it should be below
+
+177
+00:16:16,011 --> 00:16:24,852
+100 Okay, at the start it has to be zero zero Okay, so it will come up then down and then
+
+178
+00:16:24,852 --> 00:16:43,732
+again go seven frames ahead increase the scale go five frames ahead, make this 95 and three
+
+179
+00:16:43,732 --> 00:16:51,171
+frames ahead and make it perfect 100 Okay, so you get this, you can see this bouncing
+
+180
+00:16:51,171 --> 00:16:59,092
+effect and now simply add plus k do the same thing which we did earlier.
+
+181
+00:16:59,092 --> 00:17:14,971
+Select this or took off everything I build mobile consumer on plus k and then speed increase
+
+182
+00:17:14,971 --> 00:17:23,531
+it to 2x I build mobile cons I build mobile and the same thing you have to do for this
+
+183
+00:17:23,531 --> 00:17:35,611
+large circle which is this one Okay, so simply just copy this over here Okay, head back inside
+
+184
+00:17:35,611 --> 00:17:50,711
+copy all this Okay, open this compound clipping delete this and paste it over here.
+
+185
+00:17:50,711 --> 00:17:55,611
+So you can see the same animation and now I'll delete this compound clip as you can
+
+186
+00:17:55,611 --> 00:18:10,172
+see but this is looking like one animation so I build mobile consumer app so for this
+
+187
+00:18:10,172 --> 00:18:21,711
+one what I have done is I have used only four keyframes and for this so the last two bounces
+
+188
+00:18:21,711 --> 00:18:26,911
+I have deleted the keyframes Okay, I have used only four bounces so so the speed is
+
+189
+00:18:26,911 --> 00:18:37,911
+different this is 1.5x and this is two and as you can see this comes in Okay, so this
+
+190
+00:18:37,911 --> 00:18:45,551
+one this is an easy effect what you have to do is basically after this goes up simply
+
+191
+00:18:45,551 --> 00:18:55,911
+just scale this up till here Okay, then click on the scale keyframe go ahead again click
+
+192
+00:18:55,911 --> 00:19:03,872
+on the scale keyframe go to this starting keyframe make the zero hit R plus K and select
+
+193
+00:19:03,872 --> 00:19:11,952
+you become a consumer or consumer shrink this down Okay animation out and fade out
+
+194
+00:19:11,952 --> 00:19:20,631
+sumer app do more apps or consumer app and just simply hit alt and drag with your mouse
+
+195
+00:19:20,631 --> 00:19:30,071
+button to copy Okay, and again when this ends over here just copy it again put it here specifically
+
+196
+00:19:30,071 --> 00:19:39,511
+the consumer apps specifically this one put it over here Okay below this so now we need
+
+197
+00:19:39,511 --> 00:19:48,952
+to do the rotation animation or this so it opens up bounces mobile like the rotation
+
+198
+00:19:48,952 --> 00:20:08,711
+keyframe go ahead and just rotate this at a fast pace Okay hit R plus K give it out
+
+199
+00:20:08,711 --> 00:20:15,392
+mobile consumer apps specifically this one so this last animation is for you to do you
+
+200
+00:20:15,392 --> 00:20:22,992
+have to bring a PNG of a mouse button and bring this over here like this Okay so let's
+
+201
+00:20:22,992 --> 00:20:27,232
+see the animation what we have created how much money do you make make 1 million dollars
+
+202
+00:20:27,232 --> 00:20:31,791
+every month how old are you 17 Okay what do you do what is it I build mobile consumer
+
+203
+00:20:31,791 --> 00:20:39,152
+apps specifically this one is Okay hope you like this podcast editing tutorial if you
+
+204
+00:20:39,152 --> 00:20:44,031
+would like me to create more podcast editing style videos in CapCut let me know in the
+
+205
+00:20:44,031 --> 00:20:47,392
+comments below till then see you in the next video.

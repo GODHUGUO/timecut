@@ -1,0 +1,127 @@
+1
+00:00:00,000 --> 00:00:01,119
+Par contre, si vous faites d'abord un translate,
+
+2
+00:00:02,160 --> 00:00:04,320
+et qu'après, vous faites un rotate, ça va se passer comme ça.
+
+3
+00:00:04,320 --> 00:00:05,839
+Ce truc est complètement mind-blowing,
+
+4
+00:00:05,839 --> 00:00:08,640
+que l'ordre dans le translate était important, je ne savais pas.
+
+5
+00:00:08,640 --> 00:00:11,359
+Et je pense qu'il y a très peu de développeurs front qui le savent, quand même.
+
+6
+00:00:11,359 --> 00:00:13,760
+Donc dites-moi dans les commentaires si vous saviez ou pas cette astuce.
+
+7
+00:00:13,760 --> 00:00:15,839
+J'aimerais bien qu'on organise une sorte de petit sondage dans les commentaires
+
+8
+00:00:15,839 --> 00:00:18,880
+comme ça pour qu'on voit si vraiment, il y avait beaucoup de devs qui le savaient
+
+9
+00:00:18,880 --> 00:00:20,880
+ou alors beaucoup de devs qui l'ignoraient complètement.
+
+10
+00:00:20,880 --> 00:00:23,119
+Parce que moi, clairement, je pense que personne ne sait ce truc.
+
+11
+00:00:24,079 --> 00:00:25,200
+Ou pas grand monde en tout cas.
+
+12
+00:00:25,200 --> 00:00:27,920
+Tout à l'heure, j'ai croisé Bastie chez Micode et je lui ai demandé s'il serait chaud
+
+13
+00:00:27,920 --> 00:00:31,279
+pour que le prochain challenge qu'on fait sur la chaîne, c'est lui qui me le design.
+
+14
+00:00:31,279 --> 00:00:33,119
+Et on va faire une sorte de petit collab comme ça.
+
+15
+00:00:33,119 --> 00:00:34,320
+D'ailleurs, regardez ce qu'il m'a dit.
+
+16
+00:00:34,320 --> 00:00:35,119
+Bastie ?
+
+17
+00:00:35,119 --> 00:00:35,359
+Ouais ?
+
+18
+00:00:35,359 --> 00:00:37,600
+T'es chaud pour me faire le prochain challenge que je vais faire ?
+
+19
+00:00:37,600 --> 00:00:38,720
+Les yeux bandés, codés dans le noir ?
+
+20
+00:00:38,720 --> 00:00:40,959
+J'attendais ça depuis des années, évidemment.
+
+21
+00:00:40,959 --> 00:00:41,440
+Oui !
+
+22
+00:00:41,440 --> 00:00:42,000
+Ah !
+
+23
+00:00:42,000 --> 00:00:42,959
+C'est ce que je voulais entendre.
+
+24
+00:00:42,959 --> 00:00:43,760
+Ah oui !
+
+25
+00:00:43,760 --> 00:00:44,239
+Ça va être...
+
+26
+00:00:44,880 --> 00:00:46,239
+Mais tu me promets que tu vas me faire un truc simple ?
+
+27
+00:00:47,920 --> 00:00:48,420
+Non.
+
+28
+00:00:51,679 --> 00:00:55,119
+Donc le prochain challenge sur cette chaîne, ça sera dans deux semaines.
+
+29
+00:00:55,119 --> 00:00:56,959
+Si vous voulez pas le manquer, abonnez-vous.
+
+30
+00:00:56,959 --> 00:00:57,920
+Et puis voilà !
+
+31
+00:00:57,920 --> 00:01:00,079
+Je vous dis à bientôt tout le monde, c'était Benjamin Code.
+
+32
+00:01:00,079 --> 00:01:00,579
+Ciao !

@@ -1,0 +1,135 @@
+1
+00:00:00,000 --> 00:00:01,760
+et qu'en fait, à la base, ma flèche, c'est juste un carré qui est comme ça,
+
+2
+00:00:01,760 --> 00:00:05,359
+qui est droit, avec une border top et une border right, comme ça.
+
+3
+00:00:05,359 --> 00:00:08,239
+Et ensuite, je la fais tourner pour simuler le bout d'une flèche.
+
+4
+00:00:08,239 --> 00:00:09,440
+Donc voilà, on tourne le truc.
+
+5
+00:00:09,440 --> 00:00:12,399
+Et le truc, c'est qu'après, au hover, en gros,
+
+6
+00:00:12,399 --> 00:00:15,200
+donc si on affiche le hover, c'est sur le bouton que je dois mettre le hover.
+
+7
+00:00:17,119 --> 00:00:19,200
+On voit que notre flèche, elle est toujours rotatée,
+
+8
+00:00:19,200 --> 00:00:21,519
+pour regarder le côté flèche, quoi.
+
+9
+00:00:21,519 --> 00:00:24,160
+Et après, on la translate comme ça vers la droite.
+
+10
+00:00:24,160 --> 00:00:27,119
+Moi, pour solutionner ça, en fait, dans l'épreuve,
+
+11
+00:00:27,119 --> 00:00:29,119
+j'ai enlevé le translate ici.
+
+12
+00:00:29,920 --> 00:00:32,959
+Là, en gros, et je l'ai appliqué sur le dessus.
+
+13
+00:00:32,959 --> 00:00:34,160
+Je l'ai appliqué ici, en gros.
+
+14
+00:00:34,160 --> 00:00:36,559
+Transform, translate, 30 pixels.
+
+15
+00:00:38,079 --> 00:00:39,519
+Et je l'ai enlevé aussi sur le body.
+
+16
+00:00:41,040 --> 00:00:42,640
+J'avais solutionné le truc comme ça.
+
+17
+00:00:42,640 --> 00:00:45,920
+Plutôt que d'appliquer le translate sur et le bout de la flèche
+
+18
+00:00:45,920 --> 00:00:47,359
+et le corps de la flèche,
+
+19
+00:00:47,359 --> 00:00:50,239
+je l'avais appliqué sur le papa, sur le parent.
+
+20
+00:00:50,239 --> 00:00:52,480
+J'avais appliqué sur l'ensemble, qui bougeait comme ça, en fait.
+
+21
+00:00:52,480 --> 00:00:56,320
+Mais j'aurais pu garder ma solution telle que je l'avais créée
+
+22
+00:00:56,320 --> 00:00:58,320
+en faisant quelque chose de beaucoup plus simple.
+
+23
+00:00:58,320 --> 00:00:59,440
+Je reforce le hover.
+
+24
+00:01:01,200 --> 00:01:02,880
+Et en fait, ici, les amis,
+
+25
+00:01:03,440 --> 00:01:06,559
+si au lieu de faire rotate 45°, translate 3D,
+
+26
+00:01:06,559 --> 00:01:10,160
+j'avais fait d'abord translate 3D et rotate ensuite,
+
+27
+00:01:10,959 --> 00:01:12,320
+là, vous avez vu, c'est bon.
+
+28
+00:01:14,720 --> 00:01:15,760
+C'est quoi cette dinguerie ?
+
+29
+00:01:15,760 --> 00:01:17,200
+Ça, je ne le savais pas du tout.
+
+30
+00:01:17,200 --> 00:01:20,239
+Mais en fait, ce qu'on apprend là, ce qu'on visionne ensemble,
+
+31
+00:01:20,239 --> 00:01:23,600
+c'est que l'ordre dans les transforms est important.
+
+32
+00:01:23,600 --> 00:01:27,040
+Si vous faites d'abord un rotate et que vous translatez en suivant sur l'axe X,
+
+33
+00:01:27,600 --> 00:01:29,440
+l'axe X va être comme ça vers le bas.
+
+34
+00:01:29,440 --> 00:01:30,000
+Par contre, si vous faites d'abord un translate,

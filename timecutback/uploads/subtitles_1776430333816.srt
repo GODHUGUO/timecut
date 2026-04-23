@@ -1,0 +1,747 @@
+1
+00:00:00,000 --> 00:00:02,559
+C'est quoi cette dinguerie ? Ça, je ne le savais pas du tout.
+
+2
+00:00:02,559 --> 00:00:06,119
+Mon dernier challenge, dans lequel je recode à l'aveugle un bouton un peu compliqué,
+
+3
+00:00:06,119 --> 00:00:09,199
+a titillé les membres de la communauté dev française.
+
+4
+00:00:09,199 --> 00:00:11,119
+Un paquet d'abonnés se sont prêtés à l'exercice,
+
+5
+00:00:11,119 --> 00:00:14,279
+l'adorable Lior Shamla a fait sa tentative de son côté,
+
+6
+00:00:14,279 --> 00:00:19,120
+ainsi que Graphicart, le grand Graphicart, qui a tenté le coup sur sa chaîne Twitch.
+
+7
+00:00:19,120 --> 00:00:23,760
+Parmi les abonnés, l'un d'entre eux m'a appris un truc en CSS complètement improbable,
+
+8
+00:00:23,760 --> 00:00:25,559
+une dinguerie que je ne savais pas du tout,
+
+9
+00:00:25,559 --> 00:00:29,200
+et qui va grandement révolutionner ma façon d'appréhender un cas de figure particulier.
+
+10
+00:00:29,200 --> 00:00:31,399
+Aujourd'hui, on va faire un petit tour des résultats de tout un chacun,
+
+11
+00:00:31,399 --> 00:00:36,759
+et on va voir cette astuce de dingue qu'au moins 99% d'entre vous ne connaissent pas à coup sûr.
+
+12
+00:00:36,759 --> 00:00:38,080
+J'en suis persuadé.
+
+13
+00:00:40,799 --> 00:00:43,119
+Alors, faisons un petit tour des résultats des travaux qui m'ont été rendus.
+
+14
+00:00:43,119 --> 00:00:45,720
+Vous allez voir que tous ont obtenu des résultats assez différents.
+
+15
+00:00:45,720 --> 00:00:47,959
+C'est normal, en même temps, ils codent tous à l'aveugle comme ça,
+
+16
+00:00:47,959 --> 00:00:49,840
+et à un moment, hop, ils regardent le résultat.
+
+17
+00:00:49,840 --> 00:00:52,400
+Et c'est ça qu'on va voir tout de suite, c'est le moment où ils ont regardé le résultat.
+
+18
+00:00:54,919 --> 00:00:57,159
+Alors, Lior, qui n'est pas vraiment un développeur frontaine,
+
+19
+00:00:57,159 --> 00:00:59,759
+au contraire, c'est un mec qui donne des cours de PHP sur Internet,
+
+20
+00:00:59,759 --> 00:01:01,880
+Symfony, Laravel, et pas mal de choses.
+
+21
+00:01:01,880 --> 00:01:04,720
+Franchement, si vous ne connaissez pas ce mec, allez faire un tour sur sa chaîne YouTube.
+
+22
+00:01:04,720 --> 00:01:08,480
+C'est un grand prince avec un accent marseillais génialement charmant et trop mignon.
+
+23
+00:01:08,480 --> 00:01:10,279
+Et donc, voilà sa proposition.
+
+24
+00:01:10,279 --> 00:01:13,400
+C'est un grand challenge pour lui que de se lancer sur cette réalisation,
+
+25
+00:01:13,400 --> 00:01:15,680
+parce qu'il n'a pas nécessairement l'habitude de faire ce genre d'intégration.
+
+26
+00:01:15,680 --> 00:01:17,879
+Il manque un peu la police, c'est pas grave.
+
+27
+00:01:18,599 --> 00:01:20,440
+L'effet est assez bon, Lior.
+
+28
+00:01:21,239 --> 00:01:23,239
+Et en plus, toi, tu as décidé de faire cette animation en SVG,
+
+29
+00:01:23,239 --> 00:01:25,599
+ce qui n'est pas donné quand vous faites ça à l'aveugle.
+
+30
+00:01:25,599 --> 00:01:27,040
+Franchement, bravo à toi, Lior.
+
+31
+00:01:27,080 --> 00:01:30,559
+L'alignement vertical n'est pas ouf, on voit que ce n'est pas vraiment centré au milieu du bloc.
+
+32
+00:01:30,559 --> 00:01:32,199
+Là, il manque un peu de padding aussi de ce côté,
+
+33
+00:01:32,199 --> 00:01:34,720
+ça aurait été pas mal d'avoir à peu près le même espace que tu as là et ici.
+
+34
+00:01:34,720 --> 00:01:37,680
+Et puis, bon, il manque la police, mais pour le reste, tu as quasiment tout.
+
+35
+00:01:37,680 --> 00:01:39,680
+Donc franchement, c'est pas mal. Respect, mon cher ami.
+
+36
+00:01:43,040 --> 00:01:44,080
+Ensuite, on a GraphicArt.
+
+37
+00:01:44,080 --> 00:01:46,440
+Alors GraphicArt, il a aussi fait l'approche SVG,
+
+38
+00:01:46,440 --> 00:01:48,080
+et lui, il nous a présenté ça de deux manières.
+
+39
+00:01:48,080 --> 00:01:50,879
+Alors ça, c'est le rendu qu'il a eu quand il a découvert à l'aveugle,
+
+40
+00:01:50,879 --> 00:01:53,279
+et ça, c'est le rendu quand il a corrigé en suivant.
+
+41
+00:01:53,319 --> 00:01:54,680
+Alors le rendu à l'aveugle, ça donne quoi ?
+
+42
+00:01:56,120 --> 00:01:57,040
+Eh, c'est pas mal du tout.
+
+43
+00:01:57,839 --> 00:02:00,919
+Il y a le souligné là qui est là en trop, ok.
+
+44
+00:02:01,279 --> 00:02:03,680
+Mais sinon, les paddings de chaque côté sont bien respectés,
+
+45
+00:02:03,680 --> 00:02:05,440
+et il a la flèche qui déconne un tout petit peu.
+
+46
+00:02:05,440 --> 00:02:07,360
+Mais alors, on m'a fait l'écho de son live,
+
+47
+00:02:07,360 --> 00:02:10,399
+et on m'a dit qu'il avait codé le SVG à l'aveugle.
+
+48
+00:02:10,399 --> 00:02:11,600
+Regardez, truc de ouf.
+
+49
+00:02:11,600 --> 00:02:12,559
+Genre si on va ici,
+
+50
+00:02:12,559 --> 00:02:16,080
+ça là, ces trucs ici, il les a écrits à l'aveugle, il les a calculés dans sa tête.
+
+51
+00:02:16,080 --> 00:02:18,080
+Ce grand, grand, grand fou dingue.
+
+52
+00:02:18,080 --> 00:02:19,759
+Qui aujourd'hui est capable de faire un truc pareil ?
+
+53
+00:02:20,559 --> 00:02:23,360
+En tout cas, Graphicart, respect d'avoir fait un truc comme ça à l'aveugle,
+
+54
+00:02:23,360 --> 00:02:24,080
+c'est BG.
+
+55
+00:02:24,080 --> 00:02:25,520
+Ta version terminée, elle est là.
+
+56
+00:02:26,399 --> 00:02:28,559
+Elle est irréprochable, super stylée, bravo.
+
+57
+00:02:28,559 --> 00:02:31,279
+Franchement, Graphicart, tu t'es lancé sur un truc un peu compliqué à l'aveugle,
+
+58
+00:02:31,279 --> 00:02:32,800
+et tu l'as torché de ouf.
+
+59
+00:02:32,800 --> 00:02:34,800
+Donc c'est carrément respectable.
+
+60
+00:02:34,800 --> 00:02:38,240
+La version découverte, et la version corrigée.
+
+61
+00:02:38,240 --> 00:02:38,880
+Bravo à toi.
+
+62
+00:02:42,880 --> 00:02:43,759
+Ensuite, on a Hélène.
+
+63
+00:02:43,759 --> 00:02:45,919
+Alors, Hélène, je vous en ai déjà parlé dans une vidéo,
+
+64
+00:02:45,919 --> 00:02:47,759
+c'est le gars trop cool qui, dès que je sors un challenge,
+
+65
+00:02:48,320 --> 00:02:50,559
+dans l'heure d'après, il a refait le challenge de son côté,
+
+66
+00:02:50,559 --> 00:02:51,520
+et il le met sur Twitter.
+
+67
+00:02:51,520 --> 00:02:52,880
+Franchement, c'est pas mal.
+
+68
+00:02:52,880 --> 00:02:54,320
+C'est pas mal du tout pour un truc à l'aveugle.
+
+69
+00:02:54,320 --> 00:02:56,080
+GG, t'as la flèche qui déconne un tout petit peu,
+
+70
+00:02:56,080 --> 00:02:57,759
+mais tout le reste, c'est tip top.
+
+71
+00:02:57,759 --> 00:02:59,520
+Donc, bien joué à toi, c'est validé.
+
+72
+00:02:59,520 --> 00:03:03,440
+Ensuite, on a Mario Randriano Mearizoa,
+
+73
+00:03:03,440 --> 00:03:04,800
+un peu complexe à dire,
+
+74
+00:03:04,800 --> 00:03:06,320
+qui nous a fait le challenge aussi.
+
+75
+00:03:06,320 --> 00:03:07,839
+J'ai aussi fait le challenge pour m'entraîner,
+
+76
+00:03:07,839 --> 00:03:09,199
+mais ah, pas les yeux bandés.
+
+77
+00:03:09,199 --> 00:03:10,559
+Malheureusement, je n'ai pas encore le niveau.
+
+78
+00:03:10,559 --> 00:03:11,679
+Donc, voyons voir ce que t'as fait.
+
+79
+00:03:11,759 --> 00:03:13,679
+Là, il aurait fallu que tu mettes un peu plus de graisse là-dessus,
+
+80
+00:03:13,679 --> 00:03:15,600
+mais après, c'est quand même pas mal.
+
+81
+00:03:15,600 --> 00:03:16,240
+Bien joué à toi.
+
+82
+00:03:16,240 --> 00:03:17,360
+Ensuite, qu'est-ce qu'on a ?
+
+83
+00:03:17,360 --> 00:03:18,320
+On a Valentin R.
+
+84
+00:03:18,320 --> 00:03:20,160
+Où, Valentin ?
+
+85
+00:03:20,160 --> 00:03:21,839
+Ah, tu t'es un peu planté.
+
+86
+00:03:21,839 --> 00:03:22,960
+Mais Valentin, je kiffe.
+
+87
+00:03:22,960 --> 00:03:24,160
+C'est un jeune apprenti.
+
+88
+00:03:24,160 --> 00:03:25,759
+Il est tout nouveau dans le game,
+
+89
+00:03:25,759 --> 00:03:27,360
+et il est super bénévole.
+
+90
+00:03:27,360 --> 00:03:28,559
+Il apprend toutes les choses,
+
+91
+00:03:28,559 --> 00:03:29,520
+il refait tous les challenges.
+
+92
+00:03:29,520 --> 00:03:30,880
+Donc, un gros GG à toi,
+
+93
+00:03:30,880 --> 00:03:32,240
+même si c'est éclaté.
+
+94
+00:03:32,240 --> 00:03:33,600
+C'est normal, t'avais les yeux bandés,
+
+95
+00:03:33,600 --> 00:03:35,360
+et c'est une épreuve super compliquée
+
+96
+00:03:35,360 --> 00:03:36,160
+quand t'as les yeux bandés.
+
+97
+00:03:36,160 --> 00:03:38,639
+Donc, voilà, ça vaut ce que ça vaut.
+
+98
+00:03:38,639 --> 00:03:41,279
+Mais maintenant, tente de le corriger en te débandant les yeux.
+
+99
+00:03:41,279 --> 00:03:42,960
+C'est ça, la bonne suite.
+
+100
+00:03:42,960 --> 00:03:44,479
+Alors, de mon côté, voici ce petit G.
+
+101
+00:03:44,479 --> 00:03:45,199
+Alors, voyons voir.
+
+102
+00:03:47,199 --> 00:03:50,479
+Oh, là, Michel, tu t'es un peu foutu de ma gueule sur la barre.
+
+103
+00:03:50,479 --> 00:03:51,360
+Trois petits traits.
+
+104
+00:03:51,360 --> 00:03:54,000
+Bon, il y a de la fumisterie dans l'air.
+
+105
+00:03:54,000 --> 00:03:55,360
+C'est pas très convaincant, au final.
+
+106
+00:03:55,360 --> 00:03:57,360
+Mais bon, si c'était à l'aveugle, je peux pas trop critiquer.
+
+107
+00:03:57,360 --> 00:03:59,039
+Donc, voilà pour les quelques résultats que j'ai eus.
+
+108
+00:03:59,039 --> 00:04:00,000
+Encore une fois, je vous rappelle,
+
+109
+00:04:00,000 --> 00:04:00,800
+c'est les gens comme ça,
+
+110
+00:04:00,800 --> 00:04:02,160
+ils ont fait le challenge à l'aveugle,
+
+111
+00:04:02,160 --> 00:04:03,679
+et enfin, ils ont regardé le résultat d'un coup,
+
+112
+00:04:03,679 --> 00:04:06,160
+et ils m'ont envoyé exactement le résultat à ce moment-là.
+
+113
+00:04:06,160 --> 00:04:08,240
+Donc, pour la plupart, c'était quand même pas mal du tout,
+
+114
+00:04:08,240 --> 00:04:09,360
+voire plutôt très bien réussi.
+
+115
+00:04:09,360 --> 00:04:11,440
+Bon, il y a quelques accidents, mais c'est normal.
+
+116
+00:04:11,440 --> 00:04:12,080
+Rien de grave.
+
+117
+00:04:15,119 --> 00:04:18,399
+Bon, et alors maintenant, l'astuce de dinde que j'ai appris grâce à un abonné.
+
+118
+00:04:18,399 --> 00:04:20,799
+Souvenez-vous, mon résultat, c'était exactement ça.
+
+119
+00:04:21,839 --> 00:04:23,119
+Oh, mon Dieu, c'était terrible.
+
+120
+00:04:23,119 --> 00:04:26,239
+J'avais cette flèche qui se barrait en bas et j'étais déprimé.
+
+121
+00:04:26,239 --> 00:04:27,359
+Moi, ma flèche, si elle va vers le bas,
+
+122
+00:04:27,359 --> 00:04:28,959
+c'est parce que je l'ai fait tout en CSS
+
+123
+00:04:29,040 --> 00:04:31,760
+et qu'en fait, à la base, ma flèche, c'est juste un carré qui est comme ça,
+
+124
+00:04:31,760 --> 00:04:35,359
+qui est droit, avec une border top et une border right, comme ça.
+
+125
+00:04:35,359 --> 00:04:38,239
+Et ensuite, je la fais tourner pour simuler le bout d'une flèche.
+
+126
+00:04:38,239 --> 00:04:39,440
+Donc voilà, on tourne le truc.
+
+127
+00:04:39,440 --> 00:04:42,399
+Et le truc, c'est qu'après, au hover, en gros,
+
+128
+00:04:42,399 --> 00:04:45,200
+donc si on affiche le hover, c'est sur le bouton que je dois mettre le hover.
+
+129
+00:04:47,119 --> 00:04:49,200
+On voit que notre flèche, elle est toujours rotatée,
+
+130
+00:04:49,200 --> 00:04:51,519
+pour regarder le côté flèche, quoi.
+
+131
+00:04:51,519 --> 00:04:54,160
+Et après, on la translate comme ça vers la droite.
+
+132
+00:04:54,160 --> 00:04:57,119
+Moi, pour solutionner ça, en fait, dans l'épreuve,
+
+133
+00:04:57,119 --> 00:04:59,119
+j'ai enlevé le translate ici.
+
+134
+00:04:59,920 --> 00:05:02,959
+Là, en gros, et je l'ai appliqué sur le dessus.
+
+135
+00:05:02,959 --> 00:05:04,160
+Je l'ai appliqué ici, en gros.
+
+136
+00:05:04,160 --> 00:05:06,559
+Transform, translate, 30 pixels.
+
+137
+00:05:08,079 --> 00:05:09,519
+Et je l'ai enlevé aussi sur le body.
+
+138
+00:05:11,040 --> 00:05:12,640
+J'avais solutionné le truc comme ça.
+
+139
+00:05:12,640 --> 00:05:15,920
+Plutôt que d'appliquer le translate sur et le bout de la flèche
+
+140
+00:05:15,920 --> 00:05:17,359
+et le corps de la flèche,
+
+141
+00:05:17,359 --> 00:05:20,239
+je l'avais appliqué sur le papa, sur le parent.
+
+142
+00:05:20,239 --> 00:05:22,480
+J'avais appliqué sur l'ensemble, qui bougeait comme ça, en fait.
+
+143
+00:05:22,480 --> 00:05:26,320
+Mais j'aurais pu garder ma solution telle que je l'avais créée
+
+144
+00:05:26,320 --> 00:05:28,320
+en faisant quelque chose de beaucoup plus simple.
+
+145
+00:05:28,320 --> 00:05:29,440
+Je reforce le hover.
+
+146
+00:05:31,200 --> 00:05:32,880
+Et en fait, ici, les amis,
+
+147
+00:05:33,440 --> 00:05:36,559
+si au lieu de faire rotate 45°, translate 3D,
+
+148
+00:05:36,559 --> 00:05:40,160
+j'avais fait d'abord translate 3D et rotate ensuite,
+
+149
+00:05:40,959 --> 00:05:42,320
+là, vous avez vu, c'est bon.
+
+150
+00:05:44,720 --> 00:05:45,760
+C'est quoi cette dinguerie ?
+
+151
+00:05:45,760 --> 00:05:47,200
+Ça, je ne le savais pas du tout.
+
+152
+00:05:47,200 --> 00:05:50,239
+Mais en fait, ce qu'on apprend là, ce qu'on visionne ensemble,
+
+153
+00:05:50,239 --> 00:05:53,600
+c'est que l'ordre dans les transforms est important.
+
+154
+00:05:53,600 --> 00:05:57,040
+Si vous faites d'abord un rotate et que vous translatez en suivant sur l'axe X,
+
+155
+00:05:57,600 --> 00:05:59,440
+l'axe X va être comme ça vers le bas.
+
+156
+00:05:59,440 --> 00:06:01,119
+Par contre, si vous faites d'abord un translate,
+
+157
+00:06:02,160 --> 00:06:04,320
+et qu'après, vous faites un rotate, ça va se passer comme ça.
+
+158
+00:06:04,320 --> 00:06:05,839
+Ce truc est complètement mind-blowing,
+
+159
+00:06:05,839 --> 00:06:08,640
+que l'ordre dans le translate était important, je ne savais pas.
+
+160
+00:06:08,640 --> 00:06:11,359
+Et je pense qu'il y a très peu de développeurs front qui le savent, quand même.
+
+161
+00:06:11,359 --> 00:06:13,760
+Donc dites-moi dans les commentaires si vous saviez ou pas cette astuce.
+
+162
+00:06:13,760 --> 00:06:15,839
+J'aimerais bien qu'on organise une sorte de petit sondage dans les commentaires
+
+163
+00:06:15,839 --> 00:06:18,880
+comme ça pour qu'on voit si vraiment, il y avait beaucoup de devs qui le savaient
+
+164
+00:06:18,880 --> 00:06:20,880
+ou alors beaucoup de devs qui l'ignoraient complètement.
+
+165
+00:06:20,880 --> 00:06:23,119
+Parce que moi, clairement, je pense que personne ne sait ce truc.
+
+166
+00:06:24,079 --> 00:06:25,200
+Ou pas grand monde en tout cas.
+
+167
+00:06:25,200 --> 00:06:27,920
+Tout à l'heure, j'ai croisé Bastie chez Micode et je lui ai demandé s'il serait chaud
+
+168
+00:06:27,920 --> 00:06:31,279
+pour que le prochain challenge qu'on fait sur la chaîne, c'est lui qui me le design.
+
+169
+00:06:31,279 --> 00:06:33,119
+Et on va faire une sorte de petit collab comme ça.
+
+170
+00:06:33,119 --> 00:06:34,320
+D'ailleurs, regardez ce qu'il m'a dit.
+
+171
+00:06:34,320 --> 00:06:35,119
+Bastie ?
+
+172
+00:06:35,119 --> 00:06:35,359
+Ouais ?
+
+173
+00:06:35,359 --> 00:06:37,600
+T'es chaud pour me faire le prochain challenge que je vais faire ?
+
+174
+00:06:37,600 --> 00:06:38,720
+Les yeux bandés, codés dans le noir ?
+
+175
+00:06:38,720 --> 00:06:40,959
+J'attendais ça depuis des années, évidemment.
+
+176
+00:06:40,959 --> 00:06:41,440
+Oui !
+
+177
+00:06:41,440 --> 00:06:42,000
+Ah !
+
+178
+00:06:42,000 --> 00:06:42,959
+C'est ce que je voulais entendre.
+
+179
+00:06:42,959 --> 00:06:43,760
+Ah oui !
+
+180
+00:06:43,760 --> 00:06:44,239
+Ça va être...
+
+181
+00:06:44,880 --> 00:06:46,239
+Mais tu me promets que tu vas me faire un truc simple ?
+
+182
+00:06:47,920 --> 00:06:48,420
+Non.
+
+183
+00:06:51,679 --> 00:06:55,119
+Donc le prochain challenge sur cette chaîne, ça sera dans deux semaines.
+
+184
+00:06:55,119 --> 00:06:56,959
+Si vous voulez pas le manquer, abonnez-vous.
+
+185
+00:06:56,959 --> 00:06:57,920
+Et puis voilà !
+
+186
+00:06:57,920 --> 00:07:00,079
+Je vous dis à bientôt tout le monde, c'était Benjamin Code.
+
+187
+00:07:00,079 --> 00:07:00,579
+Ciao !

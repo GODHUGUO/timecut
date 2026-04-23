@@ -1,0 +1,83 @@
+1
+00:00:00,000 --> 00:00:01,000
+ça va se passer comme ça.
+
+2
+00:00:01,000 --> 00:00:04,719
+Ce truc est complètement mind-blowing, que l'ordre dans le translate était important,
+
+3
+00:00:04,719 --> 00:00:08,079
+je ne savais pas, et je pense qu'il y a très peu de développeurs fonds qui le savent ça quand même.
+
+4
+00:00:08,079 --> 00:00:10,520
+Donc dites-moi dans les commentaires si vous saviez ou pas cette astuce,
+
+5
+00:00:10,520 --> 00:00:12,720
+j'aimerais bien qu'on organise une sorte de petit sondage dans les commentaires comme ça
+
+6
+00:00:12,720 --> 00:00:15,600
+pour qu'on voit si vraiment il y avait beaucoup de devs qui le savaient,
+
+7
+00:00:15,600 --> 00:00:17,600
+ou alors beaucoup de devs qui l'ignoraient complètement.
+
+8
+00:00:17,600 --> 00:00:19,959
+Parce que moi, clairement, je pense que personne ne sait ce truc.
+
+9
+00:00:20,799 --> 00:00:21,879
+Ou pas grand monde en tout cas.
+
+10
+00:00:21,879 --> 00:00:24,600
+Tout à l'heure j'ai croisé Bastille chez Micode et je lui ai demandé s'il serait chaud
+
+11
+00:00:24,600 --> 00:00:27,959
+pour que le prochain challenge qu'on fait sur la chaîne, eh ben c'est lui qui me le design.
+
+12
+00:00:27,959 --> 00:00:31,040
+Et on va faire une sorte de petit collab comme ça, d'ailleurs, regardez ce qu'il m'a dit.
+
+13
+00:00:31,040 --> 00:00:35,400
+Bastille, t'es chaud pour me faire le prochain challenge que je vais faire les yeux bandés codés dans le noir ?
+
+14
+00:00:35,400 --> 00:00:38,119
+J'attendais ça depuis des années, évidemment, oui !
+
+15
+00:00:38,119 --> 00:00:39,639
+Ah, c'est ce que je voulais entendre.
+
+16
+00:00:39,639 --> 00:00:41,639
+Ah oui, ça va être...
+
+17
+00:00:41,639 --> 00:00:43,639
+Mais tu me promets que tu vas me faire un truc simple ?
+
+18
+00:00:44,439 --> 00:00:45,439
+Non.
+
+19
+00:00:50,560 --> 00:00:53,759
+Donc le prochain challenge sur cette chaîne, ça sera dans deux semaines.
+
+20
+00:00:53,759 --> 00:00:55,759
+Si vous voulez pas le manquer, abonnez-vous.
+
+21
+00:00:55,759 --> 00:00:59,279
+Et puis voilà, je vous dis à bientôt tout le monde, c'était Benjamin Code, ciao !

@@ -1,0 +1,123 @@
+1
+00:00:00,000 --> 00:00:02,559
+C'est quoi cette dinguerie ? Ça, je ne le savais pas du tout.
+
+2
+00:00:02,559 --> 00:00:06,119
+Mon dernier challenge, dans lequel je recode à l'aveugle un bouton un peu compliqué,
+
+3
+00:00:06,119 --> 00:00:09,199
+a titillé les membres de la communauté dev française.
+
+4
+00:00:09,199 --> 00:00:11,119
+Un paquet d'abonnés se sont prêtés à l'exercice,
+
+5
+00:00:11,119 --> 00:00:14,279
+l'adorable Lior Shamla a fait sa tentative de son côté,
+
+6
+00:00:14,279 --> 00:00:19,120
+ainsi que Graphicart, le grand Graphicart, qui a tenté le coup sur sa chaîne Twitch.
+
+7
+00:00:19,120 --> 00:00:23,760
+Parmi les abonnés, l'un d'entre eux m'a appris un truc en CSS complètement improbable,
+
+8
+00:00:23,760 --> 00:00:25,559
+une dinguerie que je ne savais pas du tout,
+
+9
+00:00:25,559 --> 00:00:29,200
+et qui va grandement révolutionner ma façon d'appréhender un cas de figure particulier.
+
+10
+00:00:29,200 --> 00:00:31,399
+Aujourd'hui, on va faire un petit tour des résultats de tout un chacun,
+
+11
+00:00:31,399 --> 00:00:36,759
+et on va voir cette astuce de dingue qu'au moins 99% d'entre vous ne connaissent pas à coup sûr.
+
+12
+00:00:36,759 --> 00:00:38,080
+J'en suis persuadé.
+
+13
+00:00:40,799 --> 00:00:43,119
+Alors, faisons un petit tour des résultats des travaux qui m'ont été rendus.
+
+14
+00:00:43,119 --> 00:00:45,720
+Vous allez voir que tous ont obtenu des résultats assez différents.
+
+15
+00:00:45,720 --> 00:00:47,959
+C'est normal, en même temps, ils codent tous à l'aveugle comme ça,
+
+16
+00:00:47,959 --> 00:00:49,840
+et à un moment, hop, ils regardent le résultat.
+
+17
+00:00:49,840 --> 00:00:52,400
+Et c'est ça qu'on va voir tout de suite, c'est le moment où ils ont regardé le résultat.
+
+18
+00:00:54,919 --> 00:00:57,159
+Alors, Lior, qui n'est pas vraiment un développeur frontaine,
+
+19
+00:00:57,159 --> 00:00:59,759
+au contraire, c'est un mec qui donne des cours de PHP sur Internet,
+
+20
+00:00:59,759 --> 00:01:01,880
+Symfony, Laravel, et pas mal de choses.
+
+21
+00:01:01,880 --> 00:01:04,720
+Franchement, si vous ne connaissez pas ce mec, allez faire un tour sur sa chaîne YouTube.
+
+22
+00:01:04,720 --> 00:01:08,480
+C'est un grand prince avec un accent marseillais génialement charmant et trop mignon.
+
+23
+00:01:08,480 --> 00:01:10,279
+Et donc, voilà sa proposition.
+
+24
+00:01:10,279 --> 00:01:13,400
+C'est un grand challenge pour lui que de se lancer sur cette réalisation,
+
+25
+00:01:13,400 --> 00:01:15,680
+parce qu'il n'a pas nécessairement l'habitude de faire ce genre d'intégration.
+
+26
+00:01:15,680 --> 00:01:17,879
+Il manque un peu la police, c'est pas grave.
+
+27
+00:01:18,599 --> 00:01:20,440
+L'effet est assez bon, Lior.
+
+28
+00:01:21,239 --> 00:01:23,239
+Et en plus, toi, tu as décidé de faire cette animation en SVG,
+
+29
+00:01:23,239 --> 00:01:25,599
+ce qui n'est pas donné quand vous faites ça à l'aveugle.
+
+30
+00:01:25,599 --> 00:01:27,040
+Franchement, bravo à toi, Lior.
+
+31
+00:01:27,080 --> 00:01:30,000
+L'alignement vertical n'est pas ouf, on voit que ce n'est pas vraiment centré au milieu du bloc.

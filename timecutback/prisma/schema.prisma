@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Video {
+  id        Int      @id @default(autoincrement())
+  filename  String
+  userId    String
+  createdAt DateTime @default(now())
+  clips     Clip[]
+
+  @@index([userId, createdAt])
+}
+
+model UserPreference {
+  id                         Int      @id @default(autoincrement())
+  userId                     String   @unique
+  subtitleTranslationEnabled Boolean  @default(false)
+  targetSubtitleLanguage     String   @default("fr")
+  captionStyle               String   @default("bold")
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+}
+
+model UserSubscription {
+  id                 Int      @id @default(autoincrement())
+  userId             String   @unique
+  currentPlan        String   @default("free")
+  monthlyMinutesUsed Int      @default(0)
+  billingPeriodStart DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Clip {
+  id        Int      @id @default(autoincrement())
+  url       String   // ← URL Cloudinary (plus "path" local)
+  duration  Float
+  createdAt DateTime @default(now())
+  videoId   Int
+  video     Video    @relation(fields: [videoId], references: [id])
+}
+model Payment {
+  id            Int      @id @default(autoincrement())
+  userId        String
+  plan          String   // starter, pro
+  amount        Int      // montant en centimes
+  currency      String   @default("EUR")
+  status        String   @default("pending") // pending, completed, failed, cancelled
+  paymentId     String?  @unique // ID venant de LeekPay
+  checkoutUrl   String?  // URL de paiement LeekPay
+  customerEmail String?
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

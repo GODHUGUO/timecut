@@ -1,0 +1,207 @@
+1
+00:00:00,000 --> 00:00:03,440
+Ensuite, on a Mario Randriano Mearizoa,
+
+2
+00:00:03,440 --> 00:00:04,800
+un peu complexe à dire,
+
+3
+00:00:04,800 --> 00:00:06,320
+qui nous a fait le challenge aussi.
+
+4
+00:00:06,320 --> 00:00:07,839
+J'ai aussi fait le challenge pour m'entraîner,
+
+5
+00:00:07,839 --> 00:00:09,199
+mais ah, pas les yeux bandés.
+
+6
+00:00:09,199 --> 00:00:10,559
+Malheureusement, je n'ai pas encore le niveau.
+
+7
+00:00:10,559 --> 00:00:11,679
+Donc, voyons voir ce que t'as fait.
+
+8
+00:00:11,759 --> 00:00:13,679
+Là, il aurait fallu que tu mettes un peu plus de graisse là-dessus,
+
+9
+00:00:13,679 --> 00:00:15,600
+mais après, c'est quand même pas mal.
+
+10
+00:00:15,600 --> 00:00:16,240
+Bien joué à toi.
+
+11
+00:00:16,240 --> 00:00:17,360
+Ensuite, qu'est-ce qu'on a ?
+
+12
+00:00:17,360 --> 00:00:18,320
+On a Valentin R.
+
+13
+00:00:18,320 --> 00:00:20,160
+Où, Valentin ?
+
+14
+00:00:20,160 --> 00:00:21,839
+Ah, tu t'es un peu planté.
+
+15
+00:00:21,839 --> 00:00:22,960
+Mais Valentin, je kiffe.
+
+16
+00:00:22,960 --> 00:00:24,160
+C'est un jeune apprenti.
+
+17
+00:00:24,160 --> 00:00:25,759
+Il est tout nouveau dans le game,
+
+18
+00:00:25,759 --> 00:00:27,360
+et il est super bénévole.
+
+19
+00:00:27,360 --> 00:00:28,559
+Il apprend toutes les choses,
+
+20
+00:00:28,559 --> 00:00:29,520
+il refait tous les challenges.
+
+21
+00:00:29,520 --> 00:00:30,880
+Donc, un gros GG à toi,
+
+22
+00:00:30,880 --> 00:00:32,240
+même si c'est éclaté.
+
+23
+00:00:32,240 --> 00:00:33,600
+C'est normal, t'avais les yeux bandés,
+
+24
+00:00:33,600 --> 00:00:35,360
+et c'est une épreuve super compliquée
+
+25
+00:00:35,360 --> 00:00:36,160
+quand t'as les yeux bandés.
+
+26
+00:00:36,160 --> 00:00:38,639
+Donc, voilà, ça vaut ce que ça vaut.
+
+27
+00:00:38,639 --> 00:00:41,279
+Mais maintenant, tente de le corriger en te débandant les yeux.
+
+28
+00:00:41,279 --> 00:00:42,960
+C'est ça, la bonne suite.
+
+29
+00:00:42,960 --> 00:00:44,479
+Alors, de mon côté, voici ce petit G.
+
+30
+00:00:44,479 --> 00:00:45,199
+Alors, voyons voir.
+
+31
+00:00:47,199 --> 00:00:50,479
+Oh, là, Michel, tu t'es un peu foutu de ma gueule sur la barre.
+
+32
+00:00:50,479 --> 00:00:51,360
+Trois petits traits.
+
+33
+00:00:51,360 --> 00:00:54,000
+Bon, il y a de la fumisterie dans l'air.
+
+34
+00:00:54,000 --> 00:00:55,360
+C'est pas très convaincant, au final.
+
+35
+00:00:55,360 --> 00:00:57,360
+Mais bon, si c'était à l'aveugle, je peux pas trop critiquer.
+
+36
+00:00:57,360 --> 00:00:59,039
+Donc, voilà pour les quelques résultats que j'ai eus.
+
+37
+00:00:59,039 --> 00:01:00,000
+Encore une fois, je vous rappelle,
+
+38
+00:01:00,000 --> 00:01:00,800
+c'est les gens comme ça,
+
+39
+00:01:00,800 --> 00:01:02,160
+ils ont fait le challenge à l'aveugle,
+
+40
+00:01:02,160 --> 00:01:03,679
+et enfin, ils ont regardé le résultat d'un coup,
+
+41
+00:01:03,679 --> 00:01:06,160
+et ils m'ont envoyé exactement le résultat à ce moment-là.
+
+42
+00:01:06,160 --> 00:01:08,240
+Donc, pour la plupart, c'était quand même pas mal du tout,
+
+43
+00:01:08,240 --> 00:01:09,360
+voire plutôt très bien réussi.
+
+44
+00:01:09,360 --> 00:01:11,440
+Bon, il y a quelques accidents, mais c'est normal.
+
+45
+00:01:11,440 --> 00:01:12,080
+Rien de grave.
+
+46
+00:01:15,119 --> 00:01:18,399
+Bon, et alors maintenant, l'astuce de dinde que j'ai appris grâce à un abonné.
+
+47
+00:01:18,399 --> 00:01:20,799
+Souvenez-vous, mon résultat, c'était exactement ça.
+
+48
+00:01:21,839 --> 00:01:23,119
+Oh, mon Dieu, c'était terrible.
+
+49
+00:01:23,119 --> 00:01:26,239
+J'avais cette flèche qui se barrait en bas et j'étais déprimé.
+
+50
+00:01:26,239 --> 00:01:27,359
+Moi, ma flèche, si elle va vers le bas,
+
+51
+00:01:27,359 --> 00:01:28,959
+c'est parce que je l'ai fait tout en CSS
+
+52
+00:01:29,040 --> 00:01:30,000
+et qu'en fait, à la base, ma flèche, c'est juste un carré qui est comme ça,

@@ -1,0 +1,167 @@
+1
+00:00:00,000 --> 00:00:00,559
+L'alignement vertical n'est pas ouf, on voit que ce n'est pas vraiment centré au milieu du bloc.
+
+2
+00:00:00,559 --> 00:00:02,199
+Là, il manque un peu de padding aussi de ce côté,
+
+3
+00:00:02,199 --> 00:00:04,720
+ça aurait été pas mal d'avoir à peu près le même espace que tu as là et ici.
+
+4
+00:00:04,720 --> 00:00:07,680
+Et puis, bon, il manque la police, mais pour le reste, tu as quasiment tout.
+
+5
+00:00:07,680 --> 00:00:09,680
+Donc franchement, c'est pas mal. Respect, mon cher ami.
+
+6
+00:00:13,040 --> 00:00:14,080
+Ensuite, on a GraphicArt.
+
+7
+00:00:14,080 --> 00:00:16,440
+Alors GraphicArt, il a aussi fait l'approche SVG,
+
+8
+00:00:16,440 --> 00:00:18,080
+et lui, il nous a présenté ça de deux manières.
+
+9
+00:00:18,080 --> 00:00:20,879
+Alors ça, c'est le rendu qu'il a eu quand il a découvert à l'aveugle,
+
+10
+00:00:20,879 --> 00:00:23,279
+et ça, c'est le rendu quand il a corrigé en suivant.
+
+11
+00:00:23,319 --> 00:00:24,680
+Alors le rendu à l'aveugle, ça donne quoi ?
+
+12
+00:00:26,120 --> 00:00:27,040
+Eh, c'est pas mal du tout.
+
+13
+00:00:27,839 --> 00:00:30,919
+Il y a le souligné là qui est là en trop, ok.
+
+14
+00:00:31,279 --> 00:00:33,680
+Mais sinon, les paddings de chaque côté sont bien respectés,
+
+15
+00:00:33,680 --> 00:00:35,440
+et il a la flèche qui déconne un tout petit peu.
+
+16
+00:00:35,440 --> 00:00:37,360
+Mais alors, on m'a fait l'écho de son live,
+
+17
+00:00:37,360 --> 00:00:40,399
+et on m'a dit qu'il avait codé le SVG à l'aveugle.
+
+18
+00:00:40,399 --> 00:00:41,600
+Regardez, truc de ouf.
+
+19
+00:00:41,600 --> 00:00:42,559
+Genre si on va ici,
+
+20
+00:00:42,559 --> 00:00:46,080
+ça là, ces trucs ici, il les a écrits à l'aveugle, il les a calculés dans sa tête.
+
+21
+00:00:46,080 --> 00:00:48,080
+Ce grand, grand, grand fou dingue.
+
+22
+00:00:48,080 --> 00:00:49,759
+Qui aujourd'hui est capable de faire un truc pareil ?
+
+23
+00:00:50,559 --> 00:00:53,360
+En tout cas, Graphicart, respect d'avoir fait un truc comme ça à l'aveugle,
+
+24
+00:00:53,360 --> 00:00:54,080
+c'est BG.
+
+25
+00:00:54,080 --> 00:00:55,520
+Ta version terminée, elle est là.
+
+26
+00:00:56,399 --> 00:00:58,559
+Elle est irréprochable, super stylée, bravo.
+
+27
+00:00:58,559 --> 00:01:01,279
+Franchement, Graphicart, tu t'es lancé sur un truc un peu compliqué à l'aveugle,
+
+28
+00:01:01,279 --> 00:01:02,800
+et tu l'as torché de ouf.
+
+29
+00:01:02,800 --> 00:01:04,800
+Donc c'est carrément respectable.
+
+30
+00:01:04,800 --> 00:01:08,240
+La version découverte, et la version corrigée.
+
+31
+00:01:08,240 --> 00:01:08,880
+Bravo à toi.
+
+32
+00:01:12,880 --> 00:01:13,759
+Ensuite, on a Hélène.
+
+33
+00:01:13,759 --> 00:01:15,919
+Alors, Hélène, je vous en ai déjà parlé dans une vidéo,
+
+34
+00:01:15,919 --> 00:01:17,759
+c'est le gars trop cool qui, dès que je sors un challenge,
+
+35
+00:01:18,320 --> 00:01:20,559
+dans l'heure d'après, il a refait le challenge de son côté,
+
+36
+00:01:20,559 --> 00:01:21,520
+et il le met sur Twitter.
+
+37
+00:01:21,520 --> 00:01:22,880
+Franchement, c'est pas mal.
+
+38
+00:01:22,880 --> 00:01:24,320
+C'est pas mal du tout pour un truc à l'aveugle.
+
+39
+00:01:24,320 --> 00:01:26,080
+GG, t'as la flèche qui déconne un tout petit peu,
+
+40
+00:01:26,080 --> 00:01:27,759
+mais tout le reste, c'est tip top.
+
+41
+00:01:27,759 --> 00:01:29,520
+Donc, bien joué à toi, c'est validé.
+
+42
+00:01:29,520 --> 00:01:30,000
+Ensuite, on a Mario Randriano Mearizoa,

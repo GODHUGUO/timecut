@@ -1,0 +1,779 @@
+1
+00:00:00,000 --> 00:00:02,559
+What is this craziness? I had no idea about this at all.
+
+2
+00:00:02,559 --> 00:00:06,119
+My last challenge, where I blindly recode a somewhat complicated button,
+
+3
+00:00:06,119 --> 00:00:09,199
+has piqued the interest of the French dev community.
+
+4
+00:00:09,199 --> 00:00:11,119
+A bunch of subscribers took on the challenge.
+
+5
+00:00:11,119 --> 00:00:14,279
+The adorable Liorchamla made his attempt on his side.
+
+6
+00:00:14,279 --> 00:00:19,120
+As well as Graphicart, the great Graphicart, who tried his hand on his Twitch channel.
+
+7
+00:00:19,120 --> 00:00:23,760
+Among the subscribers, one of them taught me a completely improbable CSS trick,
+
+8
+00:00:23,760 --> 00:00:25,559
+a craziness that I had no idea about at all,
+
+9
+00:00:25,559 --> 00:00:29,200
+and which is going to greatly revolutionize my way of approaching a particular case.
+
+10
+00:00:29,200 --> 00:00:31,399
+Today, we're going to take a little tour of everyone's results,
+
+11
+00:00:31,399 --> 00:00:36,759
+and we're going to see this crazy trick that at least 99% of you definitely don't know.
+
+12
+00:00:36,759 --> 00:00:38,080
+I'm convinced of that.
+
+13
+00:00:40,799 --> 00:00:43,159
+So, let's take a little tour of the results of the work that was submitted to me.
+
+14
+00:00:43,159 --> 00:00:45,759
+You'll see that everyone got quite different results.
+
+15
+00:00:45,759 --> 00:00:47,959
+That's normal, at the same time, they all code blindly like this,
+
+16
+00:00:47,959 --> 00:00:49,880
+and at one point, boom, they look at the result.
+
+17
+00:00:49,880 --> 00:00:52,400
+That's what we're going to see right away, it's the moment they looked at the result.
+
+18
+00:00:54,919 --> 00:00:57,200
+So, Liorch, who isn't really a front-end developer,
+
+19
+00:00:57,200 --> 00:00:59,799
+on the contrary, he's a guy who teaches PHP online,
+
+20
+00:00:59,799 --> 00:01:01,919
+Symfony, Laravel, and a bunch of other things.
+
+21
+00:01:01,919 --> 00:01:04,760
+Honestly, if you don't know this guy, go check out his YouTube channel.
+
+22
+00:01:04,760 --> 00:01:08,519
+He's a great guy with a charmingly cute Marseille accent.
+
+23
+00:01:08,519 --> 00:01:10,319
+And so, here's his proposal.
+
+24
+00:01:10,319 --> 00:01:13,440
+It's a big challenge for him to take on this realization,
+
+25
+00:01:13,440 --> 00:01:15,720
+because he's not necessarily used to doing this kind of integration.
+
+26
+00:01:15,720 --> 00:01:17,879
+He's missing a bit of the font, but that's okay.
+
+27
+00:01:18,639 --> 00:01:20,440
+The effect is quite good, Liorch.
+
+28
+00:01:21,279 --> 00:01:23,279
+And on top of that, you decided to do this animation in SVG,
+
+29
+00:01:23,279 --> 00:01:25,639
+which isn't easy when you're doing it blindly.
+
+30
+00:01:25,639 --> 00:01:27,080
+Honestly, well done, Liorch.
+
+31
+00:01:27,199 --> 00:01:30,639
+The vertical alignment isn't great, you can see it's not really centered in the middle of the block.
+
+32
+00:01:30,639 --> 00:01:32,279
+Here, it also lacks a bit of padding on this side,
+
+33
+00:01:32,279 --> 00:01:34,800
+it would have been nice to have about the same space you have there and here.
+
+34
+00:01:34,800 --> 00:01:37,760
+And then, well, the font is missing, but for the rest, you have almost everything.
+
+35
+00:01:37,760 --> 00:01:39,760
+So honestly, it's not bad. Respect, my dear friend.
+
+36
+00:01:43,120 --> 00:01:44,160
+Next, we have GraphicCart.
+
+37
+00:01:44,160 --> 00:01:46,519
+So GraphicCart also took the SVG approach,
+
+38
+00:01:46,519 --> 00:01:48,160
+and he presented it to us in two ways.
+
+39
+00:01:48,160 --> 00:01:50,959
+So this is the rendering he got when he discovered it blindly,
+
+40
+00:01:50,959 --> 00:01:53,360
+and this is the rendering when he corrected it afterwards.
+
+41
+00:01:53,360 --> 00:01:54,720
+So, what does the blind rendering look like?
+
+42
+00:01:56,160 --> 00:01:57,040
+Hey, it's not bad at all.
+
+43
+00:01:57,879 --> 00:02:00,879
+There's the underline there that's a bit too much, okay.
+
+44
+00:02:01,279 --> 00:02:03,680
+But otherwise, the paddings on each side are well respected,
+
+45
+00:02:03,680 --> 00:02:05,480
+and he has the arrow that is a little off.
+
+46
+00:02:05,480 --> 00:02:07,400
+But then, I heard about his live stream,
+
+47
+00:02:07,400 --> 00:02:10,440
+and I was told he coded the SVG blindly.
+
+48
+00:02:10,440 --> 00:02:11,639
+Look, crazy stuff.
+
+49
+00:02:11,639 --> 00:02:14,720
+Like if we go here, this stuff here, he wrote it blindly,
+
+50
+00:02:14,720 --> 00:02:16,119
+he calculated it in his head.
+
+51
+00:02:16,119 --> 00:02:18,119
+This big, big, big crazy guy.
+
+52
+00:02:18,119 --> 00:02:19,759
+Who today is capable of doing something like that?
+
+53
+00:02:20,759 --> 00:02:23,839
+In any case, GraphicCart, respect for doing something like that blindly,
+
+54
+00:02:23,839 --> 00:02:24,520
+it's impressive.
+
+55
+00:02:24,520 --> 00:02:26,039
+Your finished version is here.
+
+56
+00:02:26,800 --> 00:02:28,960
+It's flawless, super stylish, well done.
+
+57
+00:02:28,960 --> 00:02:31,600
+Honestly, GraphicCart, you took on something a bit complicated blindly,
+
+58
+00:02:31,600 --> 00:02:33,119
+and you nailed it.
+
+59
+00:02:33,119 --> 00:02:35,160
+So, that's totally respectable.
+
+60
+00:02:35,160 --> 00:02:38,559
+The discovered version, and the corrected version.
+
+61
+00:02:38,559 --> 00:02:39,240
+Well done to you.
+
+62
+00:02:43,240 --> 00:02:44,080
+Next, we have Hélène.
+
+63
+00:02:44,080 --> 00:02:46,240
+So, Hélène, I've already talked about her in a video.
+
+64
+00:02:46,240 --> 00:02:48,080
+She's the really cool guy who, as soon as I release a challenge,
+
+65
+00:02:48,399 --> 00:02:50,720
+within the next hour, has redone the challenge on her side,
+
+66
+00:02:50,720 --> 00:02:51,639
+and posts it on Twitter.
+
+67
+00:02:51,639 --> 00:02:53,039
+Honestly, it's not bad.
+
+68
+00:02:53,039 --> 00:02:54,440
+It's not bad at all for something done blindly.
+
+69
+00:02:54,440 --> 00:02:56,199
+GG, you have the arrow that is a little off.
+
+70
+00:02:56,199 --> 00:02:57,880
+But everything else is top-notch.
+
+71
+00:02:57,880 --> 00:02:59,639
+So, well done to you, it's validated.
+
+72
+00:02:59,639 --> 00:03:00,720
+Next, we have Mario.
+
+73
+00:03:03,639 --> 00:03:04,960
+A bit complex to say.
+
+74
+00:03:04,960 --> 00:03:06,479
+Who also did the challenge.
+
+75
+00:03:06,479 --> 00:03:07,960
+I also did the challenge to practice,
+
+76
+00:03:07,960 --> 00:03:09,360
+but ah, not blindfolded.
+
+77
+00:03:09,360 --> 00:03:10,720
+Unfortunately, I don't have the level yet.
+
+78
+00:03:10,720 --> 00:03:11,880
+So, let's see what you did.
+
+79
+00:03:11,880 --> 00:03:14,320
+There, you should have added a bit more weight to that.
+
+80
+00:03:14,320 --> 00:03:15,720
+But after that, it's still not bad.
+
+81
+00:03:15,720 --> 00:03:16,320
+Well done to you.
+
+82
+00:03:16,320 --> 00:03:17,520
+Next, what do we have?
+
+83
+00:03:17,520 --> 00:03:18,639
+We have Valentin R.
+
+84
+00:03:19,639 --> 00:03:20,360
+Where, Valentin?
+
+85
+00:03:21,119 --> 00:03:21,919
+Ah, you messed up a bit.
+
+86
+00:03:21,919 --> 00:03:23,240
+But Valentin, I love it.
+
+87
+00:03:23,240 --> 00:03:24,279
+He's a young apprentice.
+
+88
+00:03:24,279 --> 00:03:25,919
+He's brand new to the game,
+
+89
+00:03:25,919 --> 00:03:27,440
+and he's super eager to learn.
+
+90
+00:03:27,440 --> 00:03:28,679
+He learns all the things.
+
+91
+00:03:28,679 --> 00:03:29,639
+He does all the challenges.
+
+92
+00:03:29,639 --> 00:03:31,440
+So, a big GG to you,
+
+93
+00:03:31,440 --> 00:03:32,320
+even if it's a bit rough.
+
+94
+00:03:32,320 --> 00:03:33,720
+It's normal, you had your eyes blindfolded.
+
+95
+00:03:33,720 --> 00:03:36,240
+And it's a super complicated test when you're blindfolded.
+
+96
+00:03:36,240 --> 00:03:38,720
+So, there you go, it is what it is.
+
+97
+00:03:38,720 --> 00:03:41,360
+But now, try to correct it by unblindfolding yourself.
+
+98
+00:03:41,360 --> 00:03:42,960
+That's the right way to go.
+
+99
+00:03:42,960 --> 00:03:44,559
+So, on my side, here's this little G.
+
+100
+00:03:44,559 --> 00:03:45,360
+So, let's see.
+
+101
+00:03:47,360 --> 00:03:50,559
+Oh dear, Michel, you kind of messed with me on the bar.
+
+102
+00:03:50,559 --> 00:03:51,360
+Three little lines.
+
+103
+00:03:51,360 --> 00:03:51,960
+Well.
+
+104
+00:03:52,759 --> 00:03:53,960
+There's some trickery in the air.
+
+105
+00:03:53,960 --> 00:03:55,360
+It's not very convincing, in the end.
+
+106
+00:03:55,360 --> 00:03:57,360
+But well, if you're blindfolded, you can't criticize too much.
+
+107
+00:03:57,360 --> 00:03:59,160
+So, that's it for the few results I got.
+
+108
+00:03:59,160 --> 00:03:59,960
+Once again, I remind you,
+
+109
+00:03:59,960 --> 00:04:00,759
+it's people like that,
+
+110
+00:04:00,759 --> 00:04:02,160
+they did the challenge blindly,
+
+111
+00:04:02,160 --> 00:04:03,759
+and finally, they looked at the result all at once,
+
+112
+00:04:03,759 --> 00:04:06,160
+and they sent me exactly the result at that moment.
+
+113
+00:04:06,160 --> 00:04:08,360
+So, for the most part, it was still not bad at all,
+
+114
+00:04:08,360 --> 00:04:09,360
+or rather very well done.
+
+115
+00:04:09,360 --> 00:04:11,360
+Well, there are a few accidents, but that's normal.
+
+116
+00:04:11,360 --> 00:04:12,160
+Nothing serious.
+
+117
+00:04:15,160 --> 00:04:17,359
+Well, and now, the crazy trick I learned,
+
+118
+00:04:17,359 --> 00:04:18,359
+thanks to a subscriber.
+
+119
+00:04:18,359 --> 00:04:20,760
+Remember, my result was exactly that.
+
+120
+00:04:21,959 --> 00:04:23,160
+Oh my God, it was terrible.
+
+121
+00:04:23,160 --> 00:04:24,559
+I had this arrow that was going down,
+
+122
+00:04:24,559 --> 00:04:26,160
+and I was depressed.
+
+123
+00:04:26,160 --> 00:04:27,359
+My arrow, if it goes down,
+
+124
+00:04:27,359 --> 00:04:28,959
+it's because I did it all in CSS,
+
+125
+00:04:28,959 --> 00:04:30,959
+and actually, at the base, my arrow is just a square,
+
+126
+00:04:30,959 --> 00:04:32,359
+that is like this, that is straight,
+
+127
+00:04:32,359 --> 00:04:35,359
+with a top border and a right border, like this.
+
+128
+00:04:36,160 --> 00:04:38,359
+I rotate it to simulate the tip of an arrow.
+
+129
+00:04:38,359 --> 00:04:39,359
+So there you go, we rotate the thing.
+
+130
+00:04:39,359 --> 00:04:42,359
+And the thing is that afterwards, on hover, basically,
+
+131
+00:04:42,359 --> 00:04:44,160
+so if we display the hover,
+
+132
+00:04:44,160 --> 00:04:45,359
+it's on the button that I'm going to put the hover.
+
+133
+00:04:47,160 --> 00:04:49,160
+We see that our arrow is still rotated,
+
+134
+00:04:49,160 --> 00:04:51,559
+to keep the arrow look, you know.
+
+135
+00:04:51,559 --> 00:04:54,160
+And then, we translate it like this, to the right.
+
+136
+00:04:54,160 --> 00:04:56,959
+For me, to solve this, actually, in the test,
+
+137
+00:04:56,959 --> 00:04:59,359
+I removed the translate here,
+
+138
+00:04:59,959 --> 00:05:00,760
+there, basically,
+
+139
+00:05:00,760 --> 00:05:03,160
+and I applied it on top.
+
+140
+00:05:03,160 --> 00:05:04,160
+I applied it here, basically.
+
+141
+00:05:04,160 --> 00:05:07,160
+Transform, Translate, 30 pixels.
+
+142
+00:05:08,160 --> 00:05:10,160
+And I also removed it from the body.
+
+143
+00:05:11,160 --> 00:05:12,760
+I had solved the thing like that.
+
+144
+00:05:12,760 --> 00:05:15,959
+Rather than applying the translate on the tip of the arrow,
+
+145
+00:05:15,959 --> 00:05:17,559
+and the body of the arrow,
+
+146
+00:05:17,559 --> 00:05:20,359
+I had applied it on the parent.
+
+147
+00:05:20,359 --> 00:05:22,559
+I had applied it on the whole, which moved like this, actually.
+
+148
+00:05:22,559 --> 00:05:26,559
+But I could have kept my solution as I created it,
+
+149
+00:05:26,559 --> 00:05:28,359
+by doing something much simpler.
+
+150
+00:05:28,359 --> 00:05:30,160
+I reinforce the hover.
+
+151
+00:05:31,160 --> 00:05:33,359
+And actually, here, friends,
+
+152
+00:05:33,359 --> 00:05:36,559
+if, instead of doing Rotate 45° and Translate 3D,
+
+153
+00:05:36,559 --> 00:05:40,559
+I had first done Translate 3D and then Rotate,
+
+154
+00:05:40,559 --> 00:05:42,559
+there, you saw, it's good.
+
+155
+00:05:44,559 --> 00:05:45,559
+What is this craziness?
+
+156
+00:05:45,559 --> 00:05:47,160
+I had no idea about this at all,
+
+157
+00:05:47,160 --> 00:05:50,160
+but actually, what we learn here, what we view together,
+
+158
+00:05:50,160 --> 00:05:53,559
+is that the order in transforms is important.
+
+159
+00:05:53,559 --> 00:05:57,559
+If you first do a Rotate and then Translate on the X-axis,
+
+160
+00:05:57,559 --> 00:05:59,359
+the X-axis will be like this, down.
+
+161
+00:05:59,359 --> 00:06:01,559
+On the other hand, if you first do a Translate,
+
+162
+00:06:01,760 --> 00:06:04,359
+and then you do a Rotate, it will happen like this.
+
+163
+00:06:04,359 --> 00:06:05,959
+This thing is completely mind-blowing,
+
+164
+00:06:05,959 --> 00:06:08,760
+that the order in Translate was important, I didn't know that,
+
+165
+00:06:08,760 --> 00:06:11,359
+and I think very few front-end developers know it, anyway.
+
+166
+00:06:11,359 --> 00:06:13,959
+Let me know in the comments if you knew this trick or not.
+
+167
+00:06:13,959 --> 00:06:15,959
+I would like us to organize a sort of little poll in the comments
+
+168
+00:06:15,959 --> 00:06:18,959
+to see if there were really a lot of devs who knew it
+
+169
+00:06:18,959 --> 00:06:20,959
+or a lot of devs who completely ignored it.
+
+170
+00:06:20,959 --> 00:06:23,959
+Because for me, clearly, I think no one knows this thing.
+
+171
+00:06:23,959 --> 00:06:25,160
+Or not many people, anyway.
+
+172
+00:06:25,160 --> 00:06:27,359
+Earlier, I ran into Bastille at Micode and I asked him
+
+173
+00:06:27,359 --> 00:06:29,760
+if he would be up for the next challenge we do on the channel,
+
+174
+00:06:29,760 --> 00:06:31,359
+and well, it's him who designs it for me.
+
+175
+00:06:31,359 --> 00:06:33,160
+And we're going to do a sort of little collab like that.
+
+176
+00:06:33,160 --> 00:06:34,359
+By the way, look at what he told me.
+
+177
+00:06:34,359 --> 00:06:35,160
+Bastille?
+
+178
+00:06:35,160 --> 00:06:35,559
+Yeah?
+
+179
+00:06:35,559 --> 00:06:37,160
+Are you up for making me the next challenge
+
+180
+00:06:37,160 --> 00:06:38,760
+that I'm going to do blindfolded coding in the dark?
+
+181
+00:06:38,760 --> 00:06:40,959
+I’ve been waiting for this for years, of course.
+
+182
+00:06:40,959 --> 00:06:41,559
+Yes!
+
+183
+00:06:41,559 --> 00:06:41,959
+Ah!
+
+184
+00:06:41,959 --> 00:06:42,359
+Yes!
+
+185
+00:06:42,359 --> 00:06:42,959
+That's what I wanted to hear.
+
+186
+00:06:42,959 --> 00:06:43,760
+Oh yes!
+
+187
+00:06:43,760 --> 00:06:44,959
+It's going to be...
+
+188
+00:06:44,959 --> 00:06:46,959
+But you promise me you're going to make me something simple?
+
+189
+00:06:47,760 --> 00:06:48,959
+No.
+
+190
+00:06:53,959 --> 00:06:57,160
+So the next challenge on this channel will be in two weeks.
+
+191
+00:06:57,160 --> 00:06:59,160
+If you don't want to miss it, subscribe.
+
+192
+00:06:59,160 --> 00:06:59,959
+And that's it!
+
+193
+00:06:59,959 --> 00:07:00,959
+I'll see you soon, everyone.
+
+194
+00:07:00,959 --> 00:07:01,959
+This was Benjamin Code.
+
+195
+00:07:01,959 --> 00:07:02,459
+Ciao!

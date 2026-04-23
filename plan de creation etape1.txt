@@ -1,0 +1,80 @@
+🎬 1. VideoModule (le chef)
+
+👉 Il gère :
+
+recevoir la vidéo
+lancer les actions
+
+👉 Il ne fait PAS tout lui-même
+
+☁️ 2. StorageModule (Firebase)
+
+👉 Il gère :
+
+stocker la vidéo
+retourner le lien
+
+👉 Peu importe que ce soit Firebase ou autre
+
+✂️ 3. ProcessingModule (découpage)
+
+👉 Il gère :
+
+découper la vidéo avec FFmpeg
+🗄️ 4. DatabaseModule (Prisma)
+
+👉 Il gère :
+
+enregistrer les infos
+récupérer les données
+🔁 4. Comment ils travaillent ensemble (très important)
+
+👉 Ce n’est PAS :
+
+❌ étape 1 → module 1
+❌ étape 2 → module 2
+
+👉 C’est plutôt :
+
+🎬 VideoModule coordonne tout
+Exemple réel :
+
+👉 utilisateur upload une vidéo
+
+1️⃣ VideoModule reçoit
+
+👉 puis il dit :
+
+2️⃣ “hé StorageModule”
+
+👉 stocke la vidéo
+→ reçoit un lien
+
+3️⃣ “hé DatabaseModule”
+
+👉 enregistre ce lien
+
+4️⃣ “hé ProcessingModule”
+
+👉 découpe la vidéo
+
+5️⃣ “hé StorageModule”
+
+👉 stocke les morceaux
+
+6️⃣ “hé DatabaseModule”
+
+👉 enregistre les morceaux
+
+👉 Et ensuite il répond à l’utilisateur
+
+🧠 5. Image simple (très claire)
+
+👉 VideoModule = chef d’orchestre 🎼
+
+Storage = musicien 🎻
+Processing = musicien 🥁
+Database = musicien 🎹
+
+👉 Le chef ne joue pas
+👉 il coordonne
