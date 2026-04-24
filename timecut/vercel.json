@@ -1,0 +1,6 @@
+{
+  "buildCommand": "nuxt build",
+  "outputDirectory": ".output",
+  "devCommand": "nuxt dev --port 3001",
+  "installCommand": "npm install"
+}
