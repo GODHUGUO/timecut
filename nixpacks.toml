@@ -1,8 +1,0 @@
-[phases.build]
-cmds = ["cd timecutback && npm install && npm run build"]
-
-[phases.setup]
-nixPkgs = ["nodejs", "npm"]
-
-[start]
-cmd = "cd timecutback && npm run start:prod"
