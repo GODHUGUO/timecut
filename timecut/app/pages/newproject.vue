@@ -155,9 +155,6 @@
           <span v-else>Générer la vidéo</span>
         </button> -->
 
-
-
-
   <button
           @click="startProcessing"
           :disabled="isProcessing || !uploadedFile"
@@ -171,13 +168,6 @@
           <span v-if="isProcessing">Traitement en cours...</span>
           <span v-else>Générer la vidéo</span>
         </button>
-
-
-
-
-
-
-
 
 
         <p v-if="uploadedFile && requiredMinutes > 0" class="text-gray-400 text-xs text-center">
