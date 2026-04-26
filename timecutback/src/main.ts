@@ -13,6 +13,7 @@ async function bootstrap() {
         'http://localhost:3000',
         'https://timecut.fr',
         'https://www.timecut.fr',
+        'https://timecut-production.up.railway.app',
       ];
       // Autoriser toutes les URLs Vercel (preview + production)
       if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
