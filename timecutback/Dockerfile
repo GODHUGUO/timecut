@@ -14,8 +14,8 @@ COPY . .
 RUN npm run build
 
 # Vérifier que dist/main existe
-RUN ls -la dist/
+RUN ls -la dist/src/
 
 EXPOSE 3000
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
