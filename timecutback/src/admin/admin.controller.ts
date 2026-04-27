@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { AdminAuthGuard } from '../auth/admin-auth.guard';
+import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { AdminService } from './admin.service';
 
 @Controller('admin')
@@ -61,6 +62,7 @@ export class AdminController {
   }
 
   @Post('verify-password')
+  @UseGuards(FirebaseAuthGuard)  // Override: only Firebase auth needed, not full admin check
   async verifyAdminPassword(@Body() body: { password: string }) {
     return this.adminService.verifyAdminPassword(body.password);
   }
