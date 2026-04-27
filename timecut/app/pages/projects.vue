@@ -102,7 +102,7 @@ definePageMeta({
 })
 
 const config = useRuntimeConfig()
-const apiBase = config.public.apiBase || 'http://localhost:3000'
+const apiBase = config.public.apiBase
 
 const getCurrentUser = async () => {
   if (auth.currentUser) return auth.currentUser

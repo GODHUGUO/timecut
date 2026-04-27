@@ -7,9 +7,10 @@ import { ProcessingModule } from './processing/processing.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AIService } from './ai/ai.service';
 import { PaymentModule } from './payment/payment.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
-  imports: [VideoModule, StorageModule, ProcessingModule, PrismaModule, PaymentModule],
+  imports: [VideoModule, StorageModule, ProcessingModule, PrismaModule, PaymentModule, AdminModule],
   controllers: [AppController],
   providers: [AppService, AIService],
 })

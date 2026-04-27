@@ -5,8 +5,8 @@ import { createHmac, timingSafeEqual } from 'crypto';
 const LEEKPAY_API_URL = 'https://leekpay.fr/api/v1';
 
 const PLAN_PRICES = {
-  starter: { amount: 399, currency: 'EUR', name: 'Starter' },
-  pro: { amount: 1199, currency: 'EUR', name: 'Pro' },
+  starter: { amount: 3.99, currency: 'EUR', name: 'Starter' },
+  pro: { amount: 11.99, currency: 'EUR', name: 'Pro' },
 } as const;
 
 type PlanKey = keyof typeof PLAN_PRICES;
