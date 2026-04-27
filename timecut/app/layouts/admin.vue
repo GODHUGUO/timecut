@@ -1,5 +1,14 @@
 <template>
-  <div class="h-screen bg-[#191022] flex overflow-hidden">
+  <!-- Loading state while verifying admin access -->
+  <div v-if="adminLoading" class="min-h-screen bg-[#191022] flex items-center justify-center">
+    <div class="text-center">
+      <div class="w-10 h-10 border-2 border-[#7f13ec] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-gray-400 text-sm">Vérification de l'accès...</p>
+    </div>
+  </div>
+
+  <!-- Admin layout (only shown when verified) -->
+  <div v-else-if="adminVerified" class="h-screen bg-[#191022] flex overflow-hidden">
     <!-- Sidebar -->
     <div
       class="fixed inset-y-0 left-0 z-50 w-64 bg-[#191022] text-white shadow-xl border-r border-[#7f13ec]/20 transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full flex flex-col h-screen"
@@ -129,40 +138,10 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
-// Admin access via URL slug
-if (import.meta.client) {
-  const isAdminAuth = sessionStorage.getItem('admin_authenticated')
-
-  if (!isAdminAuth) {
-    // Check for access key in URL query params
-    const route = useRoute()
-    const accessKey = route.query.access as string
-
-    if (accessKey) {
-      // Verify against backend
-      const { verifyAdminPassword } = useAdmin()
-      verifyAdminPassword(accessKey).then((result: any) => {
-        if (result?.valid) {
-          sessionStorage.setItem('admin_authenticated', 'true')
-          // Clean the URL by removing the access query param
-          const router = useRouter()
-          const query = { ...route.query }
-          delete query.access
-          router.replace({ path: route.path, query })
-        } else {
-          navigateTo('/')
-        }
-      }).catch(() => {
-        navigateTo('/')
-      })
-    } else {
-      navigateTo('/')
-    }
-  }
-}
+const adminVerified = ref(false)
+const adminLoading = ref(true)
 
 const route = useRoute()
-const router = useRouter()
 const isMobileMenuOpen = ref(false)
 const searchQuery = ref('')
 
@@ -195,7 +174,7 @@ const handleLogout = () => {
   if (import.meta.client) {
     sessionStorage.removeItem('admin_authenticated')
   }
-  navigateTo('/')
+  navigateTo('/admin/login')
 }
 
 watch(() => route.path, () => closeMobileMenu())
@@ -205,7 +184,17 @@ const handleResize = (e: MediaQueryListEvent) => {
   if (e.matches) closeMobileMenu()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Check admin authentication via sessionStorage
+  const isAdminAuth = sessionStorage.getItem('admin_authenticated')
+  if (isAdminAuth) {
+    adminVerified.value = true
+  } else {
+    navigateTo('/admin/login')
+  }
+  adminLoading.value = false
+
+  // Media query & auth state
   mediaQuery.value = window.matchMedia('(min-width: 1024px)')
   mediaQuery.value.addEventListener('change', handleResize)
 
