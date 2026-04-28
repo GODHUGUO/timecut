@@ -2,17 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { getAuth } from 'firebase-admin/auth';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Interfaces exportées ─────────────────────────────────────────────────────
 
-interface UserWhereInput {
+export interface UserWhereInput {
   currentPlan?: string;
 }
 
-interface PaymentWhereInput {
+export interface PaymentWhereInput {
   status?: string;
 }
 
-interface UserRow {
+export interface UserRow {
   id: string;
   name: string;
   email: string;
@@ -23,7 +23,7 @@ interface UserRow {
   lastActive: Date;
 }
 
-interface PaymentRow {
+export interface PaymentRow {
   id: string;
   name: string;
   email: string;
@@ -32,6 +32,15 @@ interface PaymentRow {
   date: Date;
   plan: string;
 }
+
+export interface TopUserRow {
+  name: string;
+  plan: string;
+  minutesUsed: number;
+  initial: string;
+}
+
+// ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
 export class AdminService {
@@ -44,7 +53,7 @@ export class AdminService {
   }
 
   // ─── Dashboard stats ──────────────────────────────────────────────────────
-  async getDashboardStats() {
+  async getDashboardStats(): Promise<Record<string, number>> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -119,7 +128,7 @@ export class AdminService {
   }
 
   // ─── Users stats ──────────────────────────────────────────────────────────
-  async getUsersStats() {
+  async getUsersStats(): Promise<Record<string, number>> {
     const [totalUsers, proUsers, starterUsers, activeNow, usageResult] =
       await Promise.all([
         this.prisma.userSubscription.count(),
@@ -156,10 +165,13 @@ export class AdminService {
   }
 
   // ─── Liste des users ──────────────────────────────────────────────────────
-  async getUsers(page: number, limit: number, search?: string, plan?: string) {
+  async getUsers(
+    page: number,
+    limit: number,
+    search?: string,
+    plan?: string,
+  ): Promise<{ users: UserRow[]; total: number; page: number; limit: number }> {
     const skip = (page - 1) * limit;
-
-    // Typage explicite du filtre
     const where: UserWhereInput = {};
     if (plan && plan !== 'all') where.currentPlan = plan;
 
@@ -175,7 +187,7 @@ export class AdminService {
 
     const auth = getAuth();
     const users: UserRow[] = await Promise.all(
-      subscriptions.map(async (sub) => {
+      subscriptions.map(async (sub): Promise<UserRow> => {
         const minutesTotal = sub.currentPlan === 'pro' ? 200 : 60;
         try {
           const fbUser = await auth.getUser(sub.userId);
@@ -221,15 +233,15 @@ export class AdminService {
   }
 
   // ─── Top users ────────────────────────────────────────────────────────────
-  async getTopUsers() {
+  async getTopUsers(): Promise<{ users: TopUserRow[] }> {
     const topSubs = await this.prisma.userSubscription.findMany({
       orderBy: { monthlyMinutesUsed: 'desc' },
       take: 4,
     });
 
     const auth = getAuth();
-    const users = await Promise.all(
-      topSubs.map(async (sub) => {
+    const users: TopUserRow[] = await Promise.all(
+      topSubs.map(async (sub): Promise<TopUserRow> => {
         try {
           const fbUser = await auth.getUser(sub.userId);
           const displayName = fbUser.displayName ?? fbUser.email ?? 'U';
@@ -255,10 +267,17 @@ export class AdminService {
   }
 
   // ─── Paiements paginés ────────────────────────────────────────────────────
-  async getPayments(page: number, limit: number, status?: string) {
+  async getPayments(
+    page: number,
+    limit: number,
+    status?: string,
+  ): Promise<{
+    payments: PaymentRow[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const skip = (page - 1) * limit;
-
-    // Typage explicite du filtre
     const where: PaymentWhereInput = {};
     if (status && status !== 'all') where.status = status;
 
@@ -274,7 +293,7 @@ export class AdminService {
 
     const auth = getAuth();
     const enriched: PaymentRow[] = await Promise.all(
-      payments.map(async (p) => {
+      payments.map(async (p): Promise<PaymentRow> => {
         try {
           const fbUser = await auth.getUser(p.userId);
           return {
@@ -305,7 +324,7 @@ export class AdminService {
   }
 
   // ─── Stats paiements ──────────────────────────────────────────────────────
-  async getPaymentsStats() {
+  async getPaymentsStats(): Promise<Record<string, number>> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -378,7 +397,7 @@ export class AdminService {
   }
 
   // ─── Paiements récents ────────────────────────────────────────────────────
-  async getRecentPayments() {
+  async getRecentPayments(): Promise<{ payments: PaymentRow[] }> {
     const payments = await this.prisma.payment.findMany({
       take: 20,
       orderBy: { createdAt: 'desc' },
@@ -386,7 +405,7 @@ export class AdminService {
 
     const auth = getAuth();
     const enriched: PaymentRow[] = await Promise.all(
-      payments.map(async (p) => {
+      payments.map(async (p): Promise<PaymentRow> => {
         try {
           const fbUser = await auth.getUser(p.userId);
           return {
