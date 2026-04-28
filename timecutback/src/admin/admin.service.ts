@@ -2,15 +2,48 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { getAuth } from 'firebase-admin/auth';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface UserWhereInput {
+  currentPlan?: string;
+}
+
+interface PaymentWhereInput {
+  status?: string;
+}
+
+interface UserRow {
+  id: string;
+  name: string;
+  email: string;
+  plan: string;
+  status: string;
+  minutesUsed: number;
+  minutesTotal: number;
+  lastActive: Date;
+}
+
+interface PaymentRow {
+  id: string;
+  name: string;
+  email: string;
+  amount: number;
+  status: string;
+  date: Date;
+  plan: string;
+}
+
 @Injectable()
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // ─── Calcul croissance ────────────────────────────────────────────────────
   private calculateGrowth(current: number, previous: number): number {
     if (previous === 0) return current > 0 ? 100 : 0;
     return Math.round(((current - previous) / previous) * 1000) / 10;
   }
 
+  // ─── Dashboard stats ──────────────────────────────────────────────────────
   async getDashboardStats() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -61,8 +94,8 @@ export class AdminService {
       }),
     ]);
 
-    const totalRevenue = (revenueResult._sum.amount || 0) / 100;
-    const pendingRevenue = (pendingResult._sum.amount || 0) / 100;
+    const totalRevenue = (revenueResult._sum.amount ?? 0) / 100;
+    const pendingRevenue = (pendingResult._sum.amount ?? 0) / 100;
     const estimatedProfit = totalRevenue * 0.56;
 
     return {
@@ -72,18 +105,20 @@ export class AdminService {
       estimatedProfit: Math.round(estimatedProfit * 100) / 100,
       pendingRevenue,
       subsThisMonth,
-      avgVideosPerDay: Math.round(
-        videosThisMonth / Math.max(now.getDate(), 1),
-      ),
+      avgVideosPerDay: Math.round(videosThisMonth / Math.max(now.getDate(), 1)),
       userGrowthPercent: this.calculateGrowth(subsThisMonth, subsLastMonth),
-      videoGrowthPercent: this.calculateGrowth(videosThisMonth, videosLastMonth),
+      videoGrowthPercent: this.calculateGrowth(
+        videosThisMonth,
+        videosLastMonth,
+      ),
       revenueGrowthPercent: this.calculateGrowth(
-        revenueThisMonth._sum.amount || 0,
-        revenueLastMonth._sum.amount || 0,
+        revenueThisMonth._sum.amount ?? 0,
+        revenueLastMonth._sum.amount ?? 0,
       ),
     };
   }
 
+  // ─── Users stats ──────────────────────────────────────────────────────────
   async getUsersStats() {
     const [totalUsers, proUsers, starterUsers, activeNow, usageResult] =
       await Promise.all([
@@ -106,8 +141,9 @@ export class AdminService {
       totalUsers > 0
         ? Math.round(((proUsers + starterUsers) / totalUsers) * 1000) / 10
         : 0;
+
     const avgUsagePerMonth = Math.round(
-      usageResult._avg.monthlyMinutesUsed || 0,
+      usageResult._avg.monthlyMinutesUsed ?? 0,
     );
 
     return {
@@ -119,9 +155,12 @@ export class AdminService {
     };
   }
 
+  // ─── Liste des users ──────────────────────────────────────────────────────
   async getUsers(page: number, limit: number, search?: string, plan?: string) {
     const skip = (page - 1) * limit;
-    const where: any = {};
+
+    // Typage explicite du filtre
+    const where: UserWhereInput = {};
     if (plan && plan !== 'all') where.currentPlan = plan;
 
     const [subscriptions, total] = await Promise.all([
@@ -135,25 +174,23 @@ export class AdminService {
     ]);
 
     const auth = getAuth();
-    const users = await Promise.all(
+    const users: UserRow[] = await Promise.all(
       subscriptions.map(async (sub) => {
+        const minutesTotal = sub.currentPlan === 'pro' ? 200 : 60;
         try {
           const fbUser = await auth.getUser(sub.userId);
           return {
             id: sub.userId,
             name:
-              fbUser.displayName ||
-              fbUser.email?.split('@')[0] ||
-              'Unknown',
-            email: fbUser.email || '',
+              fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'Unknown',
+            email: fbUser.email ?? '',
             plan: sub.currentPlan,
             status:
-              sub.updatedAt >
-              new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+              sub.updatedAt > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
                 ? 'Active'
                 : 'Inactive',
             minutesUsed: sub.monthlyMinutesUsed,
-            minutesTotal: sub.currentPlan === 'pro' ? 200 : 60,
+            minutesTotal,
             lastActive: sub.updatedAt,
           };
         } catch {
@@ -164,26 +201,26 @@ export class AdminService {
             plan: sub.currentPlan,
             status: 'Inactive',
             minutesUsed: sub.monthlyMinutesUsed,
-            minutesTotal: sub.currentPlan === 'pro' ? 200 : 60,
+            minutesTotal,
             lastActive: sub.updatedAt,
           };
         }
       }),
     );
 
-    let filtered = users;
+    let filtered: UserRow[] = users;
     if (search) {
       const s = search.toLowerCase();
       filtered = users.filter(
         (u) =>
-          u.name.toLowerCase().includes(s) ||
-          u.email.toLowerCase().includes(s),
+          u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s),
       );
     }
 
     return { users: filtered, total, page, limit };
   }
 
+  // ─── Top users ────────────────────────────────────────────────────────────
   async getTopUsers() {
     const topSubs = await this.prisma.userSubscription.findMany({
       orderBy: { monthlyMinutesUsed: 'desc' },
@@ -195,18 +232,13 @@ export class AdminService {
       topSubs.map(async (sub) => {
         try {
           const fbUser = await auth.getUser(sub.userId);
+          const displayName = fbUser.displayName ?? fbUser.email ?? 'U';
           return {
             name:
-              fbUser.displayName ||
-              fbUser.email?.split('@')[0] ||
-              'Unknown',
+              fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'Unknown',
             plan: sub.currentPlan,
             minutesUsed: sub.monthlyMinutesUsed,
-            initial: (
-              fbUser.displayName ||
-              fbUser.email ||
-              'U'
-            )[0].toUpperCase(),
+            initial: displayName[0].toUpperCase(),
           };
         } catch {
           return {
@@ -222,9 +254,12 @@ export class AdminService {
     return { users };
   }
 
+  // ─── Paiements paginés ────────────────────────────────────────────────────
   async getPayments(page: number, limit: number, status?: string) {
     const skip = (page - 1) * limit;
-    const where: any = {};
+
+    // Typage explicite du filtre
+    const where: PaymentWhereInput = {};
     if (status && status !== 'all') where.status = status;
 
     const [payments, total] = await Promise.all([
@@ -238,17 +273,15 @@ export class AdminService {
     ]);
 
     const auth = getAuth();
-    const enriched = await Promise.all(
+    const enriched: PaymentRow[] = await Promise.all(
       payments.map(async (p) => {
         try {
           const fbUser = await auth.getUser(p.userId);
           return {
-            id: p.paymentId || String(p.id),
+            id: p.paymentId ?? String(p.id),
             name:
-              fbUser.displayName ||
-              fbUser.email?.split('@')[0] ||
-              'Unknown',
-            email: p.customerEmail || fbUser.email || '',
+              fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'Unknown',
+            email: p.customerEmail ?? fbUser.email ?? '',
             amount: p.amount / 100,
             status: p.status,
             date: p.createdAt,
@@ -256,9 +289,9 @@ export class AdminService {
           };
         } catch {
           return {
-            id: p.paymentId || String(p.id),
+            id: p.paymentId ?? String(p.id),
             name: 'Unknown',
-            email: p.customerEmail || '',
+            email: p.customerEmail ?? '',
             amount: p.amount / 100,
             status: p.status,
             date: p.createdAt,
@@ -271,6 +304,7 @@ export class AdminService {
     return { payments: enriched, total, page, limit };
   }
 
+  // ─── Stats paiements ──────────────────────────────────────────────────────
   async getPaymentsStats() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -322,26 +356,28 @@ export class AdminService {
       totalPayments > 0
         ? Math.round((refundedPayments / totalPayments) * 10000) / 100
         : 0;
+
     const refundRateLastMonth =
       totalPaymentsLastMonth > 0
         ? Math.round((refundedLastMonth / totalPaymentsLastMonth) * 10000) / 100
         : 0;
 
     return {
-      monthlyRevenue: (monthlyRevenue._sum.amount || 0) / 100,
-      previousMonthRevenue: (previousMonthRevenue._sum.amount || 0) / 100,
+      monthlyRevenue: (monthlyRevenue._sum.amount ?? 0) / 100,
+      previousMonthRevenue: (previousMonthRevenue._sum.amount ?? 0) / 100,
       revenueGrowthPercent: this.calculateGrowth(
-        monthlyRevenue._sum.amount || 0,
-        previousMonthRevenue._sum.amount || 0,
+        monthlyRevenue._sum.amount ?? 0,
+        previousMonthRevenue._sum.amount ?? 0,
       ),
-      pendingPayouts: (pendingPayouts._sum.amount || 0) / 100,
-      pendingCount: pendingPayouts._count._all || 0,
+      pendingPayouts: (pendingPayouts._sum.amount ?? 0) / 100,
+      pendingCount: pendingPayouts._count._all ?? 0,
       refundRate,
       refundRateChange:
         Math.round((refundRate - refundRateLastMonth) * 100) / 100,
     };
   }
 
+  // ─── Paiements récents ────────────────────────────────────────────────────
   async getRecentPayments() {
     const payments = await this.prisma.payment.findMany({
       take: 20,
@@ -349,17 +385,15 @@ export class AdminService {
     });
 
     const auth = getAuth();
-    const enriched = await Promise.all(
+    const enriched: PaymentRow[] = await Promise.all(
       payments.map(async (p) => {
         try {
           const fbUser = await auth.getUser(p.userId);
           return {
-            id: p.paymentId || String(p.id),
+            id: p.paymentId ?? String(p.id),
             name:
-              fbUser.displayName ||
-              fbUser.email?.split('@')[0] ||
-              'Unknown',
-            email: p.customerEmail || fbUser.email || '',
+              fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'Unknown',
+            email: p.customerEmail ?? fbUser.email ?? '',
             amount: p.amount / 100,
             status: p.status,
             date: p.createdAt,
@@ -367,9 +401,9 @@ export class AdminService {
           };
         } catch {
           return {
-            id: p.paymentId || String(p.id),
+            id: p.paymentId ?? String(p.id),
             name: 'Unknown',
-            email: p.customerEmail || '',
+            email: p.customerEmail ?? '',
             amount: p.amount / 100,
             status: p.status,
             date: p.createdAt,
@@ -382,6 +416,7 @@ export class AdminService {
     return { payments: enriched };
   }
 
+  // ─── Vérification mot de passe admin ──────────────────────────────────────
   verifyAdminPassword(password: string): { valid: boolean } {
     const adminPassword = process.env.ADMIN_PASSWORD;
     if (!adminPassword) {
