@@ -46,6 +46,44 @@ export interface TopUserRow {
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async getFirebaseUserRegistrationStats(
+    startOfMonth?: Date,
+    startOfLastMonth?: Date,
+  ): Promise<{
+    totalUsers: number;
+    usersThisMonth: number;
+    usersLastMonth: number;
+  }> {
+    const auth = getAuth();
+    let pageToken: string | undefined;
+    let totalUsers = 0;
+    let usersThisMonth = 0;
+    let usersLastMonth = 0;
+
+    do {
+      const result = await auth.listUsers(1000, pageToken);
+      totalUsers += result.users.length;
+
+      if (startOfMonth && startOfLastMonth) {
+        for (const user of result.users) {
+          const createdAt = new Date(user.metadata.creationTime);
+          if (createdAt >= startOfMonth) {
+            usersThisMonth += 1;
+          } else if (
+            createdAt >= startOfLastMonth &&
+            createdAt < startOfMonth
+          ) {
+            usersLastMonth += 1;
+          }
+        }
+      }
+
+      pageToken = result.pageToken;
+    } while (pageToken);
+
+    return { totalUsers, usersThisMonth, usersLastMonth };
+  }
+
   // ─── Calcul croissance ────────────────────────────────────────────────────
   private calculateGrowth(current: number, previous: number): number {
     if (previous === 0) return current > 0 ? 100 : 0;
@@ -59,7 +97,7 @@ export class AdminService {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
     const [
-      totalSubscriptions,
+      firebaseUserStats,
       totalVideos,
       revenueResult,
       pendingResult,
@@ -67,10 +105,8 @@ export class AdminService {
       videosLastMonth,
       revenueThisMonth,
       revenueLastMonth,
-      subsThisMonth,
-      subsLastMonth,
     ] = await Promise.all([
-      this.prisma.userSubscription.count(),
+      this.getFirebaseUserRegistrationStats(startOfMonth, startOfLastMonth),
       this.prisma.video.count(),
       this.prisma.payment.aggregate({
         where: { status: 'completed' },
@@ -95,12 +131,6 @@ export class AdminService {
         },
         _sum: { amount: true },
       }),
-      this.prisma.userSubscription.count({
-        where: { createdAt: { gte: startOfMonth } },
-      }),
-      this.prisma.userSubscription.count({
-        where: { createdAt: { gte: startOfLastMonth, lt: startOfMonth } },
-      }),
     ]);
 
     const totalRevenue = (revenueResult._sum.amount ?? 0) / 100;
@@ -108,14 +138,17 @@ export class AdminService {
     const estimatedProfit = totalRevenue * 0.56;
 
     return {
-      totalUsers: totalSubscriptions,
+      totalUsers: firebaseUserStats.totalUsers,
       totalVideos,
       totalRevenue,
       estimatedProfit: Math.round(estimatedProfit * 100) / 100,
       pendingRevenue,
-      subsThisMonth,
+      subsThisMonth: firebaseUserStats.usersThisMonth,
       avgVideosPerDay: Math.round(videosThisMonth / Math.max(now.getDate(), 1)),
-      userGrowthPercent: this.calculateGrowth(subsThisMonth, subsLastMonth),
+      userGrowthPercent: this.calculateGrowth(
+        firebaseUserStats.usersThisMonth,
+        firebaseUserStats.usersLastMonth,
+      ),
       videoGrowthPercent: this.calculateGrowth(
         videosThisMonth,
         videosLastMonth,
@@ -129,9 +162,9 @@ export class AdminService {
 
   // ─── Users stats ──────────────────────────────────────────────────────────
   async getUsersStats(): Promise<Record<string, number>> {
-    const [totalUsers, proUsers, starterUsers, activeNow, usageResult] =
+    const [firebaseUserStats, proUsers, starterUsers, activeNow, usageResult] =
       await Promise.all([
-        this.prisma.userSubscription.count(),
+        this.getFirebaseUserRegistrationStats(),
         this.prisma.userSubscription.count({ where: { currentPlan: 'pro' } }),
         this.prisma.userSubscription.count({
           where: { currentPlan: 'starter' },
@@ -145,6 +178,7 @@ export class AdminService {
           _avg: { monthlyMinutesUsed: true },
         }),
       ]);
+    const totalUsers = firebaseUserStats.totalUsers;
 
     const proConversionRate =
       totalUsers > 0
