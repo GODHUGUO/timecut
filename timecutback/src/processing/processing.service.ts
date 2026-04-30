@@ -18,19 +18,8 @@ const ffprobeStatic = require('ffprobe-static') as { path: string };
 ffmpeg.setFfmpegPath(ffmpegStatic);
 ffmpeg.setFfprobePath(ffprobeStatic.path);
 
-type MulterFile = {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  size: number;
-  path: string;
-  filename: string;
-};
-
 @Injectable()
 export class ProcessingService {
-  private readonly outputDir = './uploads';
 
   async getMediaDuration(filePath: string): Promise<number> {
     return new Promise((resolve, reject) => {
@@ -46,40 +35,6 @@ export class ProcessingService {
         },
       );
     });
-  }
-
-  async splitVideo(file: MulterFile, clipDuration: number): Promise<string[]> {
-    // Utiliser un sous-dossier temporaire pour éviter le scan de tout uploads/
-    const timestamp = Date.now();
-    const tempDir = path.join(this.outputDir, `split_${timestamp}`);
-    fs.mkdirSync(tempDir, { recursive: true });
-
-    const baseName = `clip_%03d.mp4`;
-    const outputPattern = path.join(tempDir, baseName);
-
-    await new Promise<void>((resolve, reject) => {
-      ffmpeg(file.path)
-        .outputOptions([
-          '-c copy',
-          '-map 0',
-          '-segment_time',
-          String(clipDuration),
-          '-f segment',
-          '-reset_timestamps 1',
-          '-avoid_negative_ts make_zero',
-        ])
-        .output(outputPattern)
-        .on('end', () => resolve())
-        .on('error', (error: Error) => reject(error))
-        .run();
-    });
-
-    // Scan rapide d'un petit dossier dédié
-    return fs
-      .readdirSync(tempDir)
-      .filter((fileName) => fileName.endsWith('.mp4'))
-      .sort()
-      .map((fileName) => path.join(tempDir, fileName));
   }
 
   /**
@@ -113,6 +68,40 @@ export class ProcessingService {
     return results;
   }
 
+  /**
+   * Burn a per-clip SRT file directly into a clip (public API for new flow).
+   * Returns the path of the output file (_sub.mp4).
+   */
+  async burnSrtIntoClip(
+    clipPath: string,
+    srtPath: string,
+    captionStyle: string = 'bold',
+  ): Promise<string> {
+    const forceStyle = this.getCaptionForceStyle(captionStyle);
+    const outputPath = clipPath.replace(/\.mp4$/, '_sub.mp4');
+    const subtitleFilter = `subtitles='${this.escapeSubtitlePath(srtPath)}':force_style='${forceStyle}'`;
+
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(clipPath)
+        .videoFilters(subtitleFilter)
+        .outputOptions([
+          '-c:v libx264',
+          '-preset ultrafast',
+          '-crf 23',
+          '-threads 0',
+          '-pix_fmt yuv420p',
+          '-movflags +faststart',
+          '-c:a copy',
+        ])
+        .output(outputPath)
+        .on('end', () => resolve())
+        .on('error', (error: Error) => reject(error))
+        .run();
+    });
+
+    return outputPath;
+  }
+
   private async burnSubtitlesIntoClip(
     clipPath: string,
     segments: SrtSegment[],
@@ -144,29 +133,30 @@ export class ProcessingService {
     const outputPath = clipPath.replace(/\.mp4$/, '_sub.mp4');
     const subtitleFilter = `subtitles='${this.escapeSubtitlePath(clipSrtPath)}':force_style='${forceStyle}'`;
 
-    await new Promise<void>((resolve, reject) => {
-      ffmpeg(clipPath)
-        .videoFilters(subtitleFilter)
-        .outputOptions([
-          '-c:v libx264',
-          '-preset ultrafast',
-          '-crf 23',
-          '-threads 0',
-          '-pix_fmt yuv420p',
-          '-movflags +faststart',
-          '-c:a copy',
-        ])
-        .output(outputPath)
-        .on('end', () => {
-          // Nettoyage du SRT temporaire
-          this.safeDelete(clipSrtPath);
-          resolve();
-        })
-        .on('error', (error: Error) => reject(error))
-        .run();
-    });
+    try {
+      await new Promise<void>((resolve, reject) => {
+        ffmpeg(clipPath)
+          .videoFilters(subtitleFilter)
+          .outputOptions([
+            '-c:v libx264',
+            '-preset ultrafast',
+            '-crf 23',
+            '-threads 0',
+            '-pix_fmt yuv420p',
+            '-movflags +faststart',
+            '-c:a copy',
+          ])
+          .output(outputPath)
+          .on('end', () => resolve())
+          .on('error', (error: Error) => reject(error))
+          .run();
+      });
 
-    return outputPath;
+      return outputPath;
+    } finally {
+      // Nettoyage du SRT temporaire (même en cas d'erreur)
+      this.safeDelete(clipSrtPath);
+    }
   }
 
   private parseSrt(srtPath: string): SrtSegment[] {

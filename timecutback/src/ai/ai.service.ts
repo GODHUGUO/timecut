@@ -117,6 +117,63 @@ export class AIService {
     }
   }
 
+  async generateSubtitlesFromClip(
+    clipPath: string,
+    clipIndex: number,
+    options?: { translate?: boolean; targetLanguage?: string; translationModel?: string },
+  ): Promise<{ text: string; srtContent: string; srtPath: string; segments: TranscriptSegment[] }> {
+    const audioPath = await this.extractAudio(clipPath);
+
+    try {
+      // Transcribe directly — no chunking needed for short clips
+      const transcription = await this.getClient().audio.transcriptions.create({
+        file: fs.createReadStream(audioPath),
+        model: process.env.TCHAVI_TRANSCRIPTION_MODEL ?? 'whisper-1',
+        response_format: 'verbose_json',
+        timestamp_granularities: ['segment'],
+      });
+
+      const rawText = (transcription as { text?: string }).text?.trim() ?? '';
+      let segments = this.normalizeSegments(transcription);
+
+      // Optionally translate
+      if (options?.translate && options?.targetLanguage) {
+        const translated = await this.translateSegmentsIfNeeded(segments, {
+          translationEnabled: true,
+          targetLanguage: options.targetLanguage,
+        });
+        if (translated.length > 0) {
+          segments = translated;
+        }
+      }
+
+      const text = segments.length > 0
+        ? segments.map((s) => s.text).join(' ').trim()
+        : rawText;
+      const srtContent = this.buildSrt(segments, text);
+      const srtPath = path.join(this.outputDir, `clip_${clipIndex}_subtitles_${Date.now()}.srt`);
+      fs.writeFileSync(srtPath, srtContent, 'utf8');
+
+      return { text, srtContent, srtPath, segments };
+    } catch (error) {
+      const apiError = error as {
+        message?: string;
+        status?: number;
+        error?: unknown;
+        response?: { data?: unknown };
+      };
+      const providerDetails = JSON.stringify(
+        apiError.response?.data ?? apiError.error ?? null,
+      );
+
+      throw new InternalServerErrorException(
+        `Erreur transcription clip ${clipIndex}: ${apiError.status ?? 'unknown'} ${apiError.message ?? 'unknown error'}${providerDetails !== 'null' ? ` | details: ${providerDetails}` : ''}`,
+      );
+    } finally {
+      this.safeDelete(audioPath);
+    }
+  }
+
   private async splitAudioIntoChunks(audioPath: string): Promise<string[]> {
     const duration = await this.getMediaDuration(audioPath);
 

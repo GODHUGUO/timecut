@@ -2,12 +2,15 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
 import { ProcessingService } from '../processing/processing.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AIService } from '../ai/ai.service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 type MulterFile = {
   fieldname: string;
@@ -64,6 +67,8 @@ type SubscriptionSummary = {
 
 @Injectable()
 export class VideoService {
+  private readonly logger = new Logger(VideoService.name);
+
   constructor(
     private readonly storageService: StorageService,
     private readonly processingService: ProcessingService,
@@ -201,80 +206,256 @@ export class VideoService {
 
     const preferences = await this.getOrCreateUserPreferences(userId);
 
-    let subtitles = {
-      text: '',
-      srtPath: '',
-    };
+    try {
+      // ÉTAPE 1 : Upload vidéo complète vers Cloudinary
+      this.logger.log(`Uploading full video to Cloudinary: ${file.originalname}`);
+      const { publicId, duration: cloudDuration } =
+        await this.storageService.uploadFullVideo(file);
+      const effectiveDuration = cloudDuration || totalDuration;
 
-    // ÉTAPE 1 : Générer sous-titres ET découper la vidéo EN PARALLÈLE
-    const subtitlesPromise = shouldGenerateSubtitles
-      ? this.aiService.generateSubtitlesFromVideo(file.path, {
-          translationEnabled: preferences.subtitleTranslationEnabled,
-          targetLanguage: preferences.targetSubtitleLanguage,
-        })
-      : Promise.resolve(null);
+      // ÉTAPE 2 : Générer les URLs de clips via transformations Cloudinary
+      const clipUrls = this.storageService.generateClipUrls(
+        publicId,
+        clipDuration,
+        effectiveDuration,
+      );
+      this.logger.log(`Generated ${clipUrls.length} clip URLs`);
 
-    const clipPathsPromise = this.processingService.splitVideo(file, clipDuration);
+      let finalUrls: string[];
+      let subtitles = { text: '', srtPath: '' };
 
-    const [subtitleResult, clipPaths] = await Promise.all([
-      subtitlesPromise,
-      clipPathsPromise,
-    ]);
+      if (!shouldGenerateSubtitles) {
+        // ─── FLUX SANS SOUS-TITRES ───
+        finalUrls = clipUrls;
+      } else {
+        // ─── FLUX AVEC SOUS-TITRES ───
+        const CONCURRENT_CLIPS = 3;
+        const processedClips: { url: string; text: string; srtContent: string; clipDuration: number }[] = [];
 
-    if (subtitleResult) {
-      subtitles = subtitleResult;
+        for (let i = 0; i < clipUrls.length; i += CONCURRENT_CLIPS) {
+          const batch = clipUrls.slice(i, i + CONCURRENT_CLIPS);
+          const batchResults = await Promise.all(
+            batch.map((clipUrl, batchIdx) =>
+              this.processClipWithSubtitles(
+                clipUrl,
+                i + batchIdx,
+                preferences,
+                file,
+              ),
+            ),
+          );
+          processedClips.push(...batchResults);
+        }
+
+        finalUrls = processedClips.map((c) => c.url);
+
+        // Construire un SRT global fusionné avec timestamps décalés
+        const mergedSrt = this.mergeSrtContents(processedClips);
+        let srtUrl = '';
+
+        if (mergedSrt) {
+          const tmpSrtPath = path.join('./uploads', `global_srt_${Date.now()}.srt`);
+          try {
+            fs.writeFileSync(tmpSrtPath, mergedSrt, 'utf-8');
+            srtUrl = await this.storageService.uploadRaw(tmpSrtPath);
+          } finally {
+            this.safeDeleteFile(tmpSrtPath);
+          }
+        }
+
+        subtitles = {
+          text: processedClips.map((c) => c.text).join(' ').trim(),
+          srtPath: srtUrl,
+        };
+      }
+
+      // ÉTAPE 3 : Créer les enregistrements Clip en DB
+      await this.prisma.clip.createMany({
+        data: finalUrls.map((url) => ({
+          url,
+          duration: clipDuration,
+          videoId: video.id,
+        })),
+      });
+
+      // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
+      await this.subscriptionRepo.update({
+        where: { userId },
+        data: {
+          monthlyMinutesUsed: {
+            increment: minutesToConsume,
+          },
+        },
+      });
+
+      return {
+        clips: finalUrls,
+        subtitles,
+      };
+    } finally {
+      // Toujours supprimer le fichier local original (même en cas d'erreur)
+      this.safeDeleteFile(file.path);
     }
+  }
 
-    // ÉTAPE 2 : Incruster les sous-titres dans chaque clip en parallèle (rapide)
-    let finalClipPaths = clipPaths;
-    if (subtitleResult) {
-      finalClipPaths = await this.processingService.burnSubtitlesIntoClips(
-        clipPaths,
+  /**
+   * Traite un clip individuel avec sous-titres :
+   * télécharge → transcrit → incrust → re-upload → nettoyage
+   */
+  private async processClipWithSubtitles(
+    clipUrl: string,
+    clipIndex: number,
+    preferences: UserPreferencesPayload,
+    file: MulterFile,
+  ): Promise<{ url: string; text: string; srtContent: string; clipDuration: number }> {
+    const tempDir = path.join('./uploads', `clip_tmp_${Date.now()}_${clipIndex}`);
+    fs.mkdirSync(tempDir, { recursive: true });
+
+    const localClipPath = path.join(tempDir, `clip_${clipIndex}.mp4`);
+    let subClipPath: string | null = null;
+    let srtFilePath: string | null = null;
+    let srtContent = '';
+
+    try {
+      // a. Télécharger le clip depuis Cloudinary
+      this.logger.log(`Downloading clip ${clipIndex} from Cloudinary`);
+      await this.storageService.downloadClipFromUrl(clipUrl, localClipPath);
+
+      // Mesurer la durée réelle du clip
+      const actualClipDuration = await this.processingService.getMediaDuration(localClipPath);
+
+      // b. Transcrire via AI
+      this.logger.log(`Transcribing clip ${clipIndex}`);
+      const subtitleResult = await this.aiService.generateSubtitlesFromClip(
+        localClipPath,
+        clipIndex,
+        {
+          translate: preferences.subtitleTranslationEnabled,
+          targetLanguage: preferences.targetSubtitleLanguage,
+        },
+      );
+      srtFilePath = subtitleResult.srtPath;
+
+      // Lire le contenu SRT AVANT le nettoyage
+      if (srtFilePath && fs.existsSync(srtFilePath)) {
+        srtContent = fs.readFileSync(srtFilePath, 'utf-8');
+      }
+
+      // c. Incruster sous-titres
+      this.logger.log(`Burning subtitles into clip ${clipIndex}`);
+      subClipPath = await this.processingService.burnSrtIntoClip(
+        localClipPath,
         subtitleResult.srtPath,
         preferences.captionStyle,
-        clipDuration,
       );
+
+      // d. Re-upload le clip avec sous-titres vers Cloudinary
+      this.logger.log(`Re-uploading clip ${clipIndex} with subtitles`);
+      const finalUrl = await this.storageService.upload({
+        ...file,
+        path: subClipPath,
+      } as any);
+
+      return {
+        url: finalUrl,
+        text: subtitleResult.text,
+        srtContent,
+        clipDuration: actualClipDuration,
+      };
+    } finally {
+      // e. Nettoyage des fichiers temporaires
+      this.safeDeleteFile(localClipPath);
+      if (subClipPath) this.safeDeleteFile(subClipPath);
+      if (srtFilePath) this.safeDeleteFile(srtFilePath);
+      // Supprimer le dossier temporaire
+      this.safeDeleteDir(tempDir);
+    }
+  }
+
+  /**
+   * Fusionne les contenus SRT de plusieurs clips en un SRT global
+   * avec timestamps décalés selon la position de chaque clip.
+   */
+  private mergeSrtContents(
+    clips: { srtContent: string; clipDuration: number }[],
+  ): string {
+    let globalIndex = 1;
+    let cumulativeOffset = 0;
+    const blocks: string[] = [];
+
+    for (const clip of clips) {
+      if (!clip.srtContent.trim()) {
+        cumulativeOffset += clip.clipDuration;
+        continue;
+      }
+
+      const entries = clip.srtContent.trim().split(/\n\n+/);
+      for (const entry of entries) {
+        const lines = entry.split('\n');
+        if (lines.length < 2) continue;
+
+        // Trouver la ligne de timestamp (format: 00:00:01,000 --> 00:00:03,500)
+        const tsLineIdx = lines.findIndex((l) => l.includes(' --> '));
+        if (tsLineIdx === -1) continue;
+
+        const tsParts = lines[tsLineIdx].split(' --> ');
+        if (tsParts.length !== 2) continue;
+
+        const start = this.parseSrtTime(tsParts[0].trim()) + cumulativeOffset;
+        const end = this.parseSrtTime(tsParts[1].trim()) + cumulativeOffset;
+        const textLines = lines.slice(tsLineIdx + 1).join('\n');
+
+        blocks.push(
+          `${globalIndex}\n${this.formatSrtTime(start)} --> ${this.formatSrtTime(end)}\n${textLines}`,
+        );
+        globalIndex++;
+      }
+
+      cumulativeOffset += clip.clipDuration;
     }
 
-    const urls: string[] = [];
+    return blocks.join('\n\n');
+  }
 
-    // ÉTAPE 3 : Upload tous les clips en parallèle (max 5 simultanément)
-    const CONCURRENT_UPLOADS = 5;
-    for (let i = 0; i < finalClipPaths.length; i += CONCURRENT_UPLOADS) {
-      const batch = finalClipPaths.slice(i, i + CONCURRENT_UPLOADS);
-      const batchUrls = await Promise.all(
-        batch.map((clipPath) =>
-          this.storageService.upload({ ...file, path: clipPath }),
-        ),
-      );
-      urls.push(...batchUrls);
-    }
+  /** Parse un timestamp SRT (HH:MM:SS,mmm) en secondes */
+  private parseSrtTime(time: string): number {
+    const match = time.match(/(\d{2}):(\d{2}):(\d{2})[,\.](\d{3})/);
+    if (!match) return 0;
+    return (
+      parseInt(match[1]) * 3600 +
+      parseInt(match[2]) * 60 +
+      parseInt(match[3]) +
+      parseInt(match[4]) / 1000
+    );
+  }
 
-    // Créer tous les clips en DB en une seule transaction
-    await this.prisma.clip.createMany({
-      data: urls.map((url) => ({
-        url,
-        duration: clipDuration,
-        videoId: video.id,
-      })),
-    });
+  /** Formate des secondes en timestamp SRT (HH:MM:SS,mmm) */
+  private formatSrtTime(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    const ms = Math.round((seconds % 1) * 1000);
+    return (
+      String(h).padStart(2, '0') +
+      ':' +
+      String(m).padStart(2, '0') +
+      ':' +
+      String(s).padStart(2, '0') +
+      ',' +
+      String(ms).padStart(3, '0')
+    );
+  }
 
-    await this.subscriptionRepo.update({
-      where: { userId },
-      data: {
-        monthlyMinutesUsed: {
-          increment: minutesToConsume,
-        },
-      },
-    });
+  private safeDeleteFile(filePath: string): void {
+    try {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    } catch { /* ignore */ }
+  }
 
-    return {
-      clips: urls,
-      subtitles: {
-        text: subtitles.text,
-        srtPath: subtitles.srtPath,
-      },
-    };
+  private safeDeleteDir(dirPath: string): void {
+    try {
+      if (fs.existsSync(dirPath)) fs.rmSync(dirPath, { recursive: true, force: true });
+    } catch { /* ignore */ }
   }
 
   async getVideoWithClips(videoId: number) {
