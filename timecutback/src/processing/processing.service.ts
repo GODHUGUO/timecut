@@ -252,12 +252,12 @@ export class ProcessingService {
   private getCaptionForceStyle(style: string): string {
     switch (style) {
       case 'clean':
-        return 'FontName=DejaVu Sans,FontSize=24,Bold=0,BorderStyle=1,Outline=2,Shadow=1,OutlineColour=&H00000000,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,Alignment=2,MarginV=40';
+        return 'FontName=DejaVu Sans,FontSize=16,Bold=0,BorderStyle=1,Outline=1.5,Shadow=0,OutlineColour=&H00000000,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,Alignment=2,MarginV=28';
       case 'minimal':
-        return 'FontName=DejaVu Sans,FontSize=22,Bold=0,BorderStyle=1,Outline=2,Shadow=1,OutlineColour=&H00000000,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,Alignment=2,MarginV=40';
+        return 'FontName=DejaVu Sans,FontSize=14,Bold=0,BorderStyle=1,Outline=1.2,Shadow=0,OutlineColour=&H00000000,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,Alignment=2,MarginV=28';
       case 'bold':
       default:
-        return 'FontName=DejaVu Sans,FontSize=30,Bold=1,BorderStyle=1,Outline=3,Shadow=1,OutlineColour=&H00000000,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,Alignment=2,MarginV=40';
+        return 'FontName=DejaVu Sans,FontSize=18,Bold=1,BorderStyle=1,Outline=2,Shadow=0,OutlineColour=&H00000000,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,Alignment=2,MarginV=28';
     }
   }
 

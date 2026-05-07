@@ -183,7 +183,7 @@ export class AIService {
           segments = translated;
         }
       }
-      segments = this.normalizeSubtitleTimings(segments, clipDuration);
+      segments = this.prepareSubtitleSegments(segments, clipDuration);
 
       const text =
         segments.length > 0
@@ -452,6 +452,121 @@ export class AIService {
         end,
       };
     });
+  }
+
+  private prepareSubtitleSegments(
+    segments: TranscriptSegment[],
+    mediaDuration: number,
+  ): TranscriptSegment[] {
+    const normalizedSegments = this.normalizeSubtitleTimings(
+      segments,
+      mediaDuration,
+    );
+    const splitSegments = this.splitLongSubtitleSegments(normalizedSegments);
+
+    return splitSegments.map((segment) => ({
+      ...segment,
+      text: this.wrapSubtitleText(segment.text),
+    }));
+  }
+
+  private splitLongSubtitleSegments(
+    segments: TranscriptSegment[],
+  ): TranscriptSegment[] {
+    const maxWords = this.getPositiveEnvNumber('TCHAVI_MAX_SUBTITLE_WORDS', 7);
+    const maxChars = this.getPositiveEnvNumber('TCHAVI_MAX_SUBTITLE_CHARS', 42);
+    const result: TranscriptSegment[] = [];
+
+    for (const segment of segments) {
+      const chunks = this.splitTextIntoChunks(segment.text, maxWords, maxChars);
+
+      if (chunks.length <= 1) {
+        result.push(segment);
+        continue;
+      }
+
+      const duration = Math.max(segment.end - segment.start, 0.1);
+      const chunkDuration = duration / chunks.length;
+
+      chunks.forEach((chunk, index) => {
+        const start = segment.start + chunkDuration * index;
+        const end =
+          index === chunks.length - 1
+            ? segment.end
+            : segment.start + chunkDuration * (index + 1);
+
+        result.push({
+          start,
+          end,
+          text: chunk,
+        });
+      });
+    }
+
+    return result;
+  }
+
+  private splitTextIntoChunks(
+    text: string,
+    maxWords: number,
+    maxChars: number,
+  ): string[] {
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    const chunks: string[] = [];
+    let currentWords: string[] = [];
+
+    for (const word of words) {
+      const candidate = [...currentWords, word].join(' ');
+
+      if (
+        currentWords.length > 0 &&
+        (currentWords.length >= maxWords || candidate.length > maxChars)
+      ) {
+        chunks.push(currentWords.join(' '));
+        currentWords = [word];
+      } else {
+        currentWords.push(word);
+      }
+    }
+
+    if (currentWords.length > 0) {
+      chunks.push(currentWords.join(' '));
+    }
+
+    return chunks.length > 0 ? chunks : [text.trim()];
+  }
+
+  private wrapSubtitleText(text: string): string {
+    const maxLineChars = this.getPositiveEnvNumber(
+      'TCHAVI_SUBTITLE_LINE_CHARS',
+      24,
+    );
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const candidate = currentLine ? `${currentLine} ${word}` : word;
+
+      if (currentLine && candidate.length > maxLineChars) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = candidate;
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines.join('\n');
+  }
+
+  private getPositiveEnvNumber(name: string, fallback: number): number {
+    const value = Number(process.env[name] ?? fallback);
+
+    return Number.isFinite(value) && value > 0 ? value : fallback;
   }
 
   private buildSrt(
