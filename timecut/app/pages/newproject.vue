@@ -464,6 +464,11 @@ const startProcessing = async () => {
   formData.append('clipDuration', clipDuration.value)
   formData.append('subtitleMode', subtitleMode.value)
 
+  console.log('=== FRONTEND UPLOAD DEBUG ===')
+  console.log('subtitleMode being sent:', subtitleMode.value)
+  console.log('clipDuration:', clipDuration.value)
+  console.log('================================')
+
   try {
     const headers = await getAuthHeaders()
     const response = await fetch(`${apiBase}/video/upload`, {

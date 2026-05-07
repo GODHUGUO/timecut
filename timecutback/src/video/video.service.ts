@@ -164,6 +164,13 @@ export class VideoService {
       srtPath: string;
     };
   }> {
+    this.logger.log(`=== UPLOAD DEBUG ===`);
+    this.logger.log(`subtitleMode received: "${subtitleMode}"`);
+    this.logger.log(`subtitleMode type: ${typeof subtitleMode}`);
+    this.logger.log(`clipDuration: ${clipDuration}`);
+    this.logger.log(`userId: ${userId}`);
+    this.logger.log(`===================`);
+
     if (!Number.isFinite(clipDuration) || clipDuration <= 0) {
       throw new BadRequestException(
         'La duree de clip doit etre un nombre positif.',
@@ -181,6 +188,7 @@ export class VideoService {
 
     const subscription = await this.getUserSubscriptionSummary(userId);
     const shouldGenerateSubtitles = subtitleMode !== 'none';
+    this.logger.log(`shouldGenerateSubtitles: ${shouldGenerateSubtitles} (subtitleMode !== 'none')`);
 
     if (shouldGenerateSubtitles && !subscription.canUseAiSubtitles) {
       throw new BadRequestException(
@@ -226,9 +234,13 @@ export class VideoService {
 
       if (!shouldGenerateSubtitles) {
         // ─── FLUX SANS SOUS-TITRES ───
+        this.logger.log('>>> FLUX SANS SOUS-TITRES: Utilisant les URLs Cloudinary directes');
         finalUrls = clipUrls;
+        this.logger.log(`Nombre de clips: ${finalUrls.length}`);
+        this.logger.log(`Premier URL: ${finalUrls[0]}`);
       } else {
         // ─── FLUX AVEC SOUS-TITRES ───
+        this.logger.log('>>> FLUX AVEC SOUS-TITRES: Traitement de chaque clip');
         const CONCURRENT_CLIPS = 3;
         const processedClips: {
           url: string;
@@ -288,6 +300,10 @@ export class VideoService {
           videoId: video.id,
         })),
       });
+
+      this.logger.log(`>>> RETURNING ${finalUrls.length} clip URLs`);
+      this.logger.log(`First URL: ${finalUrls[0]}`);
+      this.logger.log(`Has subtitles in URL path: ${finalUrls[0].includes('_sub') || finalUrls[0].includes('subtitle')}`);
 
       // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
       await this.prisma.userSubscription.update({
