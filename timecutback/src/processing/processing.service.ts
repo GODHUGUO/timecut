@@ -79,7 +79,17 @@ export class ProcessingService {
   ): Promise<string> {
     const forceStyle = this.getCaptionForceStyle(captionStyle);
     const outputPath = clipPath.replace(/\.mp4$/, '_sub.mp4');
-    const subtitleFilter = `subtitles='${this.escapeSubtitlePath(srtPath)}':force_style='${forceStyle}'`;
+    const escapedPath = this.escapeSubtitlePath(srtPath);
+    const subtitleFilter = `subtitles='${escapedPath}':force_style='${forceStyle}'`;
+
+    console.log('=== BURN SUBTITLES DEBUG ===');
+    console.log('Input clip:', clipPath);
+    console.log('SRT path:', srtPath);
+    console.log('Escaped path:', escapedPath);
+    console.log('Output path:', outputPath);
+    console.log('Subtitle filter:', subtitleFilter);
+    console.log('SRT exists:', require('fs').existsSync(srtPath));
+    console.log('===========================');
 
     await new Promise<void>((resolve, reject) => {
       ffmpeg(clipPath)
@@ -94,8 +104,14 @@ export class ProcessingService {
           '-c:a copy',
         ])
         .output(outputPath)
-        .on('end', () => resolve())
-        .on('error', (error: Error) => reject(error))
+        .on('end', () => {
+          console.log('FFmpeg finished burning subtitles');
+          resolve();
+        })
+        .on('error', (error: Error) => {
+          console.error('FFmpeg error burning subtitles:', error);
+          reject(error);
+        })
         .run();
     });
 

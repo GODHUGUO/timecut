@@ -408,24 +408,38 @@ const handleSubtitleSelect = () => {
 }
 
 const downloadAll = async () => {
-  for (let index = 0; index < clipUrls.value.length; index += 1) {
+  const totalClips = clipUrls.value.length
+  
+  for (let index = 0; index < totalClips; index += 1) {
     const url = clipUrls.value[index]
     const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/')
 
-    const response = await fetch(downloadUrl)
-    const blob = await response.blob()
-    const blobUrl = URL.createObjectURL(blob)
+    try {
+      const response = await fetch(downloadUrl)
+      const blob = await response.blob()
+      const blobUrl = URL.createObjectURL(blob)
 
-    const link = document.createElement('a')
-    link.href = blobUrl
-    link.download = `clip_${index + 1}.mp4`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(blobUrl)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = `clip_${index + 1}.mp4`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(blobUrl)
 
-    await new Promise((resolve) => setTimeout(resolve, 500))
+      // Attendre 1 seconde entre chaque téléchargement pour éviter le blocage du navigateur
+      if (index < totalClips - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
+    } catch (error) {
+      console.error(`Erreur lors du téléchargement du clip ${index + 1}:`, error)
+    }
   }
+
+  // Fermer le popup après que tous les téléchargements soient terminés
+  setTimeout(() => {
+    showModal.value = false
+  }, 500)
 }
 
 const startProcessing = async () => {

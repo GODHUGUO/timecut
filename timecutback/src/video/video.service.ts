@@ -76,10 +76,6 @@ export class VideoService {
     private readonly aiService: AIService,
   ) {}
 
-  private get subscriptionRepo() {
-    return (this.prisma as any).userSubscription;
-  }
-
   private getPlanKey(plan: string | null | undefined): PlanKey {
     if (plan === 'starter' || plan === 'pro') return plan;
     return 'free';
@@ -92,7 +88,7 @@ export class VideoService {
   }
 
   private async getOrCreateUserSubscriptionRecord(userId: string) {
-    const subscription = await this.subscriptionRepo.upsert({
+    const subscription = await this.prisma.userSubscription.upsert({
       where: { userId },
       create: {
         userId,
@@ -106,7 +102,7 @@ export class VideoService {
     return this.refreshSubscriptionCycle(subscription);
   }
 
-  private async refreshSubscriptionCycle(subscription: {
+  private refreshSubscriptionCycle(subscription: {
     id: number;
     userId: string;
     currentPlan: string;
@@ -123,7 +119,7 @@ export class VideoService {
       return subscription;
     }
 
-    return this.subscriptionRepo.update({
+    return this.prisma.userSubscription.update({
       where: { id: subscription.id },
       data: {
         monthlyMinutesUsed: 0,
@@ -174,7 +170,9 @@ export class VideoService {
       );
     }
 
-    const totalDuration = await this.processingService.getMediaDuration(file.path);
+    const totalDuration = await this.processingService.getMediaDuration(
+      file.path,
+    );
     if (totalDuration > 0 && clipDuration > totalDuration) {
       throw new BadRequestException(
         `La duree du clip (${clipDuration}s) ne peut pas depasser la duree totale de la video (${Math.floor(totalDuration)}s).`,
@@ -208,7 +206,9 @@ export class VideoService {
 
     try {
       // ÉTAPE 1 : Upload vidéo complète vers Cloudinary
-      this.logger.log(`Uploading full video to Cloudinary: ${file.originalname}`);
+      this.logger.log(
+        `Uploading full video to Cloudinary: ${file.originalname}`,
+      );
       const { publicId, duration: cloudDuration } =
         await this.storageService.uploadFullVideo(file);
       const effectiveDuration = cloudDuration || totalDuration;
@@ -230,7 +230,12 @@ export class VideoService {
       } else {
         // ─── FLUX AVEC SOUS-TITRES ───
         const CONCURRENT_CLIPS = 3;
-        const processedClips: { url: string; text: string; srtContent: string; clipDuration: number }[] = [];
+        const processedClips: {
+          url: string;
+          text: string;
+          srtContent: string;
+          clipDuration: number;
+        }[] = [];
 
         for (let i = 0; i < clipUrls.length; i += CONCURRENT_CLIPS) {
           const batch = clipUrls.slice(i, i + CONCURRENT_CLIPS);
@@ -254,7 +259,10 @@ export class VideoService {
         let srtUrl = '';
 
         if (mergedSrt) {
-          const tmpSrtPath = path.join('./uploads', `global_srt_${Date.now()}.srt`);
+          const tmpSrtPath = path.join(
+            './uploads',
+            `global_srt_${Date.now()}.srt`,
+          );
           try {
             fs.writeFileSync(tmpSrtPath, mergedSrt, 'utf-8');
             srtUrl = await this.storageService.uploadRaw(tmpSrtPath);
@@ -264,7 +272,10 @@ export class VideoService {
         }
 
         subtitles = {
-          text: processedClips.map((c) => c.text).join(' ').trim(),
+          text: processedClips
+            .map((c) => c.text)
+            .join(' ')
+            .trim(),
           srtPath: srtUrl,
         };
       }
@@ -279,7 +290,7 @@ export class VideoService {
       });
 
       // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
-      await this.subscriptionRepo.update({
+      await this.prisma.userSubscription.update({
         where: { userId },
         data: {
           monthlyMinutesUsed: {
@@ -307,8 +318,16 @@ export class VideoService {
     clipIndex: number,
     preferences: UserPreferencesPayload,
     file: MulterFile,
-  ): Promise<{ url: string; text: string; srtContent: string; clipDuration: number }> {
-    const tempDir = path.join('./uploads', `clip_tmp_${Date.now()}_${clipIndex}`);
+  ): Promise<{
+    url: string;
+    text: string;
+    srtContent: string;
+    clipDuration: number;
+  }> {
+    const tempDir = path.join(
+      './uploads',
+      `clip_tmp_${Date.now()}_${clipIndex}`,
+    );
     fs.mkdirSync(tempDir, { recursive: true });
 
     const localClipPath = path.join(tempDir, `clip_${clipIndex}.mp4`);
@@ -322,7 +341,8 @@ export class VideoService {
       await this.storageService.downloadClipFromUrl(clipUrl, localClipPath);
 
       // Mesurer la durée réelle du clip
-      const actualClipDuration = await this.processingService.getMediaDuration(localClipPath);
+      const actualClipDuration =
+        await this.processingService.getMediaDuration(localClipPath);
 
       // b. Transcrire via AI
       this.logger.log(`Transcribing clip ${clipIndex}`);
@@ -343,18 +363,26 @@ export class VideoService {
 
       // c. Incruster sous-titres
       this.logger.log(`Burning subtitles into clip ${clipIndex}`);
+      this.logger.log(`SRT file path: ${subtitleResult.srtPath}`);
       subClipPath = await this.processingService.burnSrtIntoClip(
         localClipPath,
         subtitleResult.srtPath,
         preferences.captionStyle,
       );
+      this.logger.log(`Subtitle burned successfully, output: ${subClipPath}`);
 
       // d. Re-upload le clip avec sous-titres vers Cloudinary
       this.logger.log(`Re-uploading clip ${clipIndex} with subtitles`);
       const finalUrl = await this.storageService.upload({
-        ...file,
+        fieldname: file.fieldname,
+        originalname: file.originalname,
+        encoding: file.encoding,
+        mimetype: file.mimetype,
+        size: file.size,
         path: subClipPath,
-      } as any);
+        filename: file.filename,
+      });
+      this.logger.log(`Clip ${clipIndex} uploaded with URL: ${finalUrl}`);
 
       return {
         url: finalUrl,
@@ -419,7 +447,7 @@ export class VideoService {
 
   /** Parse un timestamp SRT (HH:MM:SS,mmm) en secondes */
   private parseSrtTime(time: string): number {
-    const match = time.match(/(\d{2}):(\d{2}):(\d{2})[,\.](\d{3})/);
+    const match = time.match(/(\d{2}):(\d{2}):(\d{2})[,[,.]](\d{3})/);
     if (!match) return 0;
     return (
       parseInt(match[1]) * 3600 +
@@ -449,13 +477,18 @@ export class VideoService {
   private safeDeleteFile(filePath: string): void {
     try {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   private safeDeleteDir(dirPath: string): void {
     try {
-      if (fs.existsSync(dirPath)) fs.rmSync(dirPath, { recursive: true, force: true });
-    } catch { /* ignore */ }
+      if (fs.existsSync(dirPath))
+        fs.rmSync(dirPath, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
   }
 
   async getVideoWithClips(videoId: number) {
@@ -465,7 +498,10 @@ export class VideoService {
     });
   }
 
-  getUserIdFromRequest(req: any): string {
+  getUserIdFromRequest(req: {
+    user?: { id?: string; userId?: string; sub?: string };
+    headers?: Record<string, string | undefined>;
+  }): string {
     const userId =
       req?.user?.id ??
       req?.user?.userId ??
@@ -499,7 +535,9 @@ export class VideoService {
     });
   }
 
-  async getUserSubscriptionSummary(userId: string): Promise<SubscriptionSummary> {
+  async getUserSubscriptionSummary(
+    userId: string,
+  ): Promise<SubscriptionSummary> {
     const subscription = await this.getOrCreateUserSubscriptionRecord(userId);
     return this.buildSubscriptionSummary(subscription);
   }
@@ -511,7 +549,7 @@ export class VideoService {
     const current = await this.getOrCreateUserSubscriptionRecord(userId);
     const nextPlan = this.getPlanKey(requestedPlan);
 
-    const updated = await this.subscriptionRepo.update({
+    const updated = await this.prisma.userSubscription.update({
       where: { id: current.id },
       data: {
         currentPlan: nextPlan,
@@ -521,7 +559,9 @@ export class VideoService {
     return this.buildSubscriptionSummary(updated);
   }
 
-  async getOrCreateUserPreferences(userId: string): Promise<UserPreferencesPayload> {
+  async getOrCreateUserPreferences(
+    userId: string,
+  ): Promise<UserPreferencesPayload> {
     const subscription = await this.getUserSubscriptionSummary(userId);
     const preferences = await this.prisma.userPreference.upsert({
       where: { userId },
@@ -554,10 +594,10 @@ export class VideoService {
     const current = await this.getOrCreateUserPreferences(userId);
     const subscription = await this.getUserSubscriptionSummary(userId);
     const next = {
-      subtitleTranslationEnabled:
-        subscription.canTranslateSubtitles
-          ? payload.subtitleTranslationEnabled ?? current.subtitleTranslationEnabled
-          : false,
+      subtitleTranslationEnabled: subscription.canTranslateSubtitles
+        ? (payload.subtitleTranslationEnabled ??
+          current.subtitleTranslationEnabled)
+        : false,
       targetSubtitleLanguage:
         payload.targetSubtitleLanguage ?? current.targetSubtitleLanguage,
       captionStyle: payload.captionStyle ?? current.captionStyle,
