@@ -2,6 +2,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# FFmpeg/libass needs real fonts to burn subtitles into videos.
+RUN apk add --no-cache fontconfig ttf-dejavu && fc-cache -f
+
 COPY package*.json ./
 COPY prisma ./prisma/
 
