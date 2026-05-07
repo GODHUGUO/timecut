@@ -396,6 +396,13 @@ export class VideoService {
 
       // d. Re-upload le clip avec sous-titres vers Cloudinary
       this.logger.log(`Re-uploading clip ${clipIndex} with subtitles`);
+      
+      // Vérifier la taille du fichier avec sous-titres
+      if (subClipPath && fs.existsSync(subClipPath)) {
+        const stats = fs.statSync(subClipPath);
+        this.logger.log(`SubClip file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+      }
+      
       const finalUrl = await this.storageService.upload({
         fieldname: file.fieldname,
         originalname: file.originalname,

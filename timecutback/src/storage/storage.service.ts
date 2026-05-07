@@ -31,8 +31,13 @@ export class StorageService {
   async upload(file: MulterFile): Promise<string> {
     const result = await cloudinary.uploader.upload(file.path, {
       resource_type: 'video',
+      // Conserver les sous-titres incrustés en évitant le ré-encodage agressif
+      quality: 'auto:good',
+      fetch_format: 'mp4',
     });
     console.log('URL Cloudinary:', result.secure_url);
+    console.log('Video duration:', result.duration, 'seconds');
+    console.log('Video format:', result.format);
     return result.secure_url;
   }
 
