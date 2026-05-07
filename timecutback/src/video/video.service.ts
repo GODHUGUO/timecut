@@ -188,7 +188,9 @@ export class VideoService {
 
     const subscription = await this.getUserSubscriptionSummary(userId);
     const shouldGenerateSubtitles = subtitleMode !== 'none';
-    this.logger.log(`shouldGenerateSubtitles: ${shouldGenerateSubtitles} (subtitleMode !== 'none')`);
+    this.logger.log(
+      `shouldGenerateSubtitles: ${shouldGenerateSubtitles} (subtitleMode !== 'none')`,
+    );
 
     if (shouldGenerateSubtitles && !subscription.canUseAiSubtitles) {
       throw new BadRequestException(
@@ -234,7 +236,9 @@ export class VideoService {
 
       if (!shouldGenerateSubtitles) {
         // ─── FLUX SANS SOUS-TITRES ───
-        this.logger.log('>>> FLUX SANS SOUS-TITRES: Utilisant les URLs Cloudinary directes');
+        this.logger.log(
+          '>>> FLUX SANS SOUS-TITRES: Utilisant les URLs Cloudinary directes',
+        );
         finalUrls = clipUrls;
         this.logger.log(`Nombre de clips: ${finalUrls.length}`);
         this.logger.log(`Premier URL: ${finalUrls[0]}`);
@@ -303,7 +307,9 @@ export class VideoService {
 
       this.logger.log(`>>> RETURNING ${finalUrls.length} clip URLs`);
       this.logger.log(`First URL: ${finalUrls[0]}`);
-      this.logger.log(`Has subtitles in URL path: ${finalUrls[0].includes('_sub') || finalUrls[0].includes('subtitle')}`);
+      this.logger.log(
+        `Has subtitles in URL path: ${finalUrls[0].includes('_sub') || finalUrls[0].includes('subtitle')}`,
+      );
 
       // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
       await this.prisma.userSubscription.update({
@@ -375,11 +381,15 @@ export class VideoService {
       // Lire le contenu SRT AVANT le nettoyage
       if (srtFilePath && fs.existsSync(srtFilePath)) {
         srtContent = fs.readFileSync(srtFilePath, 'utf-8');
-        this.logger.log(`\n========== SRT FILE CONTENT (Clip ${clipIndex}) ==========`);
+        this.logger.log(
+          `\n========== SRT FILE CONTENT (Clip ${clipIndex}) ==========`,
+        );
         this.logger.log(`File: ${srtFilePath}`);
         this.logger.log(`Size: ${srtContent.length} characters`);
         this.logger.log(`Content:\n${srtContent}`);
-        this.logger.log(`==========================================================\n`);
+        this.logger.log(
+          `==========================================================\n`,
+        );
       } else {
         this.logger.warn(`SRT file does not exist at: ${srtFilePath}`);
       }
@@ -396,13 +406,15 @@ export class VideoService {
 
       // d. Re-upload le clip avec sous-titres vers Cloudinary
       this.logger.log(`Re-uploading clip ${clipIndex} with subtitles`);
-      
+
       // Vérifier la taille du fichier avec sous-titres
       if (subClipPath && fs.existsSync(subClipPath)) {
         const stats = fs.statSync(subClipPath);
-        this.logger.log(`SubClip file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+        this.logger.log(
+          `SubClip file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`,
+        );
       }
-      
+
       const finalUrl = await this.storageService.upload({
         fieldname: file.fieldname,
         originalname: file.originalname,
@@ -414,9 +426,13 @@ export class VideoService {
       });
       this.logger.log(`Clip ${clipIndex} uploaded with URL: ${finalUrl}`);
 
-      this.logger.log(`\n========== TRANSCRIPTION RESULT (Clip ${clipIndex}) ==========`);
+      this.logger.log(
+        `\n========== TRANSCRIPTION RESULT (Clip ${clipIndex}) ==========`,
+      );
       this.logger.log(`Transcribed text: ${subtitleResult.text}`);
-      this.logger.log(`=============================================================\n`);
+      this.logger.log(
+        `=============================================================\n`,
+      );
 
       return {
         url: finalUrl,

@@ -81,9 +81,11 @@ export class ProcessingService {
     const outputPath = clipPath.replace(/\.mp4$/, '_sub.mp4');
     const escapedPath = this.escapeSubtitlePath(srtPath);
     const subtitleFilter = `subtitles='${escapedPath}':force_style='${forceStyle}'`;
+    const inputDuration = await this.getMediaDuration(clipPath);
 
     console.log('=== BURN SUBTITLES DEBUG ===');
     console.log('Input clip:', clipPath);
+    console.log('Input duration:', inputDuration, 'seconds');
     console.log('SRT path:', srtPath);
     console.log('Escaped path:', escapedPath);
     console.log('Output path:', outputPath);
@@ -126,6 +128,15 @@ export class ProcessingService {
         })
         .run();
     });
+
+    const outputDuration = await this.getMediaDuration(outputPath);
+    console.log('Output duration:', outputDuration, 'seconds');
+
+    if (inputDuration > 1 && outputDuration < inputDuration * 0.9) {
+      throw new Error(
+        `Burned clip duration is suspicious: input=${inputDuration}s output=${outputDuration}s`,
+      );
+    }
 
     return outputPath;
   }
@@ -232,12 +243,12 @@ export class ProcessingService {
   private getCaptionForceStyle(style: string): string {
     switch (style) {
       case 'clean':
-        return 'FontSize=24,Bold=0,Outline=2,OutlineColour=&H000000,PrimaryColour=&H00FFFFFF,Alignment=2,MarginV=30';
+        return 'FontName=Arial,FontSize=24,Bold=0,BorderStyle=1,Outline=2,Shadow=1,OutlineColour=&H00000000,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,Alignment=2,MarginV=40';
       case 'minimal':
-        return 'FontSize=20,Bold=0,Outline=2,OutlineColour=&H000000,PrimaryColour=&H00FFFFFF,Alignment=2,MarginV=30';
+        return 'FontName=Arial,FontSize=22,Bold=0,BorderStyle=1,Outline=2,Shadow=1,OutlineColour=&H00000000,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,Alignment=2,MarginV=40';
       case 'bold':
       default:
-        return 'FontSize=28,Bold=1,Outline=3,OutlineColour=&H000000,PrimaryColour=&H00FFFFFF,Alignment=2,MarginV=30';
+        return 'FontName=Arial,FontSize=30,Bold=1,BorderStyle=1,Outline=3,Shadow=1,OutlineColour=&H00000000,PrimaryColour=&H00FFFFFF,BackColour=&H80000000,Alignment=2,MarginV=40';
     }
   }
 

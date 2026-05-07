@@ -128,6 +128,7 @@ export class AIService {
     options?: { translate?: boolean; targetLanguage?: string; translationModel?: string },
   ): Promise<{ text: string; srtContent: string; srtPath: string; segments: TranscriptSegment[] }> {
     const audioPath = await this.extractAudio(clipPath);
+    const clipDuration = await this.getMediaDuration(clipPath);
 
     try {
       // Transcribe directly — no chunking needed for short clips
@@ -162,6 +163,7 @@ export class AIService {
           segments = translated;
         }
       }
+      segments = this.normalizeSubtitleTimings(segments, clipDuration);
 
       const text = segments.length > 0
         ? segments.map((s) => s.text).join(' ').trim()
@@ -379,6 +381,48 @@ export class AIService {
         end: segment.end as number,
         text: (segment.text as string).trim(),
       }));
+  }
+
+  private normalizeSubtitleTimings(
+    segments: TranscriptSegment[],
+    mediaDuration: number,
+  ): TranscriptSegment[] {
+    const configuredMinDuration = Number(
+      process.env.TCHAVI_MIN_SUBTITLE_SECONDS ?? 1.5,
+    );
+    const minDurationSeconds =
+      Number.isFinite(configuredMinDuration) && configuredMinDuration > 0
+        ? configuredMinDuration
+        : 1.5;
+    const safeMediaDuration =
+      Number.isFinite(mediaDuration) && mediaDuration > 0
+        ? mediaDuration
+        : undefined;
+
+    return segments.map((segment) => {
+      const start = Math.max(segment.start, 0);
+      const originalEnd = Math.max(segment.end, start);
+      let end = Math.max(originalEnd, start + minDurationSeconds);
+
+      if (safeMediaDuration) {
+        end = Math.min(end, safeMediaDuration);
+      }
+
+      if (end <= start) {
+        const fallbackEnd = safeMediaDuration ?? start + minDurationSeconds;
+        return {
+          ...segment,
+          start: Math.max(0, fallbackEnd - minDurationSeconds),
+          end: fallbackEnd,
+        };
+      }
+
+      return {
+        ...segment,
+        start,
+        end,
+      };
+    });
   }
 
   private buildSrt(segments: TranscriptSegment[], fallbackText: string): string {

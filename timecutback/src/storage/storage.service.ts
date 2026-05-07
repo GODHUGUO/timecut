@@ -70,21 +70,55 @@ export class StorageService {
     clipDuration: number,
     totalDuration: number,
   ): string[] {
-    const clipCount = Math.ceil(totalDuration / clipDuration);
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const urls: string[] = [];
+    const minTrailingClipSeconds = 1;
 
-    for (let i = 0; i < clipCount; i++) {
-      const startOffset = i * clipDuration;
-      const endOffset = Math.min((i + 1) * clipDuration, totalDuration);
-      const url = `https://res.cloudinary.com/${cloudName}/video/upload/so_${startOffset},eo_${endOffset}/${publicId}.mp4`;
+    if (!Number.isFinite(clipDuration) || clipDuration <= 0) {
+      return urls;
+    }
+
+    let startOffset = 0;
+
+    while (startOffset < totalDuration) {
+      const remainingDuration = totalDuration - startOffset;
+
+      if (urls.length > 0 && remainingDuration < minTrailingClipSeconds) {
+        const previousStartOffset = Math.max(startOffset - clipDuration, 0);
+        urls[urls.length - 1] = this.buildClipUrl(
+          cloudName,
+          publicId,
+          previousStartOffset,
+          totalDuration - previousStartOffset,
+        );
+        break;
+      }
+
+      const duration = Math.min(clipDuration, remainingDuration);
+      const url = this.buildClipUrl(cloudName, publicId, startOffset, duration);
       urls.push(url);
+      startOffset += clipDuration;
     }
 
     this.logger.log(
       `Generated ${urls.length} clip URLs for publicId=${publicId}`,
     );
     return urls;
+  }
+
+  private buildClipUrl(
+    cloudName: string | undefined,
+    publicId: string,
+    startOffset: number,
+    duration: number,
+  ): string {
+    const start = this.formatCloudinarySeconds(startOffset);
+    const clipLength = this.formatCloudinarySeconds(duration);
+    return `https://res.cloudinary.com/${cloudName}/video/upload/so_${start},du_${clipLength}/${publicId}.mp4`;
+  }
+
+  private formatCloudinarySeconds(value: number): string {
+    return Number(value.toFixed(3)).toString();
   }
 
   async downloadClipFromUrl(
