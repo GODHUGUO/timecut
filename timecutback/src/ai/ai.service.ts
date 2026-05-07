@@ -57,6 +57,11 @@ export class AIService {
         .save(audioPath)
         .on('end', () => {
           console.log('Audio genere:', audioPath);
+          // Vérifier la taille du fichier audio
+          if (fs.existsSync(audioPath)) {
+            const stats = fs.statSync(audioPath);
+            console.log(`Audio file size: ${(stats.size / 1024).toFixed(2)} KB`);
+          }
           resolve(audioPath);
         })
         .on('error', (err: Error) => {
@@ -134,6 +139,17 @@ export class AIService {
       });
 
       const rawText = (transcription as { text?: string }).text?.trim() ?? '';
+      console.log('\n========== OPENAI RAW RESPONSE ==========');
+      console.log('Raw text:', rawText);
+      console.log('Segments count:', (transcription as any).segments?.length ?? 0);
+      if ((transcription as any).segments?.length > 0) {
+        console.log('First 3 segments:');
+        (transcription as any).segments.slice(0, 3).forEach((seg: any, i: number) => {
+          console.log(`  ${i + 1}. [${seg.start}s -> ${seg.end}s] ${seg.text}`);
+        });
+      }
+      console.log('===========================================\n');
+
       let segments = this.normalizeSegments(transcription);
 
       // Optionally translate
