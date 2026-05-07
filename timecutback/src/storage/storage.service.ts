@@ -121,10 +121,7 @@ export class StorageService {
     return Number(value.toFixed(3)).toString();
   }
 
-  async downloadClipFromUrl(
-    url: string,
-    localPath: string,
-  ): Promise<string> {
+  async downloadClipFromUrl(url: string, localPath: string): Promise<string> {
     const dir = path.dirname(localPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });

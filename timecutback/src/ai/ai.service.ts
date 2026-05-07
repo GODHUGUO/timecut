@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 ffmpeg.setFfmpegPath(ffmpegPath as string);
-ffmpeg.setFfprobePath(ffprobeStatic.path);
+ffmpeg.setFfprobePath((ffprobeStatic as { path: string }).path);
 
 export type TranscriptSegment = {
   start: number;
@@ -60,7 +60,9 @@ export class AIService {
           // Vérifier la taille du fichier audio
           if (fs.existsSync(audioPath)) {
             const stats = fs.statSync(audioPath);
-            console.log(`Audio file size: ${(stats.size / 1024).toFixed(2)} KB`);
+            console.log(
+              `Audio file size: ${(stats.size / 1024).toFixed(2)} KB`,
+            );
           }
           resolve(audioPath);
         })
@@ -85,14 +87,20 @@ export class AIService {
         transcription.segments,
         options,
       );
-      const srtContent = this.buildSrt(transcription.segments, transcription.text);
+      const srtContent = this.buildSrt(
+        transcription.segments,
+        transcription.text,
+      );
       const srtPath = path.join(this.outputDir, `subtitles_${Date.now()}.srt`);
 
       const finalSegments =
         translatedSegments.length > 0
           ? translatedSegments
           : transcription.segments;
-      const finalText = finalSegments.map((segment) => segment.text).join(' ').trim();
+      const finalText = finalSegments
+        .map((segment) => segment.text)
+        .join(' ')
+        .trim();
       const finalSrtContent = this.buildSrt(finalSegments, finalText);
 
       fs.writeFileSync(srtPath, finalSrtContent || srtContent, 'utf8');
@@ -125,8 +133,17 @@ export class AIService {
   async generateSubtitlesFromClip(
     clipPath: string,
     clipIndex: number,
-    options?: { translate?: boolean; targetLanguage?: string; translationModel?: string },
-  ): Promise<{ text: string; srtContent: string; srtPath: string; segments: TranscriptSegment[] }> {
+    options?: {
+      translate?: boolean;
+      targetLanguage?: string;
+      translationModel?: string;
+    },
+  ): Promise<{
+    text: string;
+    srtContent: string;
+    srtPath: string;
+    segments: TranscriptSegment[];
+  }> {
     const audioPath = await this.extractAudio(clipPath);
     const clipDuration = await this.getMediaDuration(clipPath);
 
@@ -140,12 +157,15 @@ export class AIService {
       });
 
       const rawText = (transcription as { text?: string }).text?.trim() ?? '';
+      const transcriptionSegments = (
+        transcription as { segments?: TranscriptSegment[] }
+      ).segments;
       console.log('\n========== OPENAI RAW RESPONSE ==========');
       console.log('Raw text:', rawText);
-      console.log('Segments count:', (transcription as any).segments?.length ?? 0);
-      if ((transcription as any).segments?.length > 0) {
+      console.log('Segments count:', transcriptionSegments?.length ?? 0);
+      if (transcriptionSegments && transcriptionSegments.length > 0) {
         console.log('First 3 segments:');
-        (transcription as any).segments.slice(0, 3).forEach((seg: any, i: number) => {
+        transcriptionSegments.slice(0, 3).forEach((seg, i) => {
           console.log(`  ${i + 1}. [${seg.start}s -> ${seg.end}s] ${seg.text}`);
         });
       }
@@ -165,11 +185,18 @@ export class AIService {
       }
       segments = this.normalizeSubtitleTimings(segments, clipDuration);
 
-      const text = segments.length > 0
-        ? segments.map((s) => s.text).join(' ').trim()
-        : rawText;
+      const text =
+        segments.length > 0
+          ? segments
+              .map((s) => s.text)
+              .join(' ')
+              .trim()
+          : rawText;
       const srtContent = this.buildSrt(segments, text);
-      const srtPath = path.join(this.outputDir, `clip_${clipIndex}_subtitles_${Date.now()}.srt`);
+      const srtPath = path.join(
+        this.outputDir,
+        `clip_${clipIndex}_subtitles_${Date.now()}.srt`,
+      );
       fs.writeFileSync(srtPath, srtContent, 'utf8');
 
       return { text, srtContent, srtPath, segments };
@@ -233,14 +260,16 @@ export class AIService {
     // Paralléliser toutes les transcriptions
     const results = await Promise.all(
       audioChunkPaths.map(async (chunkPath) => {
-        const transcription = await this.getClient().audio.transcriptions.create({
-          file: fs.createReadStream(chunkPath),
-          model: process.env.TCHAVI_TRANSCRIPTION_MODEL ?? 'whisper-1',
-          response_format: 'verbose_json',
-          timestamp_granularities: ['segment'],
-        });
+        const transcription =
+          await this.getClient().audio.transcriptions.create({
+            file: fs.createReadStream(chunkPath),
+            model: process.env.TCHAVI_TRANSCRIPTION_MODEL ?? 'whisper-1',
+            response_format: 'verbose_json',
+            timestamp_granularities: ['segment'],
+          });
 
-        const chunkText = (transcription as { text?: string }).text?.trim() ?? '';
+        const chunkText =
+          (transcription as { text?: string }).text?.trim() ?? '';
         const chunkSegments = this.normalizeSegments(transcription);
 
         return { chunkText, chunkSegments };
@@ -425,7 +454,10 @@ export class AIService {
     });
   }
 
-  private buildSrt(segments: TranscriptSegment[], fallbackText: string): string {
+  private buildSrt(
+    segments: TranscriptSegment[],
+    fallbackText: string,
+  ): string {
     if (segments.length === 0) {
       const text = fallbackText.trim() || 'Sous-titres non disponibles.';
       return `1\n00:00:00,000 --> 00:00:10,000\n${text}\n`;

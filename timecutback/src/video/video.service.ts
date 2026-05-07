@@ -159,6 +159,8 @@ export class VideoService {
     subtitleMode?: string,
   ): Promise<{
     clips: string[];
+    subtitleMode: string;
+    subtitlesBurned: boolean;
     subtitles: {
       text: string;
       srtPath: string;
@@ -187,9 +189,10 @@ export class VideoService {
     }
 
     const subscription = await this.getUserSubscriptionSummary(userId);
-    const shouldGenerateSubtitles = subtitleMode !== 'none';
+    const normalizedSubtitleMode = subtitleMode === 'ai' ? 'ai' : 'none';
+    const shouldGenerateSubtitles = normalizedSubtitleMode === 'ai';
     this.logger.log(
-      `shouldGenerateSubtitles: ${shouldGenerateSubtitles} (subtitleMode !== 'none')`,
+      `shouldGenerateSubtitles: ${shouldGenerateSubtitles} (subtitleMode=${normalizedSubtitleMode})`,
     );
 
     if (shouldGenerateSubtitles && !subscription.canUseAiSubtitles) {
@@ -308,7 +311,7 @@ export class VideoService {
       this.logger.log(`>>> RETURNING ${finalUrls.length} clip URLs`);
       this.logger.log(`First URL: ${finalUrls[0]}`);
       this.logger.log(
-        `Has subtitles in URL path: ${finalUrls[0].includes('_sub') || finalUrls[0].includes('subtitle')}`,
+        `Subtitles burned into returned clips: ${shouldGenerateSubtitles}`,
       );
 
       // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
@@ -323,6 +326,8 @@ export class VideoService {
 
       return {
         clips: finalUrls,
+        subtitleMode: normalizedSubtitleMode,
+        subtitlesBurned: shouldGenerateSubtitles,
         subtitles,
       };
     } finally {

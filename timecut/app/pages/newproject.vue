@@ -403,7 +403,7 @@ const handleDrop = async (event) => {
 }
 
 const handleSubtitleSelect = () => {
-  if (!subscription.value?.canUseAiSubtitles) return
+  if (subscription.value && !subscription.value.canUseAiSubtitles) return
   subtitleMode.value = 'ai'
 }
 

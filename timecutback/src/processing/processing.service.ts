@@ -20,7 +20,6 @@ ffmpeg.setFfprobePath(ffprobeStatic.path);
 
 @Injectable()
 export class ProcessingService {
-
   async getMediaDuration(filePath: string): Promise<number> {
     return new Promise((resolve, reject) => {
       ffmpeg.ffprobe(
@@ -59,7 +58,13 @@ export class ProcessingService {
           const clipIndex = i + batchIdx;
           const clipStart = clipIndex * clipDuration;
           const clipEnd = clipStart + clipDuration;
-          return this.burnSubtitlesIntoClip(clipPath, segments, clipStart, clipEnd, forceStyle);
+          return this.burnSubtitlesIntoClip(
+            clipPath,
+            segments,
+            clipStart,
+            clipEnd,
+            forceStyle,
+          );
         }),
       );
       results.push(...batchResults);
@@ -90,7 +95,7 @@ export class ProcessingService {
     console.log('Escaped path:', escapedPath);
     console.log('Output path:', outputPath);
     console.log('Subtitle filter:', subtitleFilter);
-    console.log('SRT exists:', require('fs').existsSync(srtPath));
+    console.log('SRT exists:', fs.existsSync(srtPath));
     console.log('===========================');
 
     await new Promise<void>((resolve, reject) => {
@@ -115,10 +120,11 @@ export class ProcessingService {
         .on('end', () => {
           console.log('FFmpeg finished burning subtitles');
           // Vérifier que le fichier de sortie existe et a une taille > 0
-          const fs = require('fs');
           if (fs.existsSync(outputPath)) {
             const stats = fs.statSync(outputPath);
-            console.log(`Output file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+            console.log(
+              `Output file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`,
+            );
           }
           resolve();
         })
@@ -163,8 +169,9 @@ export class ProcessingService {
     // Créer un SRT temporaire pour ce clip
     const clipSrtPath = clipPath.replace(/\.mp4$/, '.srt');
     const srtContent = clipSegments
-      .map((s, idx) =>
-        `${idx + 1}\n${this.formatSrtTime(s.start)} --> ${this.formatSrtTime(s.end)}\n${s.text}\n`,
+      .map(
+        (s, idx) =>
+          `${idx + 1}\n${this.formatSrtTime(s.start)} --> ${this.formatSrtTime(s.end)}\n${s.text}\n`,
       )
       .join('\n');
     fs.writeFileSync(clipSrtPath, srtContent, 'utf8');
@@ -237,7 +244,9 @@ export class ProcessingService {
   private safeDelete(filePath: string): void {
     try {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   private getCaptionForceStyle(style: string): string {
