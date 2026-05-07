@@ -375,6 +375,13 @@ export class VideoService {
       // Lire le contenu SRT AVANT le nettoyage
       if (srtFilePath && fs.existsSync(srtFilePath)) {
         srtContent = fs.readFileSync(srtFilePath, 'utf-8');
+        this.logger.log(`\n========== SRT FILE CONTENT (Clip ${clipIndex}) ==========`);
+        this.logger.log(`File: ${srtFilePath}`);
+        this.logger.log(`Size: ${srtContent.length} characters`);
+        this.logger.log(`Content:\n${srtContent}`);
+        this.logger.log(`==========================================================\n`);
+      } else {
+        this.logger.warn(`SRT file does not exist at: ${srtFilePath}`);
       }
 
       // c. Incruster sous-titres
@@ -399,6 +406,10 @@ export class VideoService {
         filename: file.filename,
       });
       this.logger.log(`Clip ${clipIndex} uploaded with URL: ${finalUrl}`);
+
+      this.logger.log(`\n========== TRANSCRIPTION RESULT (Clip ${clipIndex}) ==========`);
+      this.logger.log(`Transcribed text: ${subtitleResult.text}`);
+      this.logger.log(`=============================================================\n`);
 
       return {
         url: finalUrl,

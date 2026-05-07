@@ -104,8 +104,20 @@ export class ProcessingService {
           '-c:a copy',
         ])
         .output(outputPath)
+        .on('start', (commandLine) => {
+          console.log('FFmpeg command:', commandLine);
+        })
+        .on('progress', (progress) => {
+          console.log(`FFmpeg progress: ${progress.percent}%`);
+        })
         .on('end', () => {
           console.log('FFmpeg finished burning subtitles');
+          // Vérifier que le fichier de sortie existe et a une taille > 0
+          const fs = require('fs');
+          if (fs.existsSync(outputPath)) {
+            const stats = fs.statSync(outputPath);
+            console.log(`Output file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+          }
           resolve();
         })
         .on('error', (error: Error) => {
@@ -220,12 +232,12 @@ export class ProcessingService {
   private getCaptionForceStyle(style: string): string {
     switch (style) {
       case 'clean':
-        return 'FontSize=20,Bold=0,Outline=1,OutlineColour=&H000000,PrimaryColour=&H00FFFFFF,Alignment=2';
+        return 'FontSize=24,Bold=0,Outline=2,OutlineColour=&H000000,PrimaryColour=&H00FFFFFF,Alignment=2,MarginV=30';
       case 'minimal':
-        return 'FontSize=16,Bold=0,Outline=1,OutlineColour=&H000000,PrimaryColour=&H00FFFFFF,Alignment=2';
+        return 'FontSize=20,Bold=0,Outline=2,OutlineColour=&H000000,PrimaryColour=&H00FFFFFF,Alignment=2,MarginV=30';
       case 'bold':
       default:
-        return 'FontSize=22,Bold=1,Outline=1,OutlineColour=&H000000,PrimaryColour=&H00FFFFFF,Alignment=2';
+        return 'FontSize=28,Bold=1,Outline=3,OutlineColour=&H000000,PrimaryColour=&H00FFFFFF,Alignment=2,MarginV=30';
     }
   }
 
