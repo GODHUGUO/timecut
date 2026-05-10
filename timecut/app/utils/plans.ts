@@ -6,13 +6,13 @@ export const PLAN_CATALOG = {
     name: 'Gratuit',
     price: '0€',
     monthlyPriceLabel: '0€ / mois',
-    minutes: 60, // TEST MODE
+    minutes: 10,
     description: 'Pour découvrir TimeCut',
     features: [
-      { label: '60 min / mois', included: true },
+      { label: '10 min / mois', included: true },
       { label: "Export dans la qualité d'origine", included: true },
-      { label: 'Sous-titres IA', included: true }, // TEST MODE
-      { label: 'Traduction des sous-titres', included: true }, // TEST MODE
+      { label: 'Sous-titres IA', included: false },
+      { label: 'Traduction des sous-titres', included: false },
     ],
   },
   starter: {

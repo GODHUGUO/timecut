@@ -40,7 +40,7 @@
             <p class="text-white font-semibold text-sm">
               {{ uploadedFile ? uploadedFile.name : 'Glissez-déposez votre vidéo' }}
             </p>
-            <p class="text-gray-500 text-xs mt-1">Formats acceptés : MP4, MOV (max. 99 Mo)</p>
+            <p class="text-gray-500 text-xs mt-1">Formats acceptés : MP4, MOV, AVI, MKV, WebM, WMV, FLV, 3GP (max. 99 Mo)</p>
           </div>
           <button
             class="px-5 py-2 bg-[#7f13ec] hover:bg-[#9333ea] text-white text-sm font-medium rounded-lg transition-colors"
@@ -48,7 +48,7 @@
           >
             Parcourir les fichiers
           </button>
-          <input ref="fileInput" type="file" accept="video/mp4,video/quicktime" class="hidden" @change="handleFileChange" />
+          <input ref="fileInput" type="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm,video/x-ms-wmv,video/x-flv,video/3gpp" class="hidden" @change="handleFileChange" />
         </div>
 
         <div>
