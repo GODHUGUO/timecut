@@ -10,8 +10,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: '/api/backend',
+      uploadUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3000',
     },
-    backendUrl: process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3000',
   },
   nitro: {
     routeRules: {

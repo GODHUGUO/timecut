@@ -310,6 +310,7 @@ definePageMeta({ layout: 'dashboard' })
 const year = new Date().getFullYear()
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
+const uploadUrl = config.public.uploadUrl
 const { subscription, currentPlanDetails, refreshSubscription, getAuthHeaders } = useSubscription()
 const { showPopup } = usePopup()
 
@@ -473,7 +474,7 @@ const startProcessing = async () => {
 
   try {
     const headers = await getAuthHeaders()
-    const response = await fetch(`${apiBase}/video/upload`, {
+    const response = await fetch(`${uploadUrl}/video/upload`, {
       method: 'POST',
       headers,
       body: formData,
