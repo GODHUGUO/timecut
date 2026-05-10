@@ -310,6 +310,7 @@ const year = new Date().getFullYear()
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 const { subscription, currentPlanDetails, refreshSubscription, getAuthHeaders } = useSubscription()
+const { showPopup } = usePopup()
 
 const fileInput = ref(null)
 const uploadedFile = ref(null)
@@ -378,7 +379,7 @@ const validateClipDuration = () => {
 const loadFile = async (file) => {
   if (!file) return
   if (file.size > 99 * 1024 * 1024) {
-    alert('Fichier trop volumineux. Maximum 99 Mo.')
+    showPopup('Fichier trop volumineux. Maximum 99 Mo.', 'warning')
     return
   }
 
@@ -386,7 +387,7 @@ const loadFile = async (file) => {
     videoDurationSeconds.value = await getFileDurationInSeconds(file)
   } catch (error) {
     console.error(error)
-    alert('Impossible de lire la durée de cette vidéo.')
+    showPopup('Impossible de lire la durée de cette vidéo.', 'error')
     return
   }
 
@@ -445,11 +446,11 @@ const downloadAll = async () => {
 const startProcessing = async () => {
   if (isProcessing.value) return
   if (!uploadedFile.value) {
-    alert('Veuillez sélectionner une vidéo avant de continuer.')
+    showPopup('Veuillez sélectionner une vidéo avant de continuer.', 'warning')
     return
   }
   if (!hasEnoughMinutes.value) {
-    alert('Votre quota mensuel est insuffisant pour traiter cette vidéo.')
+    showPopup('Votre quota mensuel est insuffisant pour traiter cette vidéo.', 'warning')
     return
   }
   if (!validateClipDuration()) return
@@ -499,7 +500,7 @@ const startProcessing = async () => {
     }, 400)
   } catch (error) {
     console.error('Erreur upload :', error)
-    alert(error.message || "Erreur lors de l'envoi")
+    showPopup(error.message || "Erreur lors de l'envoi", 'error')
     isProcessing.value = false
   }
 }

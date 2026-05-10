@@ -181,6 +181,7 @@ const route = useRoute()
 
 const { subscription, currentPlan, currentPlanDetails, refreshSubscription, changePlan } = useSubscription()
 const { isPaying, createCheckout } = usePayment()
+const { showPopup } = usePopup()
 
 const plans = PLAN_CATALOG
 const planKeys = PLAN_ORDER
@@ -225,7 +226,7 @@ const updatePlanSelection = async (plan) => {
       await changePlan(plan)
     } catch (error) {
       console.error('Erreur changement de plan :', error)
-      alert("Impossible de mettre à jour l'abonnement pour le moment.")
+      showPopup("Impossible de mettre à jour l'abonnement pour le moment.", 'error')
     } finally {
       isUpdatingPlan.value = false
     }
@@ -237,7 +238,7 @@ const updatePlanSelection = async (plan) => {
     await createCheckout(plan)
   } catch (error) {
     console.error('Erreur paiement :', error)
-    alert("Impossible d'initier le paiement. Veuillez réessayer.")
+    showPopup("Impossible d'initier le paiement. Veuillez réessayer.", 'error')
   }
 }
 

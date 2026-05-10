@@ -161,6 +161,8 @@ export class VideoService {
     clips: string[];
     subtitleMode: string;
     subtitlesBurned: boolean;
+    subtitleTranslationEnabled: boolean;
+    targetSubtitleLanguage: string;
     subtitles: {
       text: string;
       srtPath: string;
@@ -216,6 +218,9 @@ export class VideoService {
     });
 
     const preferences = await this.getOrCreateUserPreferences(userId);
+    this.logger.log(
+      `Subtitle preferences: translate=${preferences.subtitleTranslationEnabled}, targetLanguage=${preferences.targetSubtitleLanguage}, captionStyle=${preferences.captionStyle}`,
+    );
 
     try {
       // ÉTAPE 1 : Upload vidéo complète vers Cloudinary
@@ -328,6 +333,8 @@ export class VideoService {
         clips: finalUrls,
         subtitleMode: normalizedSubtitleMode,
         subtitlesBurned: shouldGenerateSubtitles,
+        subtitleTranslationEnabled: preferences.subtitleTranslationEnabled,
+        targetSubtitleLanguage: preferences.targetSubtitleLanguage,
         subtitles,
       };
     } finally {
@@ -430,7 +437,6 @@ export class VideoService {
         filename: file.filename,
       });
       this.logger.log(`Clip ${clipIndex} uploaded with URL: ${finalUrl}`);
-
       this.logger.log(
         `\n========== TRANSCRIPTION RESULT (Clip ${clipIndex}) ==========`,
       );

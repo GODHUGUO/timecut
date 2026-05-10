@@ -204,6 +204,7 @@ definePageMeta({
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 const { subscription, currentPlanDetails, refreshSubscription, getAuthHeaders } = useSubscription()
+const { showPopup } = usePopup()
 
 const profile = ref({
   name: '',
@@ -275,7 +276,7 @@ const loadPreferences = async () => {
 const toggleTranslation = () => {
   if (!subscription.value?.canTranslateSubtitles) {
     ai.value.translationEnabled = false
-    alert('La traduction des sous-titres est réservée aux plans Starter et Pro.')
+    showPopup('La traduction des sous-titres est réservée aux plans Starter et Pro.', 'warning')
     return
   }
 
@@ -296,10 +297,10 @@ const saveProfile = async () => {
       await updateEmail(user, nextEmail)
     }
 
-    alert('Profil mis à jour.')
+    showPopup('Profil mis à jour.', 'success')
   } catch (error) {
     console.error('Erreur profil :', error)
-    alert('Impossible de sauvegarder le profil. Reconnecte-toi si nécessaire.')
+    showPopup('Impossible de sauvegarder le profil. Reconnecte-toi si nécessaire.', 'error')
   }
 }
 
@@ -327,12 +328,12 @@ const changePassword = async () => {
   try {
     const user = await getCurrentUser()
     if (!user || !user.email) {
-      alert('Utilisateur non connecté.')
+      showPopup('Utilisateur non connecté.', 'warning')
       return
     }
 
     if (!security.value.currentPassword || !security.value.newPassword) {
-      alert('Renseigne le mot de passe actuel et le nouveau mot de passe.')
+      showPopup('Renseigne le mot de passe actuel et le nouveau mot de passe.', 'warning')
       return
     }
 
@@ -345,10 +346,10 @@ const changePassword = async () => {
 
     security.value.currentPassword = ''
     security.value.newPassword = ''
-    alert('Mot de passe mis à jour.')
+    showPopup('Mot de passe mis à jour.', 'success')
   } catch (error) {
     console.error('Erreur mot de passe :', error)
-    alert('Impossible de modifier le mot de passe. Reconnecte-toi et réessaie.')
+    showPopup('Impossible de modifier le mot de passe. Reconnecte-toi et réessaie.', 'error')
   }
 }
 
@@ -358,10 +359,10 @@ const saveAll = async () => {
     await saveAiPreferences()
     await refreshSubscription()
     await loadPreferences()
-    alert('Paramètres sauvegardés.')
+    showPopup('Paramètres sauvegardés.', 'success')
   } catch (error) {
     console.error('Erreur sauvegarde globale :', error)
-    alert('Erreur lors de la sauvegarde des paramètres.')
+    showPopup('Erreur lors de la sauvegarde des paramètres.', 'error')
   }
 }
 

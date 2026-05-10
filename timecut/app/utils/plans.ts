@@ -18,8 +18,8 @@ export const PLAN_CATALOG = {
   starter: {
     key: 'starter',
     name: 'Starter',
-    price: '3,99€',
-    monthlyPriceLabel: '3,99€ / mois',
+    price: '4,99€',
+    monthlyPriceLabel: '4,99€ / mois',
     minutes: 60,
     description: 'Pour les créateurs réguliers',
     features: [
@@ -33,8 +33,8 @@ export const PLAN_CATALOG = {
   pro: {
     key: 'pro',
     name: 'Pro',
-    price: '11,99€',
-    monthlyPriceLabel: '11,99€ / mois',
+    price: '12,99€',
+    monthlyPriceLabel: '12,99€ / mois',
     minutes: 200,
     description: 'Pour les pros du contenu',
     features: [

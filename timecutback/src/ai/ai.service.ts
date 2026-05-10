@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import ffprobeStatic from 'ffprobe-static';
@@ -33,6 +37,7 @@ type SubtitleGenerationOptions = {
 
 @Injectable()
 export class AIService {
+  private readonly logger = new Logger(AIService.name);
   private readonly outputDir = './uploads';
   private readonly transcriptionChunkSeconds = Number(
     process.env.TCHAVI_AUDIO_CHUNK_SECONDS ?? 480,
@@ -331,18 +336,19 @@ export class AIService {
     }
 
     try {
+      const resolvedTargetLanguage = this.resolveTargetLanguage(targetLanguage);
       const response = await this.getClient().chat.completions.create({
         model: process.env.TCHAVI_TRANSLATION_MODEL ?? 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
             content:
-              'You translate subtitle segments. Return only a JSON array of translated strings in the same order and same length.',
+              'You translate subtitle segments. Preserve the same order. Return JSON only in this exact shape: {"translations":["..."]}. Do not use markdown.',
           },
           {
             role: 'user',
             content: JSON.stringify({
-              targetLanguage,
+              targetLanguage: resolvedTargetLanguage,
               segments: segments.map((segment) => segment.text),
             }),
           },
@@ -352,21 +358,112 @@ export class AIService {
 
       const rawContent = response.choices[0]?.message?.content?.trim() ?? '';
       if (!rawContent) {
+        this.logger.warn('Translation skipped: empty model response.');
         return [];
       }
 
-      const parsed = JSON.parse(rawContent) as string[];
-      if (!Array.isArray(parsed) || parsed.length !== segments.length) {
+      const translations = this.parseTranslationResponse(rawContent);
+      if (translations.length === 0) {
+        this.logger.warn(
+          `Translation skipped: could not parse model response: ${rawContent.slice(0, 200)}`,
+        );
         return [];
       }
+
+      if (translations.length !== segments.length) {
+        this.logger.warn(
+          `Translation response length mismatch: expected=${segments.length}, received=${translations.length}. Missing items will keep original text.`,
+        );
+      }
+
+      this.logger.log(
+        `Translated ${Math.min(translations.length, segments.length)}/${segments.length} subtitle segment(s) to ${resolvedTargetLanguage}.`,
+      );
 
       return segments.map((segment, index) => ({
         ...segment,
-        text: String(parsed[index] ?? segment.text).trim() || segment.text,
+        text:
+          String(translations[index] ?? segment.text).trim() || segment.text,
       }));
+    } catch (error) {
+      const translationError = error as { message?: string };
+      this.logger.warn(
+        `Translation skipped: ${translationError.message ?? 'unknown error'}`,
+      );
+      return [];
+    }
+  }
+
+  private resolveTargetLanguage(language: string): string {
+    const languages: Record<string, string> = {
+      ar: 'Arabic',
+      de: 'German',
+      en: 'English',
+      es: 'Spanish',
+      fr: 'French',
+      pt: 'Portuguese',
+    };
+
+    return languages[language.toLowerCase()] ?? language;
+  }
+
+  private parseTranslationResponse(rawContent: string): string[] {
+    try {
+      const parsed = JSON.parse(this.extractJsonPayload(rawContent)) as unknown;
+
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => String(item ?? '').trim()).filter(Boolean);
+      }
+
+      if (parsed && typeof parsed === 'object') {
+        const candidate = parsed as {
+          translations?: unknown;
+          translatedSegments?: unknown;
+          segments?: unknown;
+        };
+        const translations =
+          candidate.translations ??
+          candidate.translatedSegments ??
+          candidate.segments;
+
+        if (Array.isArray(translations)) {
+          return translations
+            .map((item) => String(item ?? '').trim())
+            .filter(Boolean);
+        }
+      }
     } catch {
       return [];
     }
+
+    return [];
+  }
+
+  private extractJsonPayload(rawContent: string): string {
+    const trimmed = rawContent.trim();
+    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+
+    if (fenced?.[1]) {
+      return fenced[1].trim();
+    }
+
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      return trimmed;
+    }
+
+    const objectStart = trimmed.indexOf('{');
+    const objectEnd = trimmed.lastIndexOf('}');
+    if (objectStart !== -1 && objectEnd > objectStart) {
+      return trimmed.slice(objectStart, objectEnd + 1);
+    }
+
+    const arrayStart = trimmed.indexOf('[');
+    const arrayEnd = trimmed.lastIndexOf(']');
+    if (arrayStart !== -1 && arrayEnd > arrayStart) {
+      return trimmed.slice(arrayStart, arrayEnd + 1);
+    }
+
+    return trimmed;
   }
 
   private getClient(): OpenAI {

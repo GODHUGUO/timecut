@@ -36,10 +36,10 @@
     <div v-else class="space-y-4">
       <div class="bg-[#1e1333] border border-[#7f13ec]/20 rounded-2xl overflow-hidden">
         <div class="p-5 border-b border-[#7f13ec]/10">
-          <div class="flex items-start justify-between gap-4">
-            <div>
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div class="min-w-0">
               <h3 class="text-white font-semibold">{{ currentProject.filename }}</h3>
-              <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+              <div class="flex flex-wrap items-center gap-4 mt-2 text-xs text-gray-500">
                 <div class="flex items-center gap-1.5">
                   <Icon name="lucide:calendar" class="w-3.5 h-3.5" />
                   Créé le {{ formatDate(currentProject.createdAt) }}
@@ -50,6 +50,16 @@
                 </div>
               </div>
             </div>
+            <button
+              v-if="currentProject.clips.length"
+              type="button"
+              :disabled="isDownloadingAll"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#7f13ec] hover:bg-[#9333ea] disabled:bg-[#7f13ec]/40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-xl transition-colors"
+              @click="downloadProjectClips"
+            >
+              <Icon :name="isDownloadingAll ? 'lucide:loader-circle' : 'lucide:download-cloud'" class="w-4 h-4" :class="{ 'animate-spin': isDownloadingAll }" />
+              {{ isDownloadingAll ? 'Téléchargement...' : 'Télécharger tout' }}
+            </button>
           </div>
         </div>
 
@@ -62,20 +72,33 @@
               :key="clip.id"
               class="rounded-2xl border border-[#7f13ec]/10 bg-[#140b28] p-3"
             >
-              <div class="flex items-center justify-between gap-3 mb-2">
+              <div class="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <p class="text-white text-xs font-semibold">Clip {{ index + 1 }}</p>
                   <p class="text-gray-500 text-xs">{{ formatDuration(clip.duration) }}</p>
                 </div>
-                <a
-                  :href="clip.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#7f13ec] hover:bg-[#9333ea] text-white text-[11px] font-medium rounded-lg transition-colors"
-                >
-                  <Icon name="lucide:external-link" class="w-3 h-3" />
-                  Ouvrir
-                </a>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    :disabled="isClipDownloading(clip)"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#7f13ec] text-white transition-colors hover:bg-[#9333ea] disabled:bg-[#7f13ec]/40 disabled:cursor-not-allowed"
+                    title="Télécharger le clip"
+                    aria-label="Télécharger le clip"
+                    @click="downloadClip(clip, index)"
+                  >
+                    <Icon :name="isClipDownloading(clip) ? 'lucide:loader-circle' : 'lucide:download'" class="w-3.5 h-3.5" :class="{ 'animate-spin': isClipDownloading(clip) }" />
+                  </button>
+                  <a
+                    :href="clip.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#7f13ec]/20 bg-[#1e1333] text-gray-300 transition-colors hover:text-white hover:bg-[#7f13ec]/10"
+                    title="Ouvrir le clip"
+                    aria-label="Ouvrir le clip"
+                  >
+                    <Icon name="lucide:external-link" class="w-3.5 h-3.5" />
+                  </a>
+                </div>
               </div>
 
               <video
@@ -93,7 +116,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../plugins/firebase.client'
 
@@ -103,6 +126,9 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
+const { showPopup } = usePopup()
+const downloadingClipIds = ref([])
+const isDownloadingAll = ref(false)
 
 const getCurrentUser = async () => {
   if (auth.currentUser) return auth.currentUser
@@ -129,6 +155,92 @@ const { data, pending, error } = await useFetch(`${apiBase}/video/projects`, {
 })
 
 const currentProject = computed(() => data.value?.[0] ?? null)
+
+const getClipKey = (clip) => String(clip.id || clip.url)
+
+const isClipDownloading = (clip) => {
+  return downloadingClipIds.value.includes(getClipKey(clip))
+}
+
+const getDownloadUrl = (url) => {
+  if (!url) return ''
+  if (url.includes('/upload/fl_attachment/')) return url
+  return url.replace('/upload/', '/upload/fl_attachment/')
+}
+
+const sanitizeFilename = (value) => {
+  return String(value || 'video')
+    .replace(/\.[^/.]+$/, '')
+    .replace(/[^a-z0-9-_]+/gi, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 60) || 'video'
+}
+
+const triggerBlobDownload = (blob, filename) => {
+  const blobUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = blobUrl
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(blobUrl)
+}
+
+const downloadClipFile = async (clip, index) => {
+  const downloadUrl = getDownloadUrl(clip.url)
+  if (!downloadUrl) {
+    throw new Error('URL du clip introuvable.')
+  }
+
+  const response = await fetch(downloadUrl)
+  if (!response.ok) {
+    throw new Error('Impossible de télécharger ce clip.')
+  }
+
+  const blob = await response.blob()
+  const projectName = sanitizeFilename(currentProject.value?.filename)
+  triggerBlobDownload(blob, `${projectName}_clip_${index + 1}.mp4`)
+}
+
+const downloadClip = async (clip, index) => {
+  const clipKey = getClipKey(clip)
+  if (downloadingClipIds.value.includes(clipKey)) return
+
+  downloadingClipIds.value = [...downloadingClipIds.value, clipKey]
+
+  try {
+    await downloadClipFile(clip, index)
+    showPopup(`Clip ${index + 1} téléchargé.`, 'success')
+  } catch (error) {
+    console.error('Erreur telechargement clip :', error)
+    showPopup(error.message || 'Impossible de télécharger le clip.', 'error')
+  } finally {
+    downloadingClipIds.value = downloadingClipIds.value.filter((id) => id !== clipKey)
+  }
+}
+
+const downloadProjectClips = async () => {
+  if (!currentProject.value?.clips?.length || isDownloadingAll.value) return
+
+  isDownloadingAll.value = true
+
+  try {
+    for (let index = 0; index < currentProject.value.clips.length; index += 1) {
+      await downloadClipFile(currentProject.value.clips[index], index)
+      if (index < currentProject.value.clips.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 800))
+      }
+    }
+
+    showPopup('Tous les clips ont été lancés en téléchargement.', 'success')
+  } catch (error) {
+    console.error('Erreur telechargement projet :', error)
+    showPopup(error.message || 'Impossible de télécharger tous les clips.', 'error')
+  } finally {
+    isDownloadingAll.value = false
+  }
+}
 
 const formatDate = (value) => {
   return new Date(value).toLocaleString('fr-FR', {

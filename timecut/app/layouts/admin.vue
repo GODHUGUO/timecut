@@ -11,20 +11,32 @@
   <div v-else-if="adminVerified" class="h-screen bg-[#191022] flex overflow-hidden">
     <!-- Sidebar -->
     <div
-      class="fixed inset-y-0 left-0 z-50 w-64 bg-[#191022] text-white shadow-xl border-r border-[#7f13ec]/20 transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full flex flex-col h-screen"
-      :class="{ 'translate-x-0': isMobileMenuOpen }"
+      id="admin-sidebar"
+      class="fixed inset-y-0 left-0 z-50 w-64 bg-[#191022] text-white shadow-xl border-r border-[#7f13ec]/20 transition-transform duration-300 ease-in-out flex flex-col h-screen"
+      :class="isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+      aria-label="Navigation admin"
     >
       <!-- Logo -->
-      <div class="shrink-0 mt-6 px-4 py-2 flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-[#7f13ec] flex items-center justify-center">
-          <Icon name="lucide:film" class="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <div class="text-lg font-bold leading-tight">
-            <span class="text-white">Time</span><span class="text-[#7f13ec]">Cut</span>
+      <div class="shrink-0 mt-6 px-4 py-2 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-lg bg-[#7f13ec] flex items-center justify-center shrink-0">
+            <Icon name="lucide:film" class="w-5 h-5 text-white" />
           </div>
-          <div class="text-[10px] uppercase tracking-widest text-gray-400">Admin</div>
+          <div>
+            <div class="text-lg font-bold leading-tight">
+              <span class="text-white">Time</span><span class="text-[#7f13ec]">Cut</span>
+            </div>
+            <div class="text-[10px] uppercase tracking-widest text-gray-400">Admin</div>
+          </div>
         </div>
+        <button
+          type="button"
+          class="lg:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-[#7f13ec]/10 transition-colors"
+          aria-label="Fermer le menu admin"
+          @click="closeMobileMenu"
+        >
+          <Icon name="lucide:x" class="w-5 h-5" />
+        </button>
       </div>
 
       <!-- Navigation -->
@@ -62,11 +74,12 @@
 
         <!-- Support & Logout -->
         <div class="px-3 pb-4 space-y-1">
-          <button class="w-full flex items-center px-4 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-[#7f13ec]/10 transition-colors">
+          <button type="button" class="w-full flex items-center px-4 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-[#7f13ec]/10 transition-colors">
             <Icon name="lucide:help-circle" class="w-4 h-4 mr-3" />
             <span>Support</span>
           </button>
           <button
+            type="button"
             @click="handleLogout"
             class="w-full flex items-center px-4 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-[#7f13ec]/10 transition-colors"
           >
@@ -80,7 +93,7 @@
     <!-- Overlay mobile -->
     <div
       v-if="isMobileMenuOpen"
-      class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
       @click="closeMobileMenu"
     />
 
@@ -88,18 +101,27 @@
     <div class="lg:ml-64 flex-1 flex flex-col h-screen overflow-hidden">
       <!-- Top bar -->
       <header class="shrink-0 bg-[#191022] border-b border-[#7f13ec]/20 shadow-sm z-20 sticky top-0">
-        <div class="flex items-center justify-between px-6 py-3">
-          <div class="flex items-center flex-1">
+        <div class="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
+          <div class="flex items-center min-w-0 flex-1">
             <!-- Hamburger mobile -->
             <button
+              type="button"
               @click="toggleMobileMenu"
-              class="lg:hidden p-2 -ml-2 rounded-xl hover:bg-[#7f13ec]/10 transition-colors mr-3"
+              class="lg:hidden w-10 h-10 flex items-center justify-center shrink-0 rounded-xl border border-[#7f13ec]/20 bg-[#1e1333] hover:bg-[#7f13ec]/10 transition-colors mr-3"
+              aria-label="Ouvrir le menu admin"
+              :aria-expanded="isMobileMenuOpen"
+              aria-controls="admin-sidebar"
             >
               <Icon name="lucide:menu" class="w-6 h-6 text-white" />
             </button>
 
+            <div class="lg:hidden min-w-0">
+              <p class="text-xs uppercase tracking-widest text-gray-500">Admin</p>
+              <p class="text-sm font-semibold text-white truncate">{{ currentPageLabel }}</p>
+            </div>
+
             <!-- Global search -->
-            <div class="relative w-full max-w-xl">
+            <div class="relative hidden sm:block w-full max-w-xl">
               <Icon name="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 v-model="searchQuery"
@@ -111,12 +133,12 @@
           </div>
 
           <!-- Right side icons -->
-          <div class="flex items-center space-x-3 ml-4">
-            <button class="p-2 hover:bg-[#7f13ec]/10 rounded-full relative transition-colors">
+          <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
+            <button type="button" class="p-2 hover:bg-[#7f13ec]/10 rounded-full relative transition-colors">
               <Icon name="lucide:bell" class="w-5 h-5 text-gray-400 hover:text-white" />
               <span class="absolute top-1 right-1 w-2 h-2 bg-[#7f13ec] rounded-full"></span>
             </button>
-            <button class="p-2 hover:bg-[#7f13ec]/10 rounded-full transition-colors">
+            <button type="button" class="hidden sm:block p-2 hover:bg-[#7f13ec]/10 rounded-full transition-colors">
               <Icon name="lucide:settings" class="w-5 h-5 text-gray-400 hover:text-white" />
             </button>
             <div class="w-8 h-8 rounded-full bg-[#7f13ec]/30 flex items-center justify-center cursor-pointer">
@@ -127,7 +149,7 @@
       </header>
 
       <!-- Page Content -->
-      <main class="flex-1 overflow-y-auto p-6 text-white">
+      <main class="flex-1 overflow-y-auto p-4 sm:p-6 text-white">
         <slot />
       </main>
     </div>
@@ -135,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
 const adminVerified = ref(false)
@@ -156,6 +178,10 @@ const navItems = [
   { label: 'Users', icon: 'lucide:users', to: '/admin/users' },
   { label: 'Payments', icon: 'lucide:credit-card', to: '/admin/payments' },
 ]
+
+const currentPageLabel = computed(() => {
+  return navItems.find((item) => isActive(item.to))?.label || 'Dashboard'
+})
 
 const isActive = (path: string) => {
   if (path === '/admin') return route.path === '/admin'
