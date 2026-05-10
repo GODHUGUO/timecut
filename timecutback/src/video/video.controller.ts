@@ -3,25 +3,12 @@ import {
   Controller,
   Get,
   Post,
-  UploadedFile,
-  UseInterceptors,
   Body,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { VideoService } from './video.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
-
-type MulterFile = {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  size: number;
-  path: string;
-  filename: string;
-};
 
 @Controller('video')
 export class VideoController {
@@ -55,10 +42,7 @@ export class VideoController {
 
   @Post('subscription')
   @UseGuards(FirebaseAuthGuard)
-  async updateSubscription(
-    @Req() req: any,
-    @Body('plan') plan: string,
-  ) {
+  async updateSubscription(@Req() req: any, @Body('plan') plan: string) {
     const userId = this.videoService.getUserIdFromRequest(req);
     return this.videoService.updateUserSubscriptionPlan(userId, plan);
   }
@@ -81,18 +65,28 @@ export class VideoController {
     });
   }
 
-  @Post('upload')
+  @Get('sign-upload')
   @UseGuards(FirebaseAuthGuard)
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadVideo(
+  async signUpload(@Req() req: any) {
+    const userId = this.videoService.getUserIdFromRequest(req);
+    return this.videoService.signUpload(userId);
+  }
+
+  @Post('process')
+  @UseGuards(FirebaseAuthGuard)
+  async processVideo(
     @Req() req: any,
-    @UploadedFile() file: MulterFile,
-    @Body('clipDuration') clipDuration: string,
+    @Body('publicId') publicId: string,
+    @Body('duration') duration: number,
+    @Body('filename') filename: string,
+    @Body('clipDuration') clipDuration: number,
     @Body('subtitleMode') subtitleMode: string,
   ) {
     const userId = this.videoService.getUserIdFromRequest(req);
-    return this.videoService.handleUpload(
-      file,
+    return this.videoService.processVideo(
+      publicId,
+      Number(duration),
+      filename,
       Number(clipDuration),
       userId,
       subtitleMode,

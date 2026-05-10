@@ -182,6 +182,28 @@ export class StorageService {
     });
   }
 
+  generateUploadSignature(userId: string): {
+    signature: string;
+    timestamp: number;
+    cloudName: string;
+    apiKey: string;
+    folder: string;
+  } {
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = `timecut/${userId}`;
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp, folder, resource_type: 'video' },
+      process.env.CLOUDINARY_API_SECRET!,
+    );
+    return {
+      signature,
+      timestamp,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+      apiKey: process.env.CLOUDINARY_API_KEY!,
+      folder,
+    };
+  }
+
   async deleteCloudinaryAsset(publicId: string): Promise<void> {
     const result = await cloudinary.uploader.destroy(publicId, {
       resource_type: 'video',

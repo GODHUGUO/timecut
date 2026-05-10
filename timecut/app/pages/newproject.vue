@@ -462,28 +462,43 @@ const startProcessing = async () => {
   clipUrls.value = []
   showModal.value = false
 
-  const formData = new FormData()
-  formData.append('file', uploadedFile.value)
-  formData.append('clipDuration', clipDuration.value)
-  formData.append('subtitleMode', subtitleMode.value)
-
-  console.log('=== FRONTEND UPLOAD DEBUG ===')
-  console.log('subtitleMode being sent:', subtitleMode.value)
-  console.log('clipDuration:', clipDuration.value)
-  console.log('================================')
-
   try {
     const headers = await getAuthHeaders()
-    const response = await fetch(`${uploadUrl}/video/upload`, {
-      method: 'POST',
-      headers,
-      body: formData,
-    })
 
-    const data = await response.json()
-    if (!response.ok) {
-      throw new Error(data?.message || "Erreur lors de l'envoi")
-    }
+    // Étape 1 : Récupérer la signature Cloudinary depuis le backend
+    const signRes = await $fetch(`${apiBase}/video/sign-upload`, { headers })
+    const { signature, timestamp, cloudName, apiKey, folder } = signRes
+
+    // Étape 2 : Uploader directement sur Cloudinary
+    const formData = new FormData()
+    formData.append('file', uploadedFile.value)
+    formData.append('signature', signature)
+    formData.append('timestamp', String(timestamp))
+    formData.append('api_key', apiKey)
+    formData.append('folder', folder)
+    formData.append('resource_type', 'video')
+
+    const cloudRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
+      { method: 'POST', body: formData },
+    )
+    const cloudData = await cloudRes.json()
+    if (!cloudRes.ok) throw new Error(cloudData?.error?.message || 'Erreur upload Cloudinary')
+
+    // Étape 3 : Envoyer le publicId au backend pour traitement
+    const processRes = await fetch(`${apiBase}/video/process`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        publicId: cloudData.public_id,
+        duration: cloudData.duration,
+        filename: uploadedFile.value.name,
+        clipDuration: clipDuration.value,
+        subtitleMode: subtitleMode.value,
+      }),
+    })
+    const data = await processRes.json()
+    if (!processRes.ok) throw new Error(data?.message || 'Erreur traitement vidéo')
 
     clipUrls.value = data.clips || []
 

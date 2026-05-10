@@ -12,16 +12,6 @@ import { AIService } from '../ai/ai.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
-type MulterFile = {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  size: number;
-  path: string;
-  filename: string;
-};
-
 type UserPreferencesPayload = {
   subtitleTranslationEnabled: boolean;
   targetSubtitleLanguage: string;
@@ -152,8 +142,20 @@ export class VideoService {
     };
   }
 
-  async handleUpload(
-    file: MulterFile,
+  async signUpload(userId: string): Promise<{
+    signature: string;
+    timestamp: number;
+    cloudName: string;
+    apiKey: string;
+    folder: string;
+  }> {
+    return this.storageService.generateUploadSignature(userId);
+  }
+
+  async processVideo(
+    publicId: string,
+    cloudDuration: number,
+    filename: string,
     clipDuration: number,
     userId: string,
     subtitleMode?: string,
@@ -163,27 +165,21 @@ export class VideoService {
     subtitlesBurned: boolean;
     subtitleTranslationEnabled: boolean;
     targetSubtitleLanguage: string;
-    subtitles: {
-      text: string;
-      srtPath: string;
-    };
+    subtitles: { text: string; srtPath: string };
   }> {
-    this.logger.log(`=== UPLOAD DEBUG ===`);
-    this.logger.log(`subtitleMode received: "${subtitleMode}"`);
-    this.logger.log(`subtitleMode type: ${typeof subtitleMode}`);
+    this.logger.log(`=== PROCESS VIDEO ===`);
+    this.logger.log(`publicId: ${publicId}`);
+    this.logger.log(`cloudDuration: ${cloudDuration}`);
+    this.logger.log(`subtitleMode: "${subtitleMode}"`);
     this.logger.log(`clipDuration: ${clipDuration}`);
     this.logger.log(`userId: ${userId}`);
-    this.logger.log(`===================`);
+    this.logger.log(`====================`);
 
     if (!Number.isFinite(clipDuration) || clipDuration <= 0) {
-      throw new BadRequestException(
-        'La duree de clip doit etre un nombre positif.',
-      );
+      throw new BadRequestException('La duree de clip doit etre un nombre positif.');
     }
 
-    const totalDuration = await this.processingService.getMediaDuration(
-      file.path,
-    );
+    const totalDuration = cloudDuration;
     if (totalDuration > 0 && clipDuration > totalDuration) {
       throw new BadRequestException(
         `La duree du clip (${clipDuration}s) ne peut pas depasser la duree totale de la video (${Math.floor(totalDuration)}s).`,
@@ -193,14 +189,9 @@ export class VideoService {
     const subscription = await this.getUserSubscriptionSummary(userId);
     const normalizedSubtitleMode = subtitleMode === 'ai' ? 'ai' : 'none';
     const shouldGenerateSubtitles = normalizedSubtitleMode === 'ai';
-    this.logger.log(
-      `shouldGenerateSubtitles: ${shouldGenerateSubtitles} (subtitleMode=${normalizedSubtitleMode})`,
-    );
 
     if (shouldGenerateSubtitles && !subscription.canUseAiSubtitles) {
-      throw new BadRequestException(
-        'Les sous-titres IA sont reserves aux abonnements Starter et Pro.',
-      );
+      throw new BadRequestException('Les sous-titres IA sont reserves aux abonnements Starter et Pro.');
     }
 
     const minutesToConsume = Math.max(Math.ceil(totalDuration / 60), 1);
@@ -211,10 +202,7 @@ export class VideoService {
     }
 
     const video = await this.prisma.video.create({
-      data: {
-        filename: file.originalname,
-        userId,
-      },
+      data: { filename, userId },
     });
 
     const preferences = await this.getOrCreateUserPreferences(userId);
@@ -222,16 +210,9 @@ export class VideoService {
       `Subtitle preferences: translate=${preferences.subtitleTranslationEnabled}, targetLanguage=${preferences.targetSubtitleLanguage}, captionStyle=${preferences.captionStyle}`,
     );
 
-    try {
-      // ÉTAPE 1 : Upload vidéo complète vers Cloudinary
-      this.logger.log(
-        `Uploading full video to Cloudinary: ${file.originalname}`,
-      );
-      const { publicId, duration: cloudDuration } =
-        await this.storageService.uploadFullVideo(file);
-      const effectiveDuration = cloudDuration || totalDuration;
+    const effectiveDuration = totalDuration;
 
-      // ÉTAPE 2 : Générer les URLs de clips via transformations Cloudinary
+    try {
       const clipUrls = this.storageService.generateClipUrls(
         publicId,
         clipDuration,
@@ -277,7 +258,7 @@ export class VideoService {
           clipUrls.map(async (clipUrl, idx) => {
             await acquire();
             try {
-              return await this.processClipWithSubtitles(clipUrl, idx, preferences, file);
+              return await this.processClipWithSubtitles(clipUrl, idx, preferences);
             } finally {
               release();
             }
@@ -345,9 +326,8 @@ export class VideoService {
         targetSubtitleLanguage: preferences.targetSubtitleLanguage,
         subtitles,
       };
-    } finally {
-      // Toujours supprimer le fichier local original (même en cas d'erreur)
-      this.safeDeleteFile(file.path);
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -359,7 +339,6 @@ export class VideoService {
     clipUrl: string,
     clipIndex: number,
     preferences: UserPreferencesPayload,
-    file: MulterFile,
   ): Promise<{
     url: string;
     text: string;
@@ -436,13 +415,13 @@ export class VideoService {
       }
 
       const finalUrl = await this.storageService.upload({
-        fieldname: file.fieldname,
-        originalname: file.originalname,
-        encoding: file.encoding,
-        mimetype: file.mimetype,
-        size: file.size,
+        fieldname: 'file',
+        originalname: `clip_${clipIndex}.mp4`,
+        encoding: '7bit',
+        mimetype: 'video/mp4',
+        size: 0,
         path: subClipPath,
-        filename: file.filename,
+        filename: `clip_${clipIndex}.mp4`,
       });
       this.logger.log(`Clip ${clipIndex} uploaded with URL: ${finalUrl}`);
       this.logger.log(
