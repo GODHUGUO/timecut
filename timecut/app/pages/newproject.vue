@@ -476,7 +476,6 @@ const startProcessing = async () => {
     formData.append('timestamp', String(timestamp))
     formData.append('api_key', apiKey)
     formData.append('folder', folder)
-    formData.append('resource_type', 'video')
 
     const cloudRes = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,

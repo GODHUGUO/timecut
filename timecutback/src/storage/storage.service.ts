@@ -192,7 +192,7 @@ export class StorageService {
     const timestamp = Math.round(Date.now() / 1000);
     const folder = `timecut/${userId}`;
     const signature = cloudinary.utils.api_sign_request(
-      { timestamp, folder, resource_type: 'video' },
+      { timestamp, folder },
       process.env.CLOUDINARY_API_SECRET!,
     );
     return {
