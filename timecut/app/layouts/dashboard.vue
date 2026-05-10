@@ -7,9 +7,9 @@
     >
       <!-- Logo -->
       <div class="shrink-0 mt-6 px-4 py-2 flex items-center justify-center">
-        <div class="text-2xl font-bold">
+        <NuxtLink to="/" class="text-2xl font-bold">
           <span class="text-white">Time</span><span class="text-[#7f13ec]">Cut</span>
-        </div>
+        </NuxtLink>
       </div>
 
       <!-- Navigation -->
@@ -68,7 +68,7 @@
       </nav>
 
       <!-- User info -->
-      <div class="shrink-0 p-4 border-t border-[#7f13ec]/20">
+      <div class="shrink-0 p-4 border-t border-[#7f13ec]/20 space-y-3">
         <div class="flex items-center">
           <div class="w-8 h-8 rounded-full bg-[#7f13ec]/30 flex items-center justify-center shrink-0">
             <Icon name="lucide:user" class="w-4 h-4 text-[#7f13ec]" />
@@ -78,6 +78,13 @@
             <p class="text-xs text-gray-400 truncate">{{ currentUser?.email || '' }}</p>
           </div>
         </div>
+        <button
+          @click="logout"
+          class="w-full flex items-center px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-red-500/10 rounded-lg transition-colors group"
+        >
+          <Icon name="lucide:log-out" class="w-4 h-4 mr-2 text-gray-500 group-hover:text-red-400" />
+          <span class="group-hover:text-red-400">Se déconnecter</span>
+        </button>
       </div>
     </div>
 
@@ -103,10 +110,10 @@
             <h2 class="text-xl font-semibold text-white ml-4">{{ pageTitle }}</h2>
           </div>
           <div class="flex items-center space-x-4">
-            <button class="p-2 hover:bg-[#7f13ec]/10 rounded-full relative">
+            <!-- <button class="p-2 hover:bg-[#7f13ec]/10 rounded-full relative">
               <Icon name="lucide:bell" class="w-5 h-5 text-white" />
               <span class="absolute top-1 right-1 w-2 h-2 bg-[#7f13ec] rounded-full"></span>
-            </button>
+            </button> -->
           </div>
         </div>
       </header>
@@ -121,7 +128,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { onAuthStateChanged } from 'firebase/auth'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { auth } from '../plugins/firebase.client'
 
 const route = useRoute()
@@ -135,6 +142,11 @@ const toggleMobileMenu = () => {
 
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
+}
+
+const logout = async () => {
+  await signOut(auth)
+  navigateTo('/login')
 }
 
 // Ferme le menu à chaque changement de route

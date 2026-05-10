@@ -38,14 +38,14 @@ const PLAN_CONFIG = {
   },
   starter: {
     name: 'Starter',
-    price: '3,99€',
+    price: '4,99€',
     monthlyMinutes: 60,
     canUseAiSubtitles: true,
     canTranslateSubtitles: true,
   },
   pro: {
     name: 'Pro',
-    price: '11,99€',
+    price: '12,99€',
     monthlyMinutes: 200,
     canUseAiSubtitles: true,
     canTranslateSubtitles: true,
@@ -253,28 +253,36 @@ export class VideoService {
       } else {
         // ─── FLUX AVEC SOUS-TITRES ───
         this.logger.log('>>> FLUX AVEC SOUS-TITRES: Traitement de chaque clip');
-        const CONCURRENT_CLIPS = 3;
+        const CONCURRENT_CLIPS = 6;
+
+        // Sémaphore : max CONCURRENT_CLIPS clips en traitement simultané
+        let active = 0;
+        const queue: (() => void)[] = [];
+        const acquire = () =>
+          new Promise<void>((resolve) => {
+            if (active < CONCURRENT_CLIPS) { active++; resolve(); }
+            else queue.push(() => { active++; resolve(); });
+          });
+        const release = () => {
+          active--;
+          if (queue.length > 0) queue.shift()!();
+        };
+
         const processedClips: {
           url: string;
           text: string;
           srtContent: string;
           clipDuration: number;
-        }[] = [];
-
-        for (let i = 0; i < clipUrls.length; i += CONCURRENT_CLIPS) {
-          const batch = clipUrls.slice(i, i + CONCURRENT_CLIPS);
-          const batchResults = await Promise.all(
-            batch.map((clipUrl, batchIdx) =>
-              this.processClipWithSubtitles(
-                clipUrl,
-                i + batchIdx,
-                preferences,
-                file,
-              ),
-            ),
-          );
-          processedClips.push(...batchResults);
-        }
+        }[] = await Promise.all(
+          clipUrls.map(async (clipUrl, idx) => {
+            await acquire();
+            try {
+              return await this.processClipWithSubtitles(clipUrl, idx, preferences, file);
+            } finally {
+              release();
+            }
+          }),
+        );
 
         finalUrls = processedClips.map((c) => c.url);
 

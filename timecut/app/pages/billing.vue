@@ -1,4 +1,17 @@
 <template>
+  <div>
+  <!-- Loader paiement -->
+  <div
+    v-if="isPaying"
+    class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm"
+  >
+    <div class="flex flex-col items-center gap-5 bg-[#1e1333] border border-[#7f13ec]/30 rounded-2xl px-10 py-10 shadow-2xl">
+      <div class="w-12 h-12 border-4 border-[#7f13ec]/30 border-t-[#7f13ec] rounded-full animate-spin" />
+      <p class="text-white font-semibold text-base">Paiement en cours de chargement…</p>
+      <p class="text-gray-400 text-sm">Vous allez être redirigé vers la page de paiement.</p>
+    </div>
+  </div>
+
   <div class="space-y-6 pb-10">
     <div>
       <h1 class="text-2xl font-bold text-white">Facturation et abonnement</h1>
@@ -43,7 +56,7 @@
                 :disabled="isUpdatingPlan || isPaying"
                 class="px-4 py-2 bg-[#7f13ec] hover:bg-[#9333ea] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {{ isPaying ? 'Redirection...' : isUpdatingPlan ? 'Mise à jour...' : 'Upgrader' }}
+                {{ isUpdatingPlan ? 'Mise à jour...' : 'Upgrader' }}
               </button>
               <button
                 v-if="currentPlan !== 'free'"
@@ -129,7 +142,7 @@
                 ? 'bg-[#7f13ec]/40 hover:bg-[#7f13ec]/60 text-white'
                 : 'border border-gray-600 text-gray-400 hover:text-white'"
           >
-            {{ isPaying ? 'Redirection...' : isUpdatingPlan ? 'Mise à jour...' : key === 'free' ? 'Choisir gratuit' : 'Choisir ce plan' }}
+            {{ isUpdatingPlan ? 'Mise à jour...' : key === 'free' ? 'Choisir gratuit' : 'Choisir ce plan' }}
           </button>
           <div v-else class="w-full py-2 text-center text-xs text-[#7f13ec] font-medium">
             Plan actuel ✓
@@ -166,6 +179,7 @@
         </span>
       </div>
     </div>
+  </div>
   </div>
 </template>
 

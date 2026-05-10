@@ -104,7 +104,8 @@ export class ProcessingService {
         .outputOptions([
           '-c:v libx264',
           '-preset ultrafast',
-          '-crf 23',
+          '-tune fastdecode',
+          '-crf 28',
           '-threads 0',
           '-pix_fmt yuv420p',
           '-movflags +faststart',
@@ -186,7 +187,8 @@ export class ProcessingService {
           .outputOptions([
             '-c:v libx264',
             '-preset ultrafast',
-            '-crf 23',
+            '-tune fastdecode',
+            '-crf 28',
             '-threads 0',
             '-pix_fmt yuv420p',
             '-movflags +faststart',

@@ -138,6 +138,7 @@
           </div>
           <p v-if="subscription && !subscription.canUseAiSubtitles" class="text-amber-300 text-xs mt-3">
             Les sous-titres IA sont disponibles uniquement avec les plans Starter et Pro.
+            <NuxtLink to="/billing" class="underline text-[#7f13ec] hover:text-[#a855f7] ml-1">Upgrader mon plan</NuxtLink>
           </p>
         </div>
 
