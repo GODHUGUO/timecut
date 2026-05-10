@@ -316,11 +316,69 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- Popup Waitlist -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="showWaitlistModal"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style="background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);"
+          @click.self="showWaitlistModal = false"
+        >
+          <div class="bg-[#12082a] border border-[#7f13ec]/30 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div class="px-6 pt-6 pb-4">
+              <div class="w-12 h-12 rounded-xl bg-[#7f13ec]/20 flex items-center justify-center mb-4">
+                <Icon name="lucide:clock" class="w-6 h-6 text-[#7f13ec]" />
+              </div>
+              <h3 class="text-white font-bold text-lg">Fichier trop volumineux</h3>
+              <p class="text-gray-400 text-sm mt-2">
+                Les vidéos de plus de <span class="text-white font-semibold">100 Mo</span> ne sont pas encore disponibles.<br/>
+                Laisse ton email pour être notifié dès que cette fonctionnalité sera ouverte.
+              </p>
+            </div>
+
+            <div class="px-6 pb-6 space-y-3">
+              <input
+                v-model="waitlistEmail"
+                type="email"
+                placeholder="ton@email.com"
+                class="w-full bg-[#1e1333] border border-[#7f13ec]/20 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#7f13ec] transition-colors"
+                :disabled="waitlistSent"
+              />
+              <p v-if="waitlistError" class="text-red-400 text-xs">{{ waitlistError }}</p>
+              <p v-if="waitlistSent" class="text-green-400 text-xs flex items-center gap-1">
+                <Icon name="lucide:check-circle" class="w-4 h-4" />
+                Inscription confirmée ! On te préviendra dès que c'est disponible.
+              </p>
+              <button
+                @click="submitWaitlist"
+                :disabled="waitlistSent || waitlistLoading"
+                class="w-full flex items-center justify-center gap-2 py-3 text-white text-sm font-semibold rounded-xl transition-colors disabled:cursor-not-allowed"
+                :class="waitlistSent ? 'bg-green-600/50' : 'bg-[#7f13ec] hover:bg-[#9333ea] disabled:opacity-50'"
+              >
+                <div v-if="waitlistLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <Icon v-else-if="waitlistSent" name="lucide:check" class="w-4 h-4" />
+                <Icon v-else name="lucide:bell" class="w-4 h-4" />
+                {{ waitlistSent ? 'Inscrit !' : waitlistLoading ? 'Envoi...' : 'Me notifier' }}
+              </button>
+              <button
+                @click="showWaitlistModal = false"
+                class="w-full py-2 text-gray-500 hover:text-white text-sm transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import emailjs from '@emailjs/browser'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -346,6 +404,12 @@ const showModal = ref(false)
 const isDownloading = ref(false)
 const currentDownloadIndex = ref(-1)
 const downloadedClips = ref(new Set())
+
+const showWaitlistModal = ref(false)
+const waitlistEmail = ref('')
+const waitlistSent = ref(false)
+const waitlistLoading = ref(false)
+const waitlistError = ref('')
 const showValidationModal = ref(false)
 const validationMessage = ref('')
 
@@ -398,10 +462,35 @@ const validateClipDuration = () => {
   return true
 }
 
+const submitWaitlist = async () => {
+  waitlistError.value = ''
+  if (!waitlistEmail.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(waitlistEmail.value)) {
+    waitlistError.value = 'Veuillez entrer un email valide.'
+    return
+  }
+  waitlistLoading.value = true
+  try {
+    await emailjs.send(
+      'service_58k70i5',
+      'template_vvmc28c',
+      { user_email: waitlistEmail.value },
+      'Q7MM9RW4F_ZxBGWi_',
+    )
+    waitlistSent.value = true
+  } catch {
+    waitlistError.value = "Erreur lors de l'envoi. Réessaie plus tard."
+  } finally {
+    waitlistLoading.value = false
+  }
+}
+
 const loadFile = async (file) => {
   if (!file) return
   if (file.size > 99 * 1024 * 1024) {
-    showPopup('Fichier trop volumineux. Maximum 99 Mo.', 'warning')
+    waitlistEmail.value = ''
+    waitlistSent.value = false
+    waitlistError.value = ''
+    showWaitlistModal.value = true
     return
   }
 
