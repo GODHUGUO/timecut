@@ -243,14 +243,23 @@
               <div
                 v-for="(url, index) in clipUrls"
                 :key="index"
-                class="flex items-center gap-3 bg-[#1e1333] border border-[#7f13ec]/10 rounded-xl px-4 py-3"
+                class="flex items-center gap-3 bg-[#1e1333] border rounded-xl px-4 py-3 transition-colors"
+                :class="downloadedClips.has(index) ? 'border-green-500/30' : currentDownloadIndex === index ? 'border-[#7f13ec]/60' : 'border-[#7f13ec]/10'"
               >
-                <div class="w-8 h-8 rounded-lg bg-[#7f13ec]/20 flex items-center justify-center shrink-0">
-                  <Icon name="lucide:film" class="w-4 h-4 text-[#7f13ec]" />
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                  :class="downloadedClips.has(index) ? 'bg-green-500/20' : currentDownloadIndex === index ? 'bg-[#7f13ec]/40' : 'bg-[#7f13ec]/20'"
+                >
+                  <div v-if="currentDownloadIndex === index" class="w-4 h-4 border-2 border-[#7f13ec]/30 border-t-white rounded-full animate-spin" />
+                  <Icon v-else-if="downloadedClips.has(index)" name="lucide:check" class="w-4 h-4 text-green-400" />
+                  <Icon v-else name="lucide:film" class="w-4 h-4 text-[#7f13ec]" />
                 </div>
-                <div>
+                <div class="flex-1 min-w-0">
                   <p class="text-white text-sm font-medium">Clip {{ index + 1 }}</p>
-                  <p class="text-gray-500 text-xs">MP4 • Prêt</p>
+                  <p class="text-xs"
+                    :class="downloadedClips.has(index) ? 'text-green-400' : currentDownloadIndex === index ? 'text-[#7f13ec]' : 'text-gray-500'"
+                  >
+                    {{ downloadedClips.has(index) ? 'Téléchargé' : currentDownloadIndex === index ? 'Téléchargement...' : 'MP4 • Prêt' }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -258,10 +267,18 @@
             <div class="px-6 py-4 border-t border-[#7f13ec]/20">
               <button
                 @click="downloadAll"
-                class="w-full flex items-center justify-center gap-2 py-3.5 bg-[#7f13ec] hover:bg-[#9333ea] text-white text-sm font-semibold rounded-xl transition-colors"
+                :disabled="isDownloading"
+                class="w-full flex items-center justify-center gap-2 py-3.5 text-white text-sm font-semibold rounded-xl transition-colors disabled:cursor-not-allowed"
+                :class="isDownloading ? 'bg-[#7f13ec]/50' : 'bg-[#7f13ec] hover:bg-[#9333ea]'"
               >
-                <Icon name="lucide:download-cloud" class="w-4 h-4" />
-                Télécharger tous les clips ({{ clipUrls.length }})
+                <div v-if="isDownloading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <Icon v-else name="lucide:download-cloud" class="w-4 h-4" />
+                <span v-if="isDownloading">
+                  Téléchargement {{ downloadedClips.size + 1 }} / {{ clipUrls.length }}...
+                </span>
+                <span v-else>
+                  Télécharger tous les clips ({{ clipUrls.length }})
+                </span>
               </button>
             </div>
           </div>
@@ -326,6 +343,9 @@ const isProcessing = ref(false)
 const progress = ref(0)
 const clipUrls = ref([])
 const showModal = ref(false)
+const isDownloading = ref(false)
+const currentDownloadIndex = ref(-1)
+const downloadedClips = ref(new Set())
 const showValidationModal = ref(false)
 const validationMessage = ref('')
 
@@ -411,9 +431,16 @@ const handleSubtitleSelect = () => {
 }
 
 const downloadAll = async () => {
+  if (isDownloading.value) return
+
+  isDownloading.value = true
+  downloadedClips.value = new Set()
+  currentDownloadIndex.value = -1
+
   const totalClips = clipUrls.value.length
-  
+
   for (let index = 0; index < totalClips; index += 1) {
+    currentDownloadIndex.value = index
     const url = clipUrls.value[index]
     const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/')
 
@@ -430,7 +457,8 @@ const downloadAll = async () => {
       document.body.removeChild(link)
       URL.revokeObjectURL(blobUrl)
 
-      // Attendre 1 seconde entre chaque téléchargement pour éviter le blocage du navigateur
+      downloadedClips.value = new Set([...downloadedClips.value, index])
+
       if (index < totalClips - 1) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
       }
@@ -439,10 +467,10 @@ const downloadAll = async () => {
     }
   }
 
-  // Fermer le popup après que tous les téléchargements soient terminés
-  setTimeout(() => {
-    showModal.value = false
-  }, 500)
+  currentDownloadIndex.value = -1
+  isDownloading.value = false
+
+  setTimeout(() => { showModal.value = false }, 800)
 }
 
 const startProcessing = async () => {
