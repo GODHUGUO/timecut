@@ -234,7 +234,7 @@ export class VideoService {
       } else {
         // ─── FLUX AVEC SOUS-TITRES ───
         this.logger.log('>>> FLUX AVEC SOUS-TITRES: Traitement de chaque clip');
-        const CONCURRENT_CLIPS = 6;
+        const CONCURRENT_CLIPS = 3;
 
         // Sémaphore : max CONCURRENT_CLIPS clips en traitement simultané
         let active = 0;
@@ -377,42 +377,21 @@ export class VideoService {
       );
       srtFilePath = subtitleResult.srtPath;
 
-      // Lire le contenu SRT AVANT le nettoyage
       if (srtFilePath && fs.existsSync(srtFilePath)) {
         srtContent = fs.readFileSync(srtFilePath, 'utf-8');
-        this.logger.log(
-          `\n========== SRT FILE CONTENT (Clip ${clipIndex}) ==========`,
-        );
-        this.logger.log(`File: ${srtFilePath}`);
-        this.logger.log(`Size: ${srtContent.length} characters`);
-        this.logger.log(`Content:\n${srtContent}`);
-        this.logger.log(
-          `==========================================================\n`,
-        );
       } else {
         this.logger.warn(`SRT file does not exist at: ${srtFilePath}`);
       }
 
       // c. Incruster sous-titres
-      this.logger.log(`Burning subtitles into clip ${clipIndex}`);
-      this.logger.log(`SRT file path: ${subtitleResult.srtPath}`);
       subClipPath = await this.processingService.burnSrtIntoClip(
         localClipPath,
         subtitleResult.srtPath,
         preferences.captionStyle,
       );
-      this.logger.log(`Subtitle burned successfully, output: ${subClipPath}`);
+      this.logger.log(`Clip ${clipIndex} subtitles burned`);
 
       // d. Re-upload le clip avec sous-titres vers Cloudinary
-      this.logger.log(`Re-uploading clip ${clipIndex} with subtitles`);
-
-      // Vérifier la taille du fichier avec sous-titres
-      if (subClipPath && fs.existsSync(subClipPath)) {
-        const stats = fs.statSync(subClipPath);
-        this.logger.log(
-          `SubClip file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`,
-        );
-      }
 
       const finalUrl = await this.storageService.upload({
         fieldname: 'file',
@@ -423,14 +402,7 @@ export class VideoService {
         path: subClipPath,
         filename: `clip_${clipIndex}.mp4`,
       });
-      this.logger.log(`Clip ${clipIndex} uploaded with URL: ${finalUrl}`);
-      this.logger.log(
-        `\n========== TRANSCRIPTION RESULT (Clip ${clipIndex}) ==========`,
-      );
-      this.logger.log(`Transcribed text: ${subtitleResult.text}`);
-      this.logger.log(
-        `=============================================================\n`,
-      );
+      this.logger.log(`Clip ${clipIndex} done`);
 
       return {
         url: finalUrl,

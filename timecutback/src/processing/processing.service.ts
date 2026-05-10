@@ -88,15 +88,6 @@ export class ProcessingService {
     const subtitleFilter = `subtitles='${escapedPath}':force_style='${forceStyle}'`;
     const inputDuration = await this.getMediaDuration(clipPath);
 
-    console.log('=== BURN SUBTITLES DEBUG ===');
-    console.log('Input clip:', clipPath);
-    console.log('Input duration:', inputDuration, 'seconds');
-    console.log('SRT path:', srtPath);
-    console.log('Escaped path:', escapedPath);
-    console.log('Output path:', outputPath);
-    console.log('Subtitle filter:', subtitleFilter);
-    console.log('SRT exists:', fs.existsSync(srtPath));
-    console.log('===========================');
 
     await new Promise<void>((resolve, reject) => {
       ffmpeg(clipPath)
@@ -112,23 +103,7 @@ export class ProcessingService {
           '-c:a copy',
         ])
         .output(outputPath)
-        .on('start', (commandLine) => {
-          console.log('FFmpeg command:', commandLine);
-        })
-        .on('progress', (progress) => {
-          console.log(`FFmpeg progress: ${progress.percent}%`);
-        })
-        .on('end', () => {
-          console.log('FFmpeg finished burning subtitles');
-          // Vérifier que le fichier de sortie existe et a une taille > 0
-          if (fs.existsSync(outputPath)) {
-            const stats = fs.statSync(outputPath);
-            console.log(
-              `Output file size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`,
-            );
-          }
-          resolve();
-        })
+        .on('end', () => resolve())
         .on('error', (error: Error) => {
           console.error('FFmpeg error burning subtitles:', error);
           reject(error);

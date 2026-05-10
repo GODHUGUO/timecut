@@ -60,17 +60,7 @@ export class AIService {
         .audioBitrate('32k')
         .format('mp3')
         .save(audioPath)
-        .on('end', () => {
-          console.log('Audio genere:', audioPath);
-          // Vérifier la taille du fichier audio
-          if (fs.existsSync(audioPath)) {
-            const stats = fs.statSync(audioPath);
-            console.log(
-              `Audio file size: ${(stats.size / 1024).toFixed(2)} KB`,
-            );
-          }
-          resolve(audioPath);
-        })
+        .on('end', () => resolve(audioPath))
         .on('error', (err: Error) => {
           console.error('Erreur extraction audio:', err);
           reject(err);
@@ -165,17 +155,6 @@ export class AIService {
       const transcriptionSegments = (
         transcription as { segments?: TranscriptSegment[] }
       ).segments;
-      console.log('\n========== OPENAI RAW RESPONSE ==========');
-      console.log('Raw text:', rawText);
-      console.log('Segments count:', transcriptionSegments?.length ?? 0);
-      if (transcriptionSegments && transcriptionSegments.length > 0) {
-        console.log('First 3 segments:');
-        transcriptionSegments.slice(0, 3).forEach((seg, i) => {
-          console.log(`  ${i + 1}. [${seg.start}s -> ${seg.end}s] ${seg.text}`);
-        });
-      }
-      console.log('===========================================\n');
-
       let segments = this.normalizeSegments(transcription);
 
       // Optionally translate
