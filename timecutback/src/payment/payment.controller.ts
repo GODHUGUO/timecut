@@ -8,9 +8,12 @@ import {
   RawBody,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+
+const EMAIL_REGEX = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/;
 
 @Controller('payment')
 export class PaymentController {
@@ -26,6 +29,12 @@ export class PaymentController {
     const userId = req.user?.uid ?? req.user?.id ?? req.headers['x-user-id'];
     if (!userId) {
       return { error: 'Utilisateur non authentifié' };
+    }
+
+    if (customerEmail !== undefined && customerEmail !== null && customerEmail !== '') {
+      if (typeof customerEmail !== 'string' || !EMAIL_REGEX.test(customerEmail)) {
+        throw new BadRequestException('Adresse email invalide.');
+      }
     }
 
     return this.paymentService.createCheckout(userId, plan, customerEmail);

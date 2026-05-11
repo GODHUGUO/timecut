@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/common';
 import { AdminAuthGuard } from '../auth/admin-auth.guard';
 import { SkipAdminCheck } from '../auth/skip-admin-check.decorator';
 import { AdminService } from './admin.service';
@@ -63,7 +63,11 @@ export class AdminController {
 
   @Post('verify-password')
   @SkipAdminCheck()
-  async verifyAdminPassword(@Body() body: { password: string }) {
-    return this.adminService.verifyAdminPassword(body.password);
+  async verifyAdminPassword(@Req() req: any, @Body() body: { password: string }) {
+    const ip: string =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket?.remoteAddress ||
+      'unknown';
+    return this.adminService.verifyAdminPassword(body.password, ip);
   }
 }

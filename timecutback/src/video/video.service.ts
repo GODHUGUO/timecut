@@ -18,6 +18,15 @@ type UserPreferencesPayload = {
   captionStyle: string;
 };
 
+const ALLOWED_CAPTION_STYLES = [
+  'bold',
+  'minimal',
+  'highlight',
+  'outline',
+  'shadow',
+] as const;
+type CaptionStyle = (typeof ALLOWED_CAPTION_STYLES)[number];
+
 const PLAN_CONFIG = {
   free: {
     name: 'Gratuit',
@@ -142,13 +151,13 @@ export class VideoService {
     };
   }
 
-  async signUpload(userId: string): Promise<{
+  signUpload(userId: string): {
     signature: string;
     timestamp: number;
     cloudName: string;
     apiKey: string;
     folder: string;
-  }> {
+  } {
     return this.storageService.generateUploadSignature(userId);
   }
 
@@ -175,8 +184,31 @@ export class VideoService {
     this.logger.log(`userId: ${userId}`);
     this.logger.log(`====================`);
 
-    if (!Number.isFinite(clipDuration) || clipDuration <= 0) {
-      throw new BadRequestException('La duree de clip doit etre un nombre positif.');
+    if (
+      !Number.isFinite(clipDuration) ||
+      clipDuration <= 0 ||
+      clipDuration > 3600
+    ) {
+      throw new BadRequestException(
+        'La duree de clip doit etre un nombre positif (max 3600s).',
+      );
+    }
+
+    if (
+      !Number.isFinite(cloudDuration) ||
+      cloudDuration <= 0 ||
+      cloudDuration > 7200
+    ) {
+      throw new BadRequestException('Duree de video invalide.');
+    }
+
+    const expectedPrefix = `timecut/${userId}/`;
+    if (!publicId.startsWith(expectedPrefix)) {
+      throw new BadRequestException('publicId invalide ou non autorise.');
+    }
+
+    if (!filename || typeof filename !== 'string' || filename.length > 255) {
+      throw new BadRequestException('Nom de fichier invalide.');
     }
 
     const totalDuration = cloudDuration;
@@ -191,7 +223,9 @@ export class VideoService {
     const shouldGenerateSubtitles = normalizedSubtitleMode === 'ai';
 
     if (shouldGenerateSubtitles && !subscription.canUseAiSubtitles) {
-      throw new BadRequestException('Les sous-titres IA sont reserves aux abonnements Starter et Pro.');
+      throw new BadRequestException(
+        'Les sous-titres IA sont reserves aux abonnements Starter et Pro.',
+      );
     }
 
     const minutesToConsume = Math.max(Math.ceil(totalDuration / 60), 1);
@@ -212,123 +246,129 @@ export class VideoService {
 
     const effectiveDuration = totalDuration;
 
-    try {
-      const clipUrls = this.storageService.generateClipUrls(
-        publicId,
-        clipDuration,
-        effectiveDuration,
+    const clipUrls = this.storageService.generateClipUrls(
+      publicId,
+      clipDuration,
+      effectiveDuration,
+    );
+    this.logger.log(`Generated ${clipUrls.length} clip URLs`);
+
+    let finalUrls: string[];
+    let subtitles = { text: '', srtPath: '' };
+
+    if (!shouldGenerateSubtitles) {
+      // ─── FLUX SANS SOUS-TITRES ───
+      this.logger.log(
+        '>>> FLUX SANS SOUS-TITRES: Utilisant les URLs Cloudinary directes',
       );
-      this.logger.log(`Generated ${clipUrls.length} clip URLs`);
+      finalUrls = clipUrls;
+      this.logger.log(`Nombre de clips: ${finalUrls.length}`);
+      this.logger.log(`Premier URL: ${finalUrls[0]}`);
+    } else {
+      // ─── FLUX AVEC SOUS-TITRES ───
+      this.logger.log('>>> FLUX AVEC SOUS-TITRES: Traitement de chaque clip');
+      const CONCURRENT_CLIPS = 3;
 
-      let finalUrls: string[];
-      let subtitles = { text: '', srtPath: '' };
+      // Sémaphore : max CONCURRENT_CLIPS clips en traitement simultané
+      let active = 0;
+      const queue: (() => void)[] = [];
+      const acquire = () =>
+        new Promise<void>((resolve) => {
+          if (active < CONCURRENT_CLIPS) {
+            active++;
+            resolve();
+          } else
+            queue.push(() => {
+              active++;
+              resolve();
+            });
+        });
+      const release = () => {
+        active--;
+        if (queue.length > 0) queue.shift()!();
+      };
 
-      if (!shouldGenerateSubtitles) {
-        // ─── FLUX SANS SOUS-TITRES ───
-        this.logger.log(
-          '>>> FLUX SANS SOUS-TITRES: Utilisant les URLs Cloudinary directes',
-        );
-        finalUrls = clipUrls;
-        this.logger.log(`Nombre de clips: ${finalUrls.length}`);
-        this.logger.log(`Premier URL: ${finalUrls[0]}`);
-      } else {
-        // ─── FLUX AVEC SOUS-TITRES ───
-        this.logger.log('>>> FLUX AVEC SOUS-TITRES: Traitement de chaque clip');
-        const CONCURRENT_CLIPS = 3;
-
-        // Sémaphore : max CONCURRENT_CLIPS clips en traitement simultané
-        let active = 0;
-        const queue: (() => void)[] = [];
-        const acquire = () =>
-          new Promise<void>((resolve) => {
-            if (active < CONCURRENT_CLIPS) { active++; resolve(); }
-            else queue.push(() => { active++; resolve(); });
-          });
-        const release = () => {
-          active--;
-          if (queue.length > 0) queue.shift()!();
-        };
-
-        const processedClips: {
-          url: string;
-          text: string;
-          srtContent: string;
-          clipDuration: number;
-        }[] = await Promise.all(
-          clipUrls.map(async (clipUrl, idx) => {
-            await acquire();
-            try {
-              return await this.processClipWithSubtitles(clipUrl, idx, preferences);
-            } finally {
-              release();
-            }
-          }),
-        );
-
-        finalUrls = processedClips.map((c) => c.url);
-
-        // Construire un SRT global fusionné avec timestamps décalés
-        const mergedSrt = this.mergeSrtContents(processedClips);
-        let srtUrl = '';
-
-        if (mergedSrt) {
-          const tmpSrtPath = path.join(
-            './uploads',
-            `global_srt_${Date.now()}.srt`,
-          );
+      const processedClips: {
+        url: string;
+        text: string;
+        srtContent: string;
+        clipDuration: number;
+      }[] = await Promise.all(
+        clipUrls.map(async (clipUrl, idx) => {
+          await acquire();
           try {
-            fs.writeFileSync(tmpSrtPath, mergedSrt, 'utf-8');
-            srtUrl = await this.storageService.uploadRaw(tmpSrtPath);
+            return await this.processClipWithSubtitles(
+              clipUrl,
+              idx,
+              preferences,
+            );
           } finally {
-            this.safeDeleteFile(tmpSrtPath);
+            release();
           }
-        }
+        }),
+      );
 
-        subtitles = {
-          text: processedClips
-            .map((c) => c.text)
-            .join(' ')
-            .trim(),
-          srtPath: srtUrl,
-        };
+      finalUrls = processedClips.map((c) => c.url);
+
+      // Construire un SRT global fusionné avec timestamps décalés
+      const mergedSrt = this.mergeSrtContents(processedClips);
+      let srtUrl = '';
+
+      if (mergedSrt) {
+        const tmpSrtPath = path.join(
+          './uploads',
+          `global_srt_${Date.now()}.srt`,
+        );
+        try {
+          fs.writeFileSync(tmpSrtPath, mergedSrt, 'utf-8');
+          srtUrl = await this.storageService.uploadRaw(tmpSrtPath);
+        } finally {
+          this.safeDeleteFile(tmpSrtPath);
+        }
       }
 
-      // ÉTAPE 3 : Créer les enregistrements Clip en DB
-      await this.prisma.clip.createMany({
-        data: finalUrls.map((url) => ({
-          url,
-          duration: clipDuration,
-          videoId: video.id,
-        })),
-      });
-
-      this.logger.log(`>>> RETURNING ${finalUrls.length} clip URLs`);
-      this.logger.log(`First URL: ${finalUrls[0]}`);
-      this.logger.log(
-        `Subtitles burned into returned clips: ${shouldGenerateSubtitles}`,
-      );
-
-      // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
-      await this.prisma.userSubscription.update({
-        where: { userId },
-        data: {
-          monthlyMinutesUsed: {
-            increment: minutesToConsume,
-          },
-        },
-      });
-
-      return {
-        clips: finalUrls,
-        subtitleMode: normalizedSubtitleMode,
-        subtitlesBurned: shouldGenerateSubtitles,
-        subtitleTranslationEnabled: preferences.subtitleTranslationEnabled,
-        targetSubtitleLanguage: preferences.targetSubtitleLanguage,
-        subtitles,
+      subtitles = {
+        text: processedClips
+          .map((c) => c.text)
+          .join(' ')
+          .trim(),
+        srtPath: srtUrl,
       };
-    } catch (error) {
-      throw error;
     }
+
+    // ÉTAPE 3 : Créer les enregistrements Clip en DB
+    await this.prisma.clip.createMany({
+      data: finalUrls.map((url) => ({
+        url,
+        duration: clipDuration,
+        videoId: video.id,
+      })),
+    });
+
+    this.logger.log(`>>> RETURNING ${finalUrls.length} clip URLs`);
+    this.logger.log(`First URL: ${finalUrls[0]}`);
+    this.logger.log(
+      `Subtitles burned into returned clips: ${shouldGenerateSubtitles}`,
+    );
+
+    // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
+    await this.prisma.userSubscription.update({
+      where: { userId },
+      data: {
+        monthlyMinutesUsed: {
+          increment: minutesToConsume,
+        },
+      },
+    });
+
+    return {
+      clips: finalUrls,
+      subtitleMode: normalizedSubtitleMode,
+      subtitlesBurned: shouldGenerateSubtitles,
+      subtitleTranslationEnabled: preferences.subtitleTranslationEnabled,
+      targetSubtitleLanguage: preferences.targetSubtitleLanguage,
+      subtitles,
+    };
   }
 
   /**
@@ -613,6 +653,16 @@ export class VideoService {
   ): Promise<UserPreferencesPayload> {
     const current = await this.getOrCreateUserPreferences(userId);
     const subscription = await this.getUserSubscriptionSummary(userId);
+
+    if (
+      payload.captionStyle !== undefined &&
+      !ALLOWED_CAPTION_STYLES.includes(payload.captionStyle as CaptionStyle)
+    ) {
+      throw new BadRequestException(
+        `Style de sous-titre invalide. Valeurs acceptées : ${ALLOWED_CAPTION_STYLES.join(', ')}.`,
+      );
+    }
+
     const next = {
       subtitleTranslationEnabled: subscription.canTranslateSubtitles
         ? (payload.subtitleTranslationEnabled ??

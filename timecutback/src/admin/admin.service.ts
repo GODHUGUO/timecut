@@ -1,6 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { getAuth } from 'firebase-admin/auth';
+import { timingSafeEqual } from 'crypto';
+
+class RateLimitError extends Error {
+  status = 429;
+  constructor(message: string) {
+    super(message);
+    this.name = 'RateLimitError';
+  }
+}
+
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX_ATTEMPTS = 10;
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 // ─── Interfaces exportées ─────────────────────────────────────────────────────
 
@@ -470,11 +483,47 @@ export class AdminService {
   }
 
   // ─── Vérification mot de passe admin ──────────────────────────────────────
-  verifyAdminPassword(password: string): { valid: boolean } {
+  verifyAdminPassword(password: string, ip: string): { valid: boolean } {
+    const now = Date.now();
+    const key = ip;
+    const entry = rateLimitMap.get(key);
+
+    if (entry) {
+      if (now < entry.resetAt) {
+        if (entry.count >= RATE_LIMIT_MAX_ATTEMPTS) {
+          const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
+          throw new RateLimitError(
+            `Trop de tentatives. Réessayez dans ${retryAfterSec}s.`,
+          );
+        }
+        entry.count += 1;
+      } else {
+        rateLimitMap.set(key, {
+          count: 1,
+          resetAt: now + RATE_LIMIT_WINDOW_MS,
+        });
+      }
+    } else {
+      rateLimitMap.set(key, {
+        count: 1,
+        resetAt: now + RATE_LIMIT_WINDOW_MS,
+      });
+    }
+
     const adminPassword = process.env.ADMIN_PASSWORD;
     if (!adminPassword) {
       throw new Error('ADMIN_PASSWORD not configured');
     }
-    return { valid: password === adminPassword };
+    try {
+      const a = Buffer.from(password.padEnd(64).slice(0, 64));
+      const b = Buffer.from(adminPassword.padEnd(64).slice(0, 64));
+      const match = timingSafeEqual(a, b) && password === adminPassword;
+      if (match) {
+        rateLimitMap.delete(key);
+      }
+      return { valid: match };
+    } catch {
+      return { valid: false };
+    }
   }
 }

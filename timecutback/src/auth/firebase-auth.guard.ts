@@ -41,8 +41,9 @@ export class FirebaseAuthGuard implements CanActivate {
       }
     }
 
-    // Fallback local development only.
+    // Fallback local development only — never in production.
     if (
+      process.env.NODE_ENV !== 'production' &&
       process.env.ALLOW_X_USER_ID === 'true' &&
       typeof headerUserId === 'string' &&
       headerUserId.trim().length > 0

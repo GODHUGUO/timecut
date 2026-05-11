@@ -35,9 +35,6 @@ export class StorageService {
       quality: 'auto:good',
       fetch_format: 'mp4',
     });
-    console.log('URL Cloudinary:', result.secure_url);
-    console.log('Video duration:', result.duration, 'seconds');
-    console.log('Video format:', result.format);
     return result.secure_url;
   }
 
@@ -45,7 +42,6 @@ export class StorageService {
     const result = await cloudinary.uploader.upload(filePath, {
       resource_type: 'raw',
     });
-    console.log('Raw URL Cloudinary:', result.secure_url);
     return result.secure_url;
   }
 

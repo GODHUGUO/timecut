@@ -15,8 +15,7 @@ async function bootstrap() {
         'https://www.timecut.fr',
         'https://timecut-production.up.railway.app',
       ];
-      // Autoriser toutes les URLs Vercel (preview + production)
-      if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+      if (!origin || allowed.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));

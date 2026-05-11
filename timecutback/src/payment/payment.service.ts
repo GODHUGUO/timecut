@@ -141,7 +141,7 @@ export class PaymentService {
 
   private verifySignature(payload: string, signature: string): boolean {
     try {
-      const expected = createHmac('sha256', this.publicKey).update(payload).digest('hex');
+      const expected = createHmac('sha256', this.secretKey).update(payload).digest('hex');
       const expectedBuf = Buffer.from(expected, 'hex');
       const signatureBuf = Buffer.from(signature, 'hex');
 
