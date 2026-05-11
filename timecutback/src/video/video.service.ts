@@ -267,7 +267,7 @@ export class VideoService {
     } else {
       // ─── FLUX AVEC SOUS-TITRES ───
       this.logger.log('>>> FLUX AVEC SOUS-TITRES: Traitement de chaque clip');
-      const CONCURRENT_CLIPS = 3;
+      const CONCURRENT_CLIPS = 5;
 
       // Sémaphore : max CONCURRENT_CLIPS clips en traitement simultané
       let active = 0;
