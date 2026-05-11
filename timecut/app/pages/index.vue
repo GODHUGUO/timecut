@@ -250,7 +250,7 @@
                 <h3 class="text-xl font-semibold mb-1">Starter</h3>
                 <p class="text-gray-500 text-sm mb-5">Pour les créateurs réguliers</p>
                 <p class="text-4xl font-bold mb-1">4,99€<span class="text-lg font-normal text-gray-400"> / mois</span></p>
-                <p class="text-gray-600 text-xs mb-6">Résiliable à tout moment</p>
+                <!-- <p class="text-gray-600 text-xs mb-6">Résiliable à tout moment</p> -->
                 <ul class="space-y-3 text-sm mb-8">
                   <li class="flex items-center gap-2 text-gray-300">
                     <span class="w-4 h-4 rounded-full bg-[#7f13ec]/20 text-[#7f13ec] flex items-center justify-center text-[10px] shrink-0">✓</span>
@@ -295,7 +295,7 @@
                 <h3 class="text-xl font-semibold mb-1">Pro</h3>
                 <p class="text-gray-500 text-sm mb-5">Pour les pros du contenu</p>
                 <p class="text-4xl font-bold mb-1">12,99€<span class="text-lg font-normal text-gray-400"> / mois</span></p>
-                <p class="text-gray-600 text-xs mb-6">Résiliable à tout moment</p>
+                <!-- <p class="text-gray-600 text-xs mb-6">Résiliable à tout moment</p> -->
                 <ul class="space-y-3 text-sm mb-8">
                   <li class="flex items-center gap-2 text-gray-300">
                     <span class="w-4 h-4 rounded-full bg-[#7f13ec]/20 text-[#7f13ec] flex items-center justify-center text-[10px] shrink-0">✓</span>
