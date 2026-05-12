@@ -361,6 +361,11 @@ export class VideoService {
       },
     });
 
+    // ÉTAPE 5 : Supprimer la vidéo source de Cloudinary (fire & forget)
+    this.storageService.deleteCloudinaryAsset(publicId).catch((err) => {
+      this.logger.warn(`Failed to delete source video ${publicId}: ${err}`);
+    });
+
     return {
       clips: finalUrls,
       subtitleMode: normalizedSubtitleMode,
