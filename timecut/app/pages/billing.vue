@@ -258,8 +258,27 @@ const updatePlanSelection = async (plan) => {
 
 onMounted(async () => {
   try {
+    if (route.query.payment === 'success') {
+      const pendingPaymentId = localStorage.getItem('pending_payment_id')
+      if (pendingPaymentId) {
+        try {
+          const { getAuthHeaders } = usePayment()
+          const config = useRuntimeConfig()
+          const headers = await getAuthHeaders()
+          await $fetch(`${config.public.apiBase}/payment/confirm?payment_id=${pendingPaymentId}`, {
+            method: 'GET',
+            headers,
+          })
+        } catch (e) {
+          console.error('Erreur confirmation paiement:', e)
+        } finally {
+          localStorage.removeItem('pending_payment_id')
+        }
+      }
+    }
+
     await refreshSubscription()
-    // Nettoyer l'URL après retour de paiement
+
     if (route.query.payment === 'success') {
       navigateTo('/billing', { replace: true })
     }

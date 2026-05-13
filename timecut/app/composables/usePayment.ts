@@ -62,6 +62,11 @@ export const usePayment = () => {
         throw new Error('Aucune URL de paiement reçue')
       }
 
+      // Sauvegarder le payment_id pour confirmation au retour
+      if (response.paymentId) {
+        localStorage.setItem('pending_payment_id', response.paymentId)
+      }
+
       // Redirection vers LeekPay
       window.location.href = response.paymentUrl
       return response
@@ -73,5 +78,6 @@ export const usePayment = () => {
   return {
     isPaying,
     createCheckout,
+    getAuthHeaders,
   }
 }
