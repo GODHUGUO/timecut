@@ -58,11 +58,18 @@ export class PaymentController {
     @Req() req: any,
     @Query('payment_id') paymentId: string,
   ) {
+    console.log('>>> [PaymentController] /payment/confirm APPELÉ');
+    console.log('>>> [PaymentController] payment_id query:', paymentId);
+    console.log('>>> [PaymentController] req.user:', req.user);
+    console.log('>>> [PaymentController] x-user-id header:', req.headers['x-user-id']);
+
     const userId = req.user?.uid ?? req.user?.id ?? req.headers['x-user-id'];
     if (!userId) {
+      console.warn('>>> [PaymentController] /payment/confirm refus: pas de userId');
       return { error: 'Utilisateur non authentifié' };
     }
     if (!paymentId) {
+      console.warn('>>> [PaymentController] /payment/confirm refus: pas de payment_id');
       throw new BadRequestException('payment_id requis');
     }
     return this.paymentService.confirmPayment(userId, paymentId);

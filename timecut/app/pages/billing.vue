@@ -273,20 +273,25 @@ onMounted(async () => {
   try {
     if (route.query.payment === 'success') {
       const pendingPaymentId = localStorage.getItem('pending_payment_id')
+      console.log('[billing] payment=success, pending_payment_id =', pendingPaymentId)
       if (pendingPaymentId) {
         try {
           const { getAuthHeaders } = usePayment()
           const config = useRuntimeConfig()
           const headers = await getAuthHeaders()
-          await $fetch(`${config.public.apiBase}/payment/confirm?payment_id=${pendingPaymentId}`, {
+          console.log('[billing] Appel /payment/confirm avec headers:', headers)
+          const confirmResult = await $fetch(`${config.public.apiBase}/payment/confirm?payment_id=${pendingPaymentId}`, {
             method: 'GET',
             headers,
           })
+          console.log('[billing] Réponse /payment/confirm:', confirmResult)
         } catch (e) {
-          console.error('Erreur confirmation paiement:', e)
+          console.error('[billing] Erreur confirmation paiement:', e)
         } finally {
           localStorage.removeItem('pending_payment_id')
         }
+      } else {
+        console.warn('[billing] AUCUN pending_payment_id en localStorage — la confirmation ne sera pas appelée')
       }
     }
 

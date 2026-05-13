@@ -127,6 +127,7 @@ export class PaymentService {
   }
 
   async verifyPaymentStatus(paymentId: string) {
+    console.log('[verifyPaymentStatus] Appel LeekPay pour paymentId:', paymentId);
     const response = await fetch(`${LEEKPAY_API_URL}/checkout/${paymentId}`, {
       method: 'GET',
       headers: {
@@ -135,12 +136,20 @@ export class PaymentService {
       },
     });
 
+    const rawText = await response.text();
+    console.log('[verifyPaymentStatus] HTTP status:', response.status);
+    console.log('[verifyPaymentStatus] Body brut LeekPay:', rawText);
+
     if (!response.ok) {
-      const error = await response.text();
-      throw new BadRequestException(`Erreur vérification LeekPay: ${error}`);
+      throw new BadRequestException(`Erreur vérification LeekPay: ${rawText}`);
     }
 
-    return response.json() as Promise<unknown>;
+    try {
+      return JSON.parse(rawText) as unknown;
+    } catch (e) {
+      console.error('[verifyPaymentStatus] JSON.parse a échoué:', e);
+      throw new BadRequestException('Réponse LeekPay non JSON');
+    }
   }
 
   async handleWebhook(payload: string, signature: string) {
@@ -218,23 +227,40 @@ export class PaymentService {
   }
 
   async confirmPayment(userId: string, leekpayPaymentId: string) {
-    const statusResponse = await this.verifyPaymentStatus(leekpayPaymentId);
-    const status = statusResponse as { data?: { status?: string } };
+    console.log('====== CONFIRM PAYMENT ======');
+    console.log('[confirmPayment] userId:', userId);
+    console.log('[confirmPayment] leekpayPaymentId:', leekpayPaymentId);
 
-    if (
-      status?.data?.status !== 'completed' &&
-      status?.data?.status !== 'paid'
-    ) {
+    const statusResponse = await this.verifyPaymentStatus(leekpayPaymentId);
+    console.log(
+      '[confirmPayment] Réponse LeekPay (parsed):',
+      JSON.stringify(statusResponse, null, 2),
+    );
+
+    const status = statusResponse as { data?: { status?: string } };
+    const leekpayStatus = status?.data?.status;
+    console.log('[confirmPayment] Statut LeekPay extrait:', leekpayStatus);
+
+    if (leekpayStatus !== 'completed' && leekpayStatus !== 'paid') {
+      console.warn(
+        '[confirmPayment] Statut LeekPay non reconnu comme complet:',
+        leekpayStatus,
+      );
       return {
         success: false,
         reason: 'payment_not_completed',
-        status: status?.data?.status,
+        status: leekpayStatus,
       };
     }
 
     const payment = await this.prisma.payment.findFirst({
       where: { paymentId: leekpayPaymentId, userId },
     });
+
+    console.log(
+      '[confirmPayment] Paiement trouvé en BD:',
+      payment ? `id=${payment.id} plan=${payment.plan}` : 'AUCUN',
+    );
 
     if (!payment) {
       return { success: false, reason: 'payment_not_found' };
@@ -246,6 +272,13 @@ export class PaymentService {
     });
 
     await this.activateSubscription(payment.userId, payment.plan);
+    console.log(
+      '[confirmPayment] Abonnement activé pour userId:',
+      payment.userId,
+      'plan:',
+      payment.plan,
+    );
+    console.log('====== FIN CONFIRM PAYMENT ======');
 
     return { success: true, plan: payment.plan };
   }
