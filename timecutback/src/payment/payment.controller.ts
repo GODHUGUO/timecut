@@ -42,6 +42,16 @@ export class PaymentController {
     return this.paymentService.createCheckout(userId, plan, customerEmail);
   }
 
+  @Get('history')
+  @UseGuards(FirebaseAuthGuard)
+  async getUserPayments(@Req() req: any) {
+    const userId = req.user?.uid ?? req.user?.id ?? req.headers['x-user-id'];
+    if (!userId) {
+      return { error: 'Utilisateur non authentifié' };
+    }
+    return this.paymentService.getUserPayments(userId);
+  }
+
   @Get('confirm')
   @UseGuards(FirebaseAuthGuard)
   async confirmPayment(

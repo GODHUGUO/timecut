@@ -106,6 +106,24 @@ export class PaymentService {
     };
   }
 
+  async getUserPayments(userId: string) {
+    const payments = await this.prisma.payment.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+
+    return payments.map((p) => ({
+      id: p.paymentId ?? String(p.id),
+      amount: p.amount / 100,
+      currency: p.currency,
+      status: p.status,
+      plan: p.plan,
+      date: p.createdAt,
+      description: p.description,
+    }));
+  }
+
   async verifyPaymentStatus(paymentId: string) {
     const response = await fetch(`${LEEKPAY_API_URL}/checkout/${paymentId}`, {
       method: 'GET',

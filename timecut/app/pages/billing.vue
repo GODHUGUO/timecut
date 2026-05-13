@@ -151,16 +151,17 @@
       </div>
     </div>
 
-    <div v-if="currentPlan !== 'free'" class="bg-[#1e1333] border border-[#7f13ec]/20 rounded-2xl p-6">
+    <div v-if="invoices.length > 0" class="bg-[#1e1333] border border-[#7f13ec]/20 rounded-2xl p-6">
       <div class="flex items-center gap-3 mb-5">
         <div class="w-8 h-8 rounded-lg bg-[#7f13ec]/20 flex items-center justify-center">
           <Icon name="lucide:receipt" class="w-4 h-4 text-[#7f13ec]" />
         </div>
-        <h3 class="text-white font-semibold text-base">Historique des factures</h3>
+        <h3 class="text-white font-semibold text-base">Historique des paiements</h3>
       </div>
 
-      <div class="grid grid-cols-3 px-4 pb-3 border-b border-[#7f13ec]/10">
+      <div class="grid grid-cols-4 px-4 pb-3 border-b border-[#7f13ec]/10">
         <span class="text-gray-500 text-xs uppercase tracking-widest">Date</span>
+        <span class="text-gray-500 text-xs uppercase tracking-widest">Plan</span>
         <span class="text-gray-500 text-xs uppercase tracking-widest">Montant</span>
         <span class="text-gray-500 text-xs uppercase tracking-widest">Statut</span>
       </div>
@@ -168,12 +169,18 @@
       <div
         v-for="(invoice, index) in invoices"
         :key="index"
-        class="grid grid-cols-3 items-center px-4 py-4 border-b border-[#7f13ec]/10 last:border-0 hover:bg-[#7f13ec]/5 rounded-xl transition-colors"
+        class="grid grid-cols-4 items-center px-4 py-4 border-b border-[#7f13ec]/10 last:border-0 hover:bg-[#7f13ec]/5 rounded-xl transition-colors"
       >
         <span class="text-gray-300 text-sm">{{ invoice.date }}</span>
+        <span class="text-gray-400 text-sm capitalize">{{ invoice.plan }}</span>
         <span class="text-white text-sm font-medium">{{ invoice.amount }}</span>
         <span>
-          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+          <span
+            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border"
+            :class="invoice.status === 'Payé'
+              ? 'bg-green-500/10 text-green-400 border-green-500/20'
+              : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'"
+          >
             {{ invoice.status }}
           </span>
         </span>
@@ -194,13 +201,14 @@ definePageMeta({
 const route = useRoute()
 
 const { subscription, currentPlan, currentPlanDetails, refreshSubscription, changePlan } = useSubscription()
-const { isPaying, createCheckout } = usePayment()
+const { isPaying, createCheckout, getAuthHeaders } = usePayment()
 const { showPopup } = usePopup()
 
 const plans = PLAN_CATALOG
 const planKeys = PLAN_ORDER
 const isUpdatingPlan = ref(false)
 const paymentSuccess = computed(() => route.query.payment === 'success')
+const invoices = ref([])
 
 const usagePercent = computed(() => {
   if (!subscription.value) return 0
@@ -219,16 +227,21 @@ const renewalDateLabel = computed(() => {
   })
 })
 
-const invoices = computed(() => {
-  if (currentPlan.value === 'free') return []
-
-  const amount = `${currentPlanDetails.value.price.replace('€', '')} €`
-  return [
-    { date: '12 mars 2026', amount, status: 'Payé' },
-    { date: '12 févr. 2026', amount, status: 'Payé' },
-    { date: '12 janv. 2026', amount, status: 'Payé' },
-  ]
-})
+const loadInvoices = async () => {
+  try {
+    const config = useRuntimeConfig()
+    const headers = await getAuthHeaders()
+    const payments = await $fetch(`${config.public.apiBase}/payment/history`, { headers })
+    invoices.value = payments.map((p) => ({
+      date: new Date(p.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+      amount: `${p.amount.toFixed(2)} €`,
+      status: p.status === 'completed' ? 'Payé' : p.status === 'pending' ? 'En attente' : p.status,
+      plan: p.plan,
+    }))
+  } catch (e) {
+    console.error('Erreur chargement factures:', e)
+  }
+}
 
 const updatePlanSelection = async (plan) => {
   if (plan === currentPlan.value || isUpdatingPlan.value || isPaying.value) return
@@ -278,6 +291,7 @@ onMounted(async () => {
     }
 
     await refreshSubscription()
+    await loadInvoices()
 
     if (route.query.payment === 'success') {
       navigateTo('/billing', { replace: true })
