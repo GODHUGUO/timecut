@@ -71,9 +71,16 @@ export class PaymentController {
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   async handleWebhook(
-    @RawBody() rawBody: string,
+    @RawBody() rawBody: Buffer,
     @Headers('x-leekpay-signature') signature: string,
+    @Req() req: any,
   ) {
-    return this.paymentService.handleWebhook(rawBody, signature);
+    console.log('====== WEBHOOK LEEKPAY REÇU ======');
+    console.log('Headers:', JSON.stringify(req.headers));
+    console.log('Signature:', signature);
+    const bodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : String(rawBody);
+    console.log('Body:', bodyStr);
+    console.log('===================================');
+    return this.paymentService.handleWebhook(bodyStr, signature ?? '');
   }
 }

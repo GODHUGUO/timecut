@@ -27,7 +27,9 @@ interface LeekPayCheckoutResponse {
 }
 
 interface LeekPayTransaction {
-  id: string;
+  id: string | number;
+  customer_email?: string;
+  amount?: number;
 }
 
 interface LeekPayWebhookEvent {
@@ -159,22 +161,45 @@ export class PaymentService {
       return { received: true, processed: false };
     }
 
-    console.log('[Webhook] Transaction ID:', transaction.id);
+    console.log(
+      '[Webhook] Transaction ID:',
+      transaction.id,
+      '| Email:',
+      transaction.customer_email,
+    );
 
-    const payment = await this.prisma.payment.updateMany({
-      where: { paymentId: String(transaction.id) },
-      data: { status: 'completed' },
+    // Chercher d'abord par paymentId exact, sinon par email + pending
+    let targetPayment = await this.prisma.payment.findFirst({
+      where: { paymentId: String(transaction.id), status: 'pending' },
     });
 
-    console.log('[Webhook] Paiements mis à jour:', payment.count);
+    if (!targetPayment && transaction.customer_email) {
+      targetPayment = await this.prisma.payment.findFirst({
+        where: { customerEmail: transaction.customer_email, status: 'pending' },
+        orderBy: { createdAt: 'desc' },
+      });
+      console.log(
+        '[Webhook] Fallback email match:',
+        targetPayment?.id ?? 'non trouvé',
+      );
+    }
 
-    if (payment.count === 0) {
+    if (!targetPayment) {
+      console.error(
+        '[Webhook] Aucun paiement pending trouvé pour transaction:',
+        transaction.id,
+      );
       return { received: true, processed: false, reason: 'payment_not_found' };
     }
 
-    const updatedPayment = await this.prisma.payment.findFirst({
-      where: { paymentId: String(transaction.id) },
+    await this.prisma.payment.update({
+      where: { id: targetPayment.id },
+      data: { status: 'completed', paymentId: String(transaction.id) },
     });
+
+    console.log('[Webhook] Paiement mis à jour, id DB:', targetPayment.id);
+
+    const updatedPayment = targetPayment;
 
     if (updatedPayment) {
       await this.activateSubscription(
