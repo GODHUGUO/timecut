@@ -9,6 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
@@ -38,6 +40,22 @@ export class PaymentController {
     }
 
     return this.paymentService.createCheckout(userId, plan, customerEmail);
+  }
+
+  @Get('confirm')
+  @UseGuards(FirebaseAuthGuard)
+  async confirmPayment(
+    @Req() req: any,
+    @Query('payment_id') paymentId: string,
+  ) {
+    const userId = req.user?.uid ?? req.user?.id ?? req.headers['x-user-id'];
+    if (!userId) {
+      return { error: 'Utilisateur non authentifié' };
+    }
+    if (!paymentId) {
+      throw new BadRequestException('payment_id requis');
+    }
+    return this.paymentService.confirmPayment(userId, paymentId);
   }
 
   @Post('webhook')

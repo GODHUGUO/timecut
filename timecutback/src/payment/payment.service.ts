@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { createHmac, timingSafeEqual } from 'crypto';
 
@@ -10,6 +14,26 @@ const PLAN_PRICES = {
 } as const;
 
 type PlanKey = keyof typeof PLAN_PRICES;
+
+interface LeekPayCheckoutData {
+  payment_id: string;
+  payment_url: string;
+  status: string;
+}
+
+interface LeekPayCheckoutResponse {
+  success: boolean;
+  data: LeekPayCheckoutData;
+}
+
+interface LeekPayTransaction {
+  id: string;
+}
+
+interface LeekPayWebhookEvent {
+  event: string;
+  transaction: LeekPayTransaction;
+}
 
 @Injectable()
 export class PaymentService {
@@ -39,7 +63,7 @@ export class PaymentService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: planConfig.amount,
+        amount: Math.round(planConfig.amount * 100),
         currency: planConfig.currency,
         description: `Abonnement TimeCut ${planConfig.name}`,
         return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/billing?payment=success`,
@@ -52,19 +76,19 @@ export class PaymentService {
       throw new BadRequestException(`Erreur LeekPay: ${error}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as LeekPayCheckoutResponse;
     if (!data.success || !data.data) {
       throw new BadRequestException('Réponse invalide de LeekPay');
     }
 
-    const checkout = data.data;
+    const checkout: LeekPayCheckoutData = data.data;
 
     // Sauvegarder le paiement en base
     const payment = await this.prisma.payment.create({
       data: {
         userId,
         plan: planKey,
-        amount: planConfig.amount,
+        amount: Math.round(planConfig.amount * 100),
         currency: planConfig.currency,
         status: 'pending',
         paymentId: checkout.payment_id,
@@ -96,52 +120,98 @@ export class PaymentService {
       throw new BadRequestException(`Erreur vérification LeekPay: ${error}`);
     }
 
-    return response.json();
+    return response.json() as Promise<unknown>;
   }
 
   async handleWebhook(payload: string, signature: string) {
     if (!this.verifySignature(payload, signature)) {
+      console.error('[Webhook] Signature invalide reçue');
       throw new UnauthorizedException('Signature webhook invalide');
     }
 
-    const event = JSON.parse(payload);
+    const event = JSON.parse(payload) as LeekPayWebhookEvent;
+    console.log('[Webhook] Événement reçu:', event.event);
+
     if (event.event !== 'payment.success') {
       return { received: true, processed: false };
     }
 
-    const transaction = event.transaction;
+    const transaction: LeekPayTransaction = event.transaction;
     if (!transaction) {
       return { received: true, processed: false };
     }
 
-    // Mettre à jour le statut du paiement
+    console.log('[Webhook] Transaction ID:', transaction.id);
+
     const payment = await this.prisma.payment.updateMany({
       where: { paymentId: String(transaction.id) },
-      data: {
-        status: 'completed',
-      },
+      data: { status: 'completed' },
     });
 
+    console.log('[Webhook] Paiements mis à jour:', payment.count);
+
     if (payment.count === 0) {
-      // Paiement non trouvé, on essaie de le retrouver par montant + email
       return { received: true, processed: false, reason: 'payment_not_found' };
     }
 
-    // Récupérer le paiement mis à jour pour mettre à jour l'abonnement
     const updatedPayment = await this.prisma.payment.findFirst({
       where: { paymentId: String(transaction.id) },
     });
 
     if (updatedPayment) {
-      await this.activateSubscription(updatedPayment.userId, updatedPayment.plan);
+      await this.activateSubscription(
+        updatedPayment.userId,
+        updatedPayment.plan,
+      );
+      console.log(
+        '[Webhook] Abonnement activé pour userId:',
+        updatedPayment.userId,
+        'plan:',
+        updatedPayment.plan,
+      );
     }
 
     return { received: true, processed: true };
   }
 
+  async confirmPayment(userId: string, leekpayPaymentId: string) {
+    const statusResponse = await this.verifyPaymentStatus(leekpayPaymentId);
+    const status = statusResponse as { data?: { status?: string } };
+
+    if (
+      status?.data?.status !== 'completed' &&
+      status?.data?.status !== 'paid'
+    ) {
+      return {
+        success: false,
+        reason: 'payment_not_completed',
+        status: status?.data?.status,
+      };
+    }
+
+    const payment = await this.prisma.payment.findFirst({
+      where: { paymentId: leekpayPaymentId, userId },
+    });
+
+    if (!payment) {
+      return { success: false, reason: 'payment_not_found' };
+    }
+
+    await this.prisma.payment.updateMany({
+      where: { paymentId: leekpayPaymentId },
+      data: { status: 'completed' },
+    });
+
+    await this.activateSubscription(payment.userId, payment.plan);
+
+    return { success: true, plan: payment.plan };
+  }
+
   private verifySignature(payload: string, signature: string): boolean {
     try {
-      const expected = createHmac('sha256', this.secretKey).update(payload).digest('hex');
+      const expected = createHmac('sha256', this.publicKey)
+        .update(payload)
+        .digest('hex');
       const expectedBuf = Buffer.from(expected, 'hex');
       const signatureBuf = Buffer.from(signature, 'hex');
 
@@ -174,7 +244,9 @@ export class PaymentService {
 
   private validatePlan(plan: string): PlanKey {
     if (plan !== 'starter' && plan !== 'pro') {
-      throw new BadRequestException('Plan invalide. Choisissez starter ou pro.');
+      throw new BadRequestException(
+        'Plan invalide. Choisissez starter ou pro.',
+      );
     }
     return plan;
   }

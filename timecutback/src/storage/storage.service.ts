@@ -61,6 +61,11 @@ export class StorageService {
     };
   }
 
+  getFullVideoUrl(publicId: string): string {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    return `https://res.cloudinary.com/${cloudName}/video/upload/${publicId}.mp4`;
+  }
+
   generateClipUrls(
     publicId: string,
     clipDuration: number,

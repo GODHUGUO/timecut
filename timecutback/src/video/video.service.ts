@@ -246,27 +246,72 @@ export class VideoService {
 
     const effectiveDuration = totalDuration;
 
-    const clipUrls = this.storageService.generateClipUrls(
-      publicId,
-      clipDuration,
-      effectiveDuration,
-    );
-    this.logger.log(`Generated ${clipUrls.length} clip URLs`);
-
     let finalUrls: string[];
     let subtitles = { text: '', srtPath: '' };
 
     if (!shouldGenerateSubtitles) {
-      // ─── FLUX SANS SOUS-TITRES ───
-      this.logger.log(
-        '>>> FLUX SANS SOUS-TITRES: Utilisant les URLs Cloudinary directes',
-      );
-      finalUrls = clipUrls;
+      // ─── FLUX SANS SOUS-TITRES : découpage local ffmpeg + upload Cloudinary ───
+      this.logger.log('>>> FLUX SANS SOUS-TITRES: Découpage local avec ffmpeg');
+      const tempDir = path.join('./uploads', `video_tmp_${Date.now()}`);
+      fs.mkdirSync(tempDir, { recursive: true });
+      const localVideoPath = path.join(tempDir, 'source.mp4');
+
+      try {
+        const sourceUrl = this.storageService.getFullVideoUrl(publicId);
+        this.logger.log(`Downloading source video: ${sourceUrl}`);
+        await this.storageService.downloadClipFromUrl(sourceUrl, localVideoPath);
+
+        this.logger.log(`Cutting video into clips with ffmpeg`);
+        const localClipPaths = await this.processingService.cutClipsLocally(
+          localVideoPath,
+          effectiveDuration,
+          clipDuration,
+          tempDir,
+        );
+        this.logger.log(`Cut ${localClipPaths.length} clips locally`);
+
+        finalUrls = await Promise.all(
+          localClipPaths.map(async (clipPath, idx) => {
+            const url = await this.storageService.upload({
+              fieldname: 'file',
+              originalname: `clip_${idx}.mp4`,
+              encoding: '7bit',
+              mimetype: 'video/mp4',
+              size: 0,
+              path: clipPath,
+              filename: `clip_${idx}.mp4`,
+            });
+            this.logger.log(`Clip ${idx} uploaded: ${url}`);
+            return url;
+          }),
+        );
+      } finally {
+        this.safeDeleteDir(tempDir);
+      }
+
       this.logger.log(`Nombre de clips: ${finalUrls.length}`);
       this.logger.log(`Premier URL: ${finalUrls[0]}`);
     } else {
       // ─── FLUX AVEC SOUS-TITRES ───
       this.logger.log('>>> FLUX AVEC SOUS-TITRES: Traitement de chaque clip');
+
+      const sourceUrl = this.storageService.getFullVideoUrl(publicId);
+      const tempBaseDir = path.join('./uploads', `video_sub_tmp_${Date.now()}`);
+      fs.mkdirSync(tempBaseDir, { recursive: true });
+      const localVideoPath = path.join(tempBaseDir, 'source.mp4');
+
+      this.logger.log(`Downloading source video for subtitles: ${sourceUrl}`);
+      await this.storageService.downloadClipFromUrl(sourceUrl, localVideoPath);
+
+      this.logger.log(`Cutting video into clips with ffmpeg`);
+      const localClipPaths = await this.processingService.cutClipsLocally(
+        localVideoPath,
+        effectiveDuration,
+        clipDuration,
+        tempBaseDir,
+      );
+      this.logger.log(`Cut ${localClipPaths.length} clips locally`);
+
       const CONCURRENT_CLIPS = 5;
 
       // Sémaphore : max CONCURRENT_CLIPS clips en traitement simultané
@@ -294,11 +339,11 @@ export class VideoService {
         srtContent: string;
         clipDuration: number;
       }[] = await Promise.all(
-        clipUrls.map(async (clipUrl, idx) => {
+        localClipPaths.map(async (clipPath, idx) => {
           await acquire();
           try {
-            return await this.processClipWithSubtitles(
-              clipUrl,
+            return await this.processLocalClipWithSubtitles(
+              clipPath,
               idx,
               preferences,
             );
@@ -307,6 +352,8 @@ export class VideoService {
           }
         }),
       );
+
+      this.safeDeleteDir(tempBaseDir);
 
       finalUrls = processedClips.map((c) => c.url);
 
@@ -377,11 +424,11 @@ export class VideoService {
   }
 
   /**
-   * Traite un clip individuel avec sous-titres :
-   * télécharge → transcrit → incrust → re-upload → nettoyage
+   * Traite un clip local (déjà découpé par ffmpeg) avec sous-titres :
+   * transcrit → incrust → upload → nettoyage
    */
-  private async processClipWithSubtitles(
-    clipUrl: string,
+  private async processLocalClipWithSubtitles(
+    localClipPath: string,
     clipIndex: number,
     preferences: UserPreferencesPayload,
   ): Promise<{
@@ -390,27 +437,14 @@ export class VideoService {
     srtContent: string;
     clipDuration: number;
   }> {
-    const tempDir = path.join(
-      './uploads',
-      `clip_tmp_${Date.now()}_${clipIndex}`,
-    );
-    fs.mkdirSync(tempDir, { recursive: true });
-
-    const localClipPath = path.join(tempDir, `clip_${clipIndex}.mp4`);
     let subClipPath: string | null = null;
     let srtFilePath: string | null = null;
     let srtContent = '';
 
     try {
-      // a. Télécharger le clip depuis Cloudinary
-      this.logger.log(`Downloading clip ${clipIndex} from Cloudinary`);
-      await this.storageService.downloadClipFromUrl(clipUrl, localClipPath);
-
-      // Mesurer la durée réelle du clip
       const actualClipDuration =
         await this.processingService.getMediaDuration(localClipPath);
 
-      // b. Transcrire via AI
       this.logger.log(`Transcribing clip ${clipIndex}`);
       const subtitleResult = await this.aiService.generateSubtitlesFromClip(
         localClipPath,
@@ -428,15 +462,12 @@ export class VideoService {
         this.logger.warn(`SRT file does not exist at: ${srtFilePath}`);
       }
 
-      // c. Incruster sous-titres
       subClipPath = await this.processingService.burnSrtIntoClip(
         localClipPath,
         subtitleResult.srtPath,
         preferences.captionStyle,
       );
       this.logger.log(`Clip ${clipIndex} subtitles burned`);
-
-      // d. Re-upload le clip avec sous-titres vers Cloudinary
 
       const finalUrl = await this.storageService.upload({
         fieldname: 'file',
@@ -456,12 +487,8 @@ export class VideoService {
         clipDuration: actualClipDuration,
       };
     } finally {
-      // e. Nettoyage des fichiers temporaires
-      this.safeDeleteFile(localClipPath);
       if (subClipPath) this.safeDeleteFile(subClipPath);
       if (srtFilePath) this.safeDeleteFile(srtFilePath);
-      // Supprimer le dossier temporaire
-      this.safeDeleteDir(tempDir);
     }
   }
 

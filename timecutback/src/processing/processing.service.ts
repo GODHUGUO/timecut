@@ -20,6 +20,65 @@ ffmpeg.setFfprobePath(ffprobeStatic.path);
 
 @Injectable()
 export class ProcessingService {
+  async cutClipsLocally(
+    inputPath: string,
+    totalDuration: number,
+    clipDuration: number,
+    outputDir: string,
+  ): Promise<string[]> {
+    const outputPaths: string[] = [];
+    const minTrailingClipSeconds = 1;
+    let startOffset = 0;
+    let clipIndex = 0;
+
+    while (startOffset < totalDuration) {
+      const remaining = totalDuration - startOffset;
+
+      if (outputPaths.length > 0 && remaining < minTrailingClipSeconds) {
+        // Fusionne le dernier clip avec le reste
+        const prevStart = Math.max(startOffset - clipDuration, 0);
+        const prevPath = outputPaths[outputPaths.length - 1];
+        const extendedPath = path.join(outputDir, `clip_${clipIndex}_ext.mp4`);
+        await this.cutClip(inputPath, prevStart, totalDuration - prevStart, extendedPath);
+        fs.unlinkSync(prevPath);
+        outputPaths[outputPaths.length - 1] = extendedPath;
+        break;
+      }
+
+      const duration = Math.min(clipDuration, remaining);
+      const outputPath = path.join(outputDir, `clip_${clipIndex}.mp4`);
+      await this.cutClip(inputPath, startOffset, duration, outputPath);
+      outputPaths.push(outputPath);
+
+      startOffset += clipDuration;
+      clipIndex++;
+    }
+
+    return outputPaths;
+  }
+
+  private cutClip(
+    inputPath: string,
+    startOffset: number,
+    duration: number,
+    outputPath: string,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      ffmpeg(inputPath)
+        .setStartTime(startOffset)
+        .setDuration(duration)
+        .outputOptions([
+          '-c copy',
+          '-avoid_negative_ts make_zero',
+          '-movflags +faststart',
+        ])
+        .output(outputPath)
+        .on('end', () => resolve())
+        .on('error', (err: Error) => reject(err))
+        .run();
+    });
+  }
+
   async getMediaDuration(filePath: string): Promise<number> {
     return new Promise((resolve, reject) => {
       ffmpeg.ffprobe(
