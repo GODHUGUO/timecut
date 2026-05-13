@@ -63,7 +63,7 @@ export class PaymentService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: Math.round(planConfig.amount * 100),
+        amount: planConfig.amount,
         currency: planConfig.currency,
         description: `Abonnement TimeCut ${planConfig.name}`,
         return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/billing?payment=success`,
