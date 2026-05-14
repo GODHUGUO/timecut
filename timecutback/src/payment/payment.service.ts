@@ -63,6 +63,9 @@ export class PaymentService {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const returnUrl = `${frontendUrl}/billing?payment=success&plan=${planKey}`;
 
+    console.log('====== CREATE CHECKOUT ======');
+    console.log('[createCheckout] userId:', userId, 'plan:', planKey);
+
     const response = await fetch(`${LEEKPAY_API_URL}/checkout`, {
       method: 'POST',
       headers: {
@@ -78,19 +81,36 @@ export class PaymentService {
       }),
     });
 
+    const rawText = await response.text();
+    console.log('[createCheckout] HTTP status:', response.status);
+    console.log('[createCheckout] Body brut LeekPay:', rawText);
+
     if (!response.ok) {
-      const error = await response.text();
-      throw new BadRequestException(`Erreur LeekPay: ${error}`);
+      throw new BadRequestException(`Erreur LeekPay: ${rawText}`);
     }
 
-    const data = (await response.json()) as LeekPayCheckoutResponse;
+    const data = JSON.parse(rawText) as LeekPayCheckoutResponse;
     if (!data.success || !data.data) {
       throw new BadRequestException('Réponse invalide de LeekPay');
     }
 
-    const checkout: LeekPayCheckoutData = data.data;
+    const checkout = data.data as any;
+    // LeekPay peut renvoyer payment_id, id, reference, transaction_id...
+    const extractedPaymentId =
+      checkout.payment_id ?? checkout.id ?? checkout.reference ?? checkout.transaction_id ?? null;
+    const extractedPaymentUrl =
+      checkout.payment_url ?? checkout.url ?? checkout.checkout_url ?? null;
 
-    // Sauvegarder le paiement en base
+    console.log('[createCheckout] payment_id extrait:', extractedPaymentId);
+    console.log('[createCheckout] payment_url extrait:', extractedPaymentUrl);
+    console.log('[createCheckout] Clés disponibles dans data:', Object.keys(checkout));
+
+    if (!extractedPaymentId) {
+      throw new BadRequestException(
+        'Impossible d\'extraire payment_id de la réponse LeekPay',
+      );
+    }
+
     const payment = await this.prisma.payment.create({
       data: {
         userId,
@@ -98,16 +118,19 @@ export class PaymentService {
         amount: Math.round(planConfig.amount * 100),
         currency: planConfig.currency,
         status: 'pending',
-        paymentId: checkout.payment_id,
-        checkoutUrl: checkout.payment_url,
+        paymentId: String(extractedPaymentId),
+        checkoutUrl: extractedPaymentUrl,
         customerEmail: customerEmail || null,
         description: `Abonnement TimeCut ${planConfig.name}`,
       },
     });
 
+    console.log('[createCheckout] Paiement BD créé id=', payment.id, 'paymentId=', payment.paymentId);
+    console.log('====== FIN CREATE CHECKOUT ======');
+
     return {
-      paymentUrl: checkout.payment_url,
-      paymentId: checkout.payment_id,
+      paymentUrl: extractedPaymentUrl,
+      paymentId: extractedPaymentId,
       status: checkout.status,
       payment,
     };
