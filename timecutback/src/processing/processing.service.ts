@@ -44,7 +44,11 @@ export class ProcessingService {
         ])
         .output(segmentPattern)
         .on('end', () => resolve())
-        .on('error', (err: Error) => reject(err))
+        .on('error', (err: Error, _stdout, stderr) => {
+          console.error('FFmpeg segment muxer error:', err.message);
+          if (stderr) console.error('FFmpeg stderr:', stderr);
+          reject(err);
+        })
         .run();
     });
 
