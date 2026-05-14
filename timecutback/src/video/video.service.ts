@@ -250,20 +250,16 @@ export class VideoService {
     let subtitles = { text: '', srtPath: '' };
 
     if (!shouldGenerateSubtitles) {
-      // ─── FLUX SANS SOUS-TITRES : découpage local ffmpeg + upload Cloudinary ───
-      this.logger.log('>>> FLUX SANS SOUS-TITRES: Découpage local avec ffmpeg');
+      // ─── FLUX SANS SOUS-TITRES : découpage en stream depuis l'URL Cloudinary ───
+      this.logger.log('>>> FLUX SANS SOUS-TITRES: Découpage en stream depuis URL');
       const tempDir = path.join('./uploads', `video_tmp_${Date.now()}`);
       fs.mkdirSync(tempDir, { recursive: true });
-      const localVideoPath = path.join(tempDir, 'source.mp4');
 
       try {
         const sourceUrl = this.storageService.getFullVideoUrl(publicId);
-        this.logger.log(`Downloading source video: ${sourceUrl}`);
-        await this.storageService.downloadClipFromUrl(sourceUrl, localVideoPath);
-
-        this.logger.log(`Cutting video into clips with ffmpeg`);
+        this.logger.log(`Cutting video from URL with ffmpeg segment muxer`);
         const localClipPaths = await this.processingService.cutClipsLocally(
-          localVideoPath,
+          sourceUrl,
           effectiveDuration,
           clipDuration,
           tempDir,
@@ -298,21 +294,17 @@ export class VideoService {
       const sourceUrl = this.storageService.getFullVideoUrl(publicId);
       const tempBaseDir = path.join('./uploads', `video_sub_tmp_${Date.now()}`);
       fs.mkdirSync(tempBaseDir, { recursive: true });
-      const localVideoPath = path.join(tempBaseDir, 'source.mp4');
 
-      this.logger.log(`Downloading source video for subtitles: ${sourceUrl}`);
-      await this.storageService.downloadClipFromUrl(sourceUrl, localVideoPath);
-
-      this.logger.log(`Cutting video into clips with ffmpeg`);
+      this.logger.log(`Cutting video from URL with ffmpeg segment muxer`);
       const localClipPaths = await this.processingService.cutClipsLocally(
-        localVideoPath,
+        sourceUrl,
         effectiveDuration,
         clipDuration,
         tempBaseDir,
       );
       this.logger.log(`Cut ${localClipPaths.length} clips locally`);
 
-      const CONCURRENT_CLIPS = 5;
+      const CONCURRENT_CLIPS = 7;
 
       // Sémaphore : max CONCURRENT_CLIPS clips en traitement simultané
       let active = 0;

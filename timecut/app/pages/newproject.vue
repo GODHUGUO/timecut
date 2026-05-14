@@ -602,9 +602,11 @@ const startProcessing = async () => {
     if (!cloudRes.ok) throw new Error(cloudData?.error?.message || 'Erreur upload Cloudinary')
 
     // Étape 3 : Envoyer le publicId au backend pour traitement
+    // Rafraîchir le token car l'upload Cloudinary peut prendre du temps
+    const freshHeaders = await getAuthHeaders()
     const processRes = await fetch(`${apiBase}/video/process`, {
       method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers: { ...freshHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         publicId: cloudData.public_id,
         duration: cloudData.duration,

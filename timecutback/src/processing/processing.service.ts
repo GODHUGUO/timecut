@@ -26,32 +26,62 @@ export class ProcessingService {
     clipDuration: number,
     outputDir: string,
   ): Promise<string[]> {
-    const outputPaths: string[] = [];
     const minTrailingClipSeconds = 1;
-    let startOffset = 0;
-    let clipIndex = 0;
+    const segmentPattern = path.join(outputDir, 'clip_%d.mp4');
 
-    while (startOffset < totalDuration) {
-      const remaining = totalDuration - startOffset;
+    // Découpage en UNE seule passe avec le segment muxer ffmpeg.
+    // -c copy = stream copy (aucune recompression, qualité 100% identique).
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(inputPath)
+        .outputOptions([
+          '-c copy',
+          '-map 0',
+          '-f segment',
+          `-segment_time ${clipDuration}`,
+          '-reset_timestamps 1',
+          '-avoid_negative_ts make_zero',
+          '-movflags +faststart',
+        ])
+        .output(segmentPattern)
+        .on('end', () => resolve())
+        .on('error', (err: Error) => reject(err))
+        .run();
+    });
 
-      if (outputPaths.length > 0 && remaining < minTrailingClipSeconds) {
-        // Fusionne le dernier clip avec le reste
-        const prevStart = Math.max(startOffset - clipDuration, 0);
-        const prevPath = outputPaths[outputPaths.length - 1];
-        const extendedPath = path.join(outputDir, `clip_${clipIndex}_ext.mp4`);
-        await this.cutClip(inputPath, prevStart, totalDuration - prevStart, extendedPath);
-        fs.unlinkSync(prevPath);
-        outputPaths[outputPaths.length - 1] = extendedPath;
-        break;
+    // Récupérer la liste des clips créés, triée par index numérique.
+    const outputPaths = fs
+      .readdirSync(outputDir)
+      .filter((f) => /^clip_\d+\.mp4$/.test(f))
+      .sort((a, b) => {
+        const na = parseInt(a.match(/(\d+)/)![1], 10);
+        const nb = parseInt(b.match(/(\d+)/)![1], 10);
+        return na - nb;
+      })
+      .map((f) => path.join(outputDir, f));
+
+    // Si le dernier clip est trop court, le fusionner avec l'avant-dernier
+    // en réextrayant un seul segment étendu depuis la source.
+    if (outputPaths.length >= 2) {
+      const lastIdx = outputPaths.length - 1;
+      const lastDuration = await this.getMediaDuration(outputPaths[lastIdx]);
+
+      if (lastDuration < minTrailingClipSeconds) {
+        const prevStart = (lastIdx - 1) * clipDuration;
+        const extendedDuration = totalDuration - prevStart;
+        const extendedPath = path.join(outputDir, `clip_${lastIdx - 1}_ext.mp4`);
+
+        await this.cutClip(
+          inputPath,
+          prevStart,
+          extendedDuration,
+          extendedPath,
+        );
+
+        fs.unlinkSync(outputPaths[lastIdx]);
+        fs.unlinkSync(outputPaths[lastIdx - 1]);
+        outputPaths[lastIdx - 1] = extendedPath;
+        outputPaths.pop();
       }
-
-      const duration = Math.min(clipDuration, remaining);
-      const outputPath = path.join(outputDir, `clip_${clipIndex}.mp4`);
-      await this.cutClip(inputPath, startOffset, duration, outputPath);
-      outputPaths.push(outputPath);
-
-      startOffset += clipDuration;
-      clipIndex++;
     }
 
     return outputPaths;
@@ -153,9 +183,9 @@ export class ProcessingService {
         .videoFilters(subtitleFilter)
         .outputOptions([
           '-c:v libx264',
-          '-preset ultrafast',
+          '-preset veryfast',
           '-tune fastdecode',
-          '-crf 28',
+          '-crf 23',
           '-threads 0',
           '-pix_fmt yuv420p',
           '-movflags +faststart',

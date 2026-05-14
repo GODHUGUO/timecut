@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { onAuthStateChanged } from 'firebase/auth'
+import { onAuthStateChanged, type User } from 'firebase/auth'
 import { auth } from '../plugins/firebase.client'
 import { PLAN_CATALOG } from '../utils/plans'
 
@@ -7,11 +7,11 @@ export const useSubscription = () => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBase
 
-  const subscription = useState('subscription:data', () => null)
+  const subscription = useState<any>('subscription:data', () => null)
   const isLoading = useState('subscription:loading', () => false)
 
-  const getCurrentUser = async () => {
-    if (auth.currentUser) return auth.currentUser
+  const getCurrentUser = (): Promise<User | null> => {
+    if (auth.currentUser) return Promise.resolve(auth.currentUser)
 
     return new Promise((resolve) => {
       const off = onAuthStateChanged(auth, (user) => {
@@ -27,7 +27,7 @@ export const useSubscription = () => {
       throw new Error('Utilisateur non connecté')
     }
 
-    const token = await user.getIdToken()
+    const token = await user.getIdToken(true)
     return {
       Authorization: `Bearer ${token}`,
       'x-user-id': user.uid,
@@ -48,7 +48,7 @@ export const useSubscription = () => {
     }
   }
 
-  const changePlan = async (plan) => {
+  const changePlan = async (plan: string) => {
     isLoading.value = true
 
     try {
