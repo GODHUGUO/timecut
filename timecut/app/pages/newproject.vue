@@ -175,7 +175,24 @@
           Cette vidéo consommera {{ requiredMinutes }} min de quota.
         </p>
 
-        <div v-if="isProcessing" class="space-y-2">
+        <div v-if="isInQueue" class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 space-y-2">
+          <div class="flex items-center gap-2">
+            <Icon name="lucide:clock" class="w-4 h-4 text-yellow-400 animate-pulse shrink-0" />
+            <p class="text-yellow-300 text-sm font-medium">
+              Beaucoup d'utilisateurs traitent une vidéo en ce moment.
+            </p>
+          </div>
+          <p class="text-gray-300 text-xs">
+            Tu es en <span class="font-semibold text-white">position {{ queuePosition }}</span> dans la file d'attente.
+            Temps d'attente estimé :
+            <span class="font-semibold text-white">
+              ~{{ queueWaitSeconds < 60 ? `${queueWaitSeconds}s` : `${Math.ceil(queueWaitSeconds / 60)} min` }}
+            </span>.
+          </p>
+          <p class="text-gray-400 text-xs italic">Ton traitement démarrera automatiquement dès qu'un emplacement se libère.</p>
+        </div>
+
+        <div v-if="isProcessing && !isInQueue" class="space-y-2">
           <div class="flex items-center justify-between text-xs">
             <div class="flex items-center gap-2 text-white">
               <span class="w-2 h-2 rounded-full bg-[#7f13ec] animate-pulse inline-block" />
@@ -402,6 +419,11 @@ const progress = ref(0)
 const clipUrls = ref([])
 const showModal = ref(false)
 const isDownloading = ref(false)
+
+const isInQueue = ref(false)
+const queuePosition = ref(0)
+const queueWaitSeconds = ref(0)
+let queuePollInterval = null
 const currentDownloadIndex = ref(-1)
 const downloadedClips = ref(new Set())
 
@@ -562,6 +584,38 @@ const downloadAll = async () => {
   setTimeout(() => { showModal.value = false }, 800)
 }
 
+const fetchQueueStatus = async (queueType) => {
+  try {
+    const headers = await getAuthHeaders()
+    return await $fetch(`${apiBase}/video/queue-status?type=${queueType}`, { headers })
+  } catch (e) {
+    console.error('Erreur récupération queue status :', e)
+    return null
+  }
+}
+
+const stopQueuePolling = () => {
+  if (queuePollInterval) {
+    clearInterval(queuePollInterval)
+    queuePollInterval = null
+  }
+}
+
+const startQueuePolling = (queueType) => {
+  stopQueuePolling()
+  queuePollInterval = setInterval(async () => {
+    const status = await fetchQueueStatus(queueType)
+    if (!status) return
+    if (status.slotsAvailable) {
+      isInQueue.value = false
+      stopQueuePolling()
+    } else {
+      queuePosition.value = status.waitingJobs + 1
+      queueWaitSeconds.value = status.estimatedWaitSeconds
+    }
+  }, 5000)
+}
+
 const startProcessing = async () => {
   if (isProcessing.value) return
   if (!uploadedFile.value) {
@@ -578,6 +632,7 @@ const startProcessing = async () => {
   progress.value = 0
   clipUrls.value = []
   showModal.value = false
+  isInQueue.value = false
 
   try {
     const headers = await getAuthHeaders()
@@ -601,7 +656,17 @@ const startProcessing = async () => {
     const cloudData = await cloudRes.json()
     if (!cloudRes.ok) throw new Error(cloudData?.error?.message || 'Erreur upload Cloudinary')
 
-    // Étape 3 : Envoyer le publicId au backend pour traitement
+    // Étape 3 : Vérifier l'état de la file d'attente avant l'envoi au backend
+    const queueType = subtitleMode.value === 'ai' ? 'heavy' : 'light'
+    const initialQueueStatus = await fetchQueueStatus(queueType)
+    if (initialQueueStatus && !initialQueueStatus.slotsAvailable) {
+      isInQueue.value = true
+      queuePosition.value = initialQueueStatus.waitingJobs + 1
+      queueWaitSeconds.value = initialQueueStatus.estimatedWaitSeconds
+      startQueuePolling(queueType)
+    }
+
+    // Étape 4 : Envoyer le publicId au backend pour traitement
     // Rafraîchir le token car l'upload Cloudinary peut prendre du temps
     const freshHeaders = await getAuthHeaders()
     const processRes = await fetch(`${apiBase}/video/process`, {
@@ -615,6 +680,10 @@ const startProcessing = async () => {
         subtitleMode: subtitleMode.value,
       }),
     })
+
+    stopQueuePolling()
+    isInQueue.value = false
+
     const data = await processRes.json()
     if (!processRes.ok) throw new Error(data?.message || 'Erreur traitement vidéo')
 
@@ -636,6 +705,8 @@ const startProcessing = async () => {
   } catch (error) {
     console.error('Erreur upload :', error)
     showPopup(error.message || "Erreur lors de l'envoi", 'error')
+    stopQueuePolling()
+    isInQueue.value = false
     isProcessing.value = false
   }
 }

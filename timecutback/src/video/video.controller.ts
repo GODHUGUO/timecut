@@ -4,11 +4,13 @@ import {
   Get,
   Post,
   Body,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { VideoService } from './video.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+import { QueueType } from '../processing/processing-queue.service';
 
 @Controller('video')
 export class VideoController {
@@ -70,6 +72,13 @@ export class VideoController {
   async signUpload(@Req() req: any) {
     const userId = this.videoService.getUserIdFromRequest(req);
     return this.videoService.signUpload(userId);
+  }
+
+  @Get('queue-status')
+  @UseGuards(FirebaseAuthGuard)
+  getQueueStatus(@Query('type') type: string) {
+    const queueType: QueueType = type === 'heavy' ? 'heavy' : 'light';
+    return this.videoService.getQueueStatus(queueType);
   }
 
   @Post('process')

@@ -7,6 +7,11 @@ import {
 } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
 import { ProcessingService } from '../processing/processing.service';
+import {
+  ProcessingQueueService,
+  QueueStatus,
+  QueueType,
+} from '../processing/processing-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AIService } from '../ai/ai.service';
 import * as fs from 'fs';
@@ -71,9 +76,14 @@ export class VideoService {
   constructor(
     private readonly storageService: StorageService,
     private readonly processingService: ProcessingService,
+    private readonly processingQueue: ProcessingQueueService,
     private readonly prisma: PrismaService,
     private readonly aiService: AIService,
   ) {}
+
+  getQueueStatus(type: QueueType): QueueStatus {
+    return this.processingQueue.getStatus(type);
+  }
 
   private getPlanKey(plan: string | null | undefined): PlanKey {
     if (plan === 'starter' || plan === 'pro') return plan;
@@ -245,11 +255,14 @@ export class VideoService {
     );
 
     const effectiveDuration = totalDuration;
+    const queueType: QueueType = shouldGenerateSubtitles ? 'heavy' : 'light';
+    this.logger.log(`[QUEUE] Enqueuing ${queueType} job for user ${userId}`);
 
-    let finalUrls: string[];
-    let subtitles = { text: '', srtPath: '' };
+    const queueResult = await this.processingQueue.enqueue(queueType, async () => {
+      let finalUrls: string[];
+      let subtitles = { text: '', srtPath: '' };
 
-    if (!shouldGenerateSubtitles) {
+      if (!shouldGenerateSubtitles) {
       // ─── FLUX SANS SOUS-TITRES : découpage local ffmpeg + upload Cloudinary ───
       this.logger.log('>>> FLUX SANS SOUS-TITRES: Découpage local avec ffmpeg');
       const tempDir = path.join('./uploads', `video_tmp_${Date.now()}`);
@@ -374,52 +387,55 @@ export class VideoService {
         }
       }
 
-      subtitles = {
-        text: processedClips
-          .map((c) => c.text)
-          .join(' ')
-          .trim(),
-        srtPath: srtUrl,
-      };
-    }
+        subtitles = {
+          text: processedClips
+            .map((c) => c.text)
+            .join(' ')
+            .trim(),
+          srtPath: srtUrl,
+        };
+      }
 
-    // ÉTAPE 3 : Créer les enregistrements Clip en DB
-    await this.prisma.clip.createMany({
-      data: finalUrls.map((url) => ({
-        url,
-        duration: clipDuration,
-        videoId: video.id,
-      })),
-    });
+      // ÉTAPE 3 : Créer les enregistrements Clip en DB
+      await this.prisma.clip.createMany({
+        data: finalUrls.map((url) => ({
+          url,
+          duration: clipDuration,
+          videoId: video.id,
+        })),
+      });
 
-    this.logger.log(`>>> RETURNING ${finalUrls.length} clip URLs`);
-    this.logger.log(`First URL: ${finalUrls[0]}`);
-    this.logger.log(
-      `Subtitles burned into returned clips: ${shouldGenerateSubtitles}`,
-    );
+      this.logger.log(`>>> RETURNING ${finalUrls.length} clip URLs`);
+      this.logger.log(`First URL: ${finalUrls[0]}`);
+      this.logger.log(
+        `Subtitles burned into returned clips: ${shouldGenerateSubtitles}`,
+      );
 
-    // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
-    await this.prisma.userSubscription.update({
-      where: { userId },
-      data: {
-        monthlyMinutesUsed: {
-          increment: minutesToConsume,
+      // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
+      await this.prisma.userSubscription.update({
+        where: { userId },
+        data: {
+          monthlyMinutesUsed: {
+            increment: minutesToConsume,
+          },
         },
-      },
-    });
+      });
 
-    // ÉTAPE 5 : Supprimer la vidéo source de Cloudinary (fire & forget)
-    this.storageService.deleteCloudinaryAsset(publicId).catch((err) => {
-      this.logger.warn(`Failed to delete source video ${publicId}: ${err}`);
+      // ÉTAPE 5 : Supprimer la vidéo source de Cloudinary (fire & forget)
+      this.storageService.deleteCloudinaryAsset(publicId).catch((err) => {
+        this.logger.warn(`Failed to delete source video ${publicId}: ${err}`);
+      });
+
+      return { finalUrls, subtitles };
     });
 
     return {
-      clips: finalUrls,
+      clips: queueResult.finalUrls,
       subtitleMode: normalizedSubtitleMode,
       subtitlesBurned: shouldGenerateSubtitles,
       subtitleTranslationEnabled: preferences.subtitleTranslationEnabled,
       targetSubtitleLanguage: preferences.targetSubtitleLanguage,
-      subtitles,
+      subtitles: queueResult.subtitles,
     };
   }
 

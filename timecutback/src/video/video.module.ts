@@ -6,6 +6,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ProcessingService } from '../processing/processing.service';
+import { ProcessingQueueService } from '../processing/processing-queue.service';
 import { AIService } from '../ai/ai.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 @Module({
@@ -23,6 +24,12 @@ import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
     }),
   ],
   controllers: [VideoController],
-  providers: [VideoService, ProcessingService, AIService, FirebaseAuthGuard],
+  providers: [
+    VideoService,
+    ProcessingService,
+    ProcessingQueueService,
+    AIService,
+    FirebaseAuthGuard,
+  ],
 })
 export class VideoModule {}
