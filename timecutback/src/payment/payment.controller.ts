@@ -58,19 +58,19 @@ export class PaymentController {
     @Req() req: any,
     @Query('payment_id') paymentId: string,
   ) {
-    console.log('>>> [PaymentController] /payment/confirm APPELÉ');
-    console.log('>>> [PaymentController] payment_id query:', paymentId);
-    console.log('>>> [PaymentController] req.user uid:', req.user?.uid);
+    // console.log('>>> [PaymentController] /payment/confirm APPELÉ');
+    // console.log('>>> [PaymentController] payment_id query:', paymentId);
+    // console.log('>>> [PaymentController] req.user uid:', req.user?.uid);
 
     const userId = req.user?.uid ?? req.user?.id ?? req.headers['x-user-id'];
     if (!userId) {
-      console.warn('>>> [PaymentController] /payment/confirm refus: pas de userId');
+      // console.warn('>>> [PaymentController] /payment/confirm refus: pas de userId');
       return { error: 'Utilisateur non authentifié' };
     }
 
     // Si pas de payment_id explicite, confirme le dernier pending de l'utilisateur
     if (!paymentId) {
-      console.log('>>> [PaymentController] Pas de payment_id, on prend le dernier pending');
+      // console.log('>>> [PaymentController] Pas de payment_id, on prend le dernier pending');
       return this.paymentService.confirmLatestPending(userId);
     }
     return this.paymentService.confirmPayment(userId, paymentId);
@@ -83,12 +83,12 @@ export class PaymentController {
     @Headers('x-leekpay-signature') signature: string,
     @Req() req: any,
   ) {
-    console.log('====== WEBHOOK LEEKPAY REÇU ======');
-    console.log('Headers:', JSON.stringify(req.headers));
-    console.log('Signature:', signature);
+    // console.log('====== WEBHOOK LEEKPAY REÇU ======');
+    // console.log('Headers:', JSON.stringify(req.headers));
+    // console.log('Signature:', signature);
     const bodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : String(rawBody);
-    console.log('Body:', bodyStr);
-    console.log('===================================');
+    // console.log('Body:', bodyStr);
+    // console.log('===================================');
     return this.paymentService.handleWebhook(bodyStr, signature ?? '');
   }
 }

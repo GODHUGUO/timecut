@@ -63,8 +63,8 @@ export class PaymentService {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const returnUrl = `${frontendUrl}/billing?payment=success&plan=${planKey}`;
 
-    console.log('====== CREATE CHECKOUT ======');
-    console.log('[createCheckout] userId:', userId, 'plan:', planKey);
+    // console.log('====== CREATE CHECKOUT ======');
+    // console.log('[createCheckout] userId:', userId, 'plan:', planKey);
 
     const response = await fetch(`${LEEKPAY_API_URL}/checkout`, {
       method: 'POST',
@@ -82,8 +82,8 @@ export class PaymentService {
     });
 
     const rawText = await response.text();
-    console.log('[createCheckout] HTTP status:', response.status);
-    console.log('[createCheckout] Body brut LeekPay:', rawText);
+    // console.log('[createCheckout] HTTP status:', response.status);
+    // console.log('[createCheckout] Body brut LeekPay:', rawText);
 
     if (!response.ok) {
       throw new BadRequestException(`Erreur LeekPay: ${rawText}`);
@@ -101,9 +101,9 @@ export class PaymentService {
     const extractedPaymentUrl =
       checkout.payment_url ?? checkout.url ?? checkout.checkout_url ?? null;
 
-    console.log('[createCheckout] payment_id extrait:', extractedPaymentId);
-    console.log('[createCheckout] payment_url extrait:', extractedPaymentUrl);
-    console.log('[createCheckout] Clés disponibles dans data:', Object.keys(checkout));
+    // console.log('[createCheckout] payment_id extrait:', extractedPaymentId);
+    // console.log('[createCheckout] payment_url extrait:', extractedPaymentUrl);
+    // console.log('[createCheckout] Clés disponibles dans data:', Object.keys(checkout));
 
     if (!extractedPaymentId) {
       throw new BadRequestException(
@@ -125,8 +125,8 @@ export class PaymentService {
       },
     });
 
-    console.log('[createCheckout] Paiement BD créé id=', payment.id, 'paymentId=', payment.paymentId);
-    console.log('====== FIN CREATE CHECKOUT ======');
+    // console.log('[createCheckout] Paiement BD créé id=', payment.id, 'paymentId=', payment.paymentId);
+    // console.log('====== FIN CREATE CHECKOUT ======');
 
     return {
       paymentUrl: extractedPaymentUrl,
@@ -155,10 +155,7 @@ export class PaymentService {
   }
 
   async verifyPaymentStatus(paymentId: string) {
-    console.log(
-      '[verifyPaymentStatus] Appel LeekPay pour paymentId:',
-      paymentId,
-    );
+    // console.log('[verifyPaymentStatus] Appel LeekPay pour paymentId:', paymentId);
     const response = await fetch(`${LEEKPAY_API_URL}/checkout/${paymentId}`, {
       method: 'GET',
       headers: {
@@ -168,8 +165,8 @@ export class PaymentService {
     });
 
     const rawText = await response.text();
-    console.log('[verifyPaymentStatus] HTTP status:', response.status);
-    console.log('[verifyPaymentStatus] Body brut LeekPay:', rawText);
+    // console.log('[verifyPaymentStatus] HTTP status:', response.status);
+    // console.log('[verifyPaymentStatus] Body brut LeekPay:', rawText);
 
     if (!response.ok) {
       throw new BadRequestException(`Erreur vérification LeekPay: ${rawText}`);
@@ -190,7 +187,7 @@ export class PaymentService {
     }
 
     const event = JSON.parse(payload) as LeekPayWebhookEvent;
-    console.log('[Webhook] Événement reçu:', event.event);
+    // console.log('[Webhook] Événement reçu:', event.event);
 
     if (event.event !== 'payment.success') {
       return { received: true, processed: false };
@@ -201,12 +198,7 @@ export class PaymentService {
       return { received: true, processed: false };
     }
 
-    console.log(
-      '[Webhook] Transaction ID:',
-      transaction.id,
-      '| Email:',
-      transaction.customer_email,
-    );
+    // console.log('[Webhook] Transaction ID:', transaction.id, '| Email:', transaction.customer_email);
 
     // Chercher d'abord par paymentId exact, sinon par email + pending
     let targetPayment = await this.prisma.payment.findFirst({
@@ -218,10 +210,7 @@ export class PaymentService {
         where: { customerEmail: transaction.customer_email, status: 'pending' },
         orderBy: { createdAt: 'desc' },
       });
-      console.log(
-        '[Webhook] Fallback email match:',
-        targetPayment?.id ?? 'non trouvé',
-      );
+      // console.log('[Webhook] Fallback email match:', targetPayment?.id ?? 'non trouvé');
     }
 
     if (!targetPayment) {
@@ -237,7 +226,7 @@ export class PaymentService {
       data: { status: 'completed', paymentId: String(transaction.id) },
     });
 
-    console.log('[Webhook] Paiement mis à jour, id DB:', targetPayment.id);
+    // console.log('[Webhook] Paiement mis à jour, id DB:', targetPayment.id);
 
     const updatedPayment = targetPayment;
 
@@ -246,20 +235,15 @@ export class PaymentService {
         updatedPayment.userId,
         updatedPayment.plan,
       );
-      console.log(
-        '[Webhook] Abonnement activé pour userId:',
-        updatedPayment.userId,
-        'plan:',
-        updatedPayment.plan,
-      );
+      // console.log('[Webhook] Abonnement activé pour userId:', updatedPayment.userId, 'plan:', updatedPayment.plan);
     }
 
     return { received: true, processed: true };
   }
 
   async confirmLatestPending(userId: string) {
-    console.log('====== CONFIRM LATEST PENDING ======');
-    console.log('[confirmLatestPending] userId:', userId);
+    // console.log('====== CONFIRM LATEST PENDING ======');
+    // console.log('[confirmLatestPending] userId:', userId);
 
     const latest = await this.prisma.payment.findFirst({
       where: { userId, status: 'pending' },
@@ -267,38 +251,35 @@ export class PaymentService {
     });
 
     if (!latest || !latest.paymentId) {
-      console.warn('[confirmLatestPending] Aucun paiement pending trouvé');
+      // console.warn('[confirmLatestPending] Aucun paiement pending trouvé');
       return { success: false, reason: 'no_pending_payment' };
     }
 
-    console.log(
-      '[confirmLatestPending] Paiement pending trouvé:',
-      `id=${latest.id} paymentId=${latest.paymentId} plan=${latest.plan}`,
-    );
+    // console.log(
+    //   '[confirmLatestPending] Paiement pending trouvé:',
+    //   `id=${latest.id} paymentId=${latest.paymentId} plan=${latest.plan}`,
+    // );
 
     return this.confirmPayment(userId, latest.paymentId);
   }
 
   async confirmPayment(userId: string, leekpayPaymentId: string) {
-    console.log('====== CONFIRM PAYMENT ======');
-    console.log('[confirmPayment] userId:', userId);
-    console.log('[confirmPayment] leekpayPaymentId:', leekpayPaymentId);
+    // console.log('====== CONFIRM PAYMENT ======');
+    // console.log('[confirmPayment] userId:', userId);
+    // console.log('[confirmPayment] leekpayPaymentId:', leekpayPaymentId);
 
     const statusResponse = await this.verifyPaymentStatus(leekpayPaymentId);
-    console.log(
-      '[confirmPayment] Réponse LeekPay (parsed):',
-      JSON.stringify(statusResponse, null, 2),
-    );
+    // console.log(
+    //   '[confirmPayment] Réponse LeekPay (parsed):',
+    //   JSON.stringify(statusResponse, null, 2),
+    // );
 
     const status = statusResponse as { data?: { status?: string } };
     const leekpayStatus = status?.data?.status;
-    console.log('[confirmPayment] Statut LeekPay extrait:', leekpayStatus);
+    // console.log('[confirmPayment] Statut LeekPay extrait:', leekpayStatus);
 
     if (leekpayStatus !== 'completed' && leekpayStatus !== 'paid') {
-      console.warn(
-        '[confirmPayment] Statut LeekPay non reconnu comme complet:',
-        leekpayStatus,
-      );
+      // console.warn('[confirmPayment] Statut LeekPay non reconnu comme complet:', leekpayStatus);
       return {
         success: false,
         reason: 'payment_not_completed',
@@ -310,10 +291,10 @@ export class PaymentService {
       where: { paymentId: leekpayPaymentId, userId },
     });
 
-    console.log(
-      '[confirmPayment] Paiement trouvé en BD:',
-      payment ? `id=${payment.id} plan=${payment.plan}` : 'AUCUN',
-    );
+    // console.log(
+    //   '[confirmPayment] Paiement trouvé en BD:',
+    //   payment ? `id=${payment.id} plan=${payment.plan}` : 'AUCUN',
+    // );
 
     if (!payment) {
       return { success: false, reason: 'payment_not_found' };
@@ -325,13 +306,13 @@ export class PaymentService {
     });
 
     await this.activateSubscription(payment.userId, payment.plan);
-    console.log(
-      '[confirmPayment] Abonnement activé pour userId:',
-      payment.userId,
-      'plan:',
-      payment.plan,
-    );
-    console.log('====== FIN CONFIRM PAYMENT ======');
+    // console.log(
+    //   '[confirmPayment] Abonnement activé pour userId:',
+    //   payment.userId,
+    //   'plan:',
+    //   payment.plan,
+    // );
+    // console.log('====== FIN CONFIRM PAYMENT ======');
 
     return { success: true, plan: payment.plan };
   }
