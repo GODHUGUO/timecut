@@ -60,17 +60,18 @@ export class PaymentController {
   ) {
     console.log('>>> [PaymentController] /payment/confirm APPELÉ');
     console.log('>>> [PaymentController] payment_id query:', paymentId);
-    console.log('>>> [PaymentController] req.user:', req.user);
-    console.log('>>> [PaymentController] x-user-id header:', req.headers['x-user-id']);
+    console.log('>>> [PaymentController] req.user uid:', req.user?.uid);
 
     const userId = req.user?.uid ?? req.user?.id ?? req.headers['x-user-id'];
     if (!userId) {
       console.warn('>>> [PaymentController] /payment/confirm refus: pas de userId');
       return { error: 'Utilisateur non authentifié' };
     }
+
+    // Si pas de payment_id explicite, confirme le dernier pending de l'utilisateur
     if (!paymentId) {
-      console.warn('>>> [PaymentController] /payment/confirm refus: pas de payment_id');
-      throw new BadRequestException('payment_id requis');
+      console.log('>>> [PaymentController] Pas de payment_id, on prend le dernier pending');
+      return this.paymentService.confirmLatestPending(userId);
     }
     return this.paymentService.confirmPayment(userId, paymentId);
   }

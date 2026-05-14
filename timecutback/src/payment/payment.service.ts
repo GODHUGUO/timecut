@@ -58,6 +58,11 @@ export class PaymentService {
     const planConfig = PLAN_PRICES[planKey];
 
     // Créer un checkout via l'API LeekPay
+    // On ne connait pas encore payment_id avant l'appel, donc on passe userId+plan
+    // dans return_url et on retrouvera le paiement en BD côté /payment/confirm
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const returnUrl = `${frontendUrl}/billing?payment=success&plan=${planKey}`;
+
     const response = await fetch(`${LEEKPAY_API_URL}/checkout`, {
       method: 'POST',
       headers: {
@@ -68,7 +73,7 @@ export class PaymentService {
         amount: planConfig.amount,
         currency: planConfig.currency,
         description: `Abonnement TimeCut ${planConfig.name}`,
-        return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/billing?payment=success`,
+        return_url: returnUrl,
         customer_email: customerEmail,
       }),
     });
@@ -127,7 +132,10 @@ export class PaymentService {
   }
 
   async verifyPaymentStatus(paymentId: string) {
-    console.log('[verifyPaymentStatus] Appel LeekPay pour paymentId:', paymentId);
+    console.log(
+      '[verifyPaymentStatus] Appel LeekPay pour paymentId:',
+      paymentId,
+    );
     const response = await fetch(`${LEEKPAY_API_URL}/checkout/${paymentId}`, {
       method: 'GET',
       headers: {
@@ -224,6 +232,28 @@ export class PaymentService {
     }
 
     return { received: true, processed: true };
+  }
+
+  async confirmLatestPending(userId: string) {
+    console.log('====== CONFIRM LATEST PENDING ======');
+    console.log('[confirmLatestPending] userId:', userId);
+
+    const latest = await this.prisma.payment.findFirst({
+      where: { userId, status: 'pending' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!latest || !latest.paymentId) {
+      console.warn('[confirmLatestPending] Aucun paiement pending trouvé');
+      return { success: false, reason: 'no_pending_payment' };
+    }
+
+    console.log(
+      '[confirmLatestPending] Paiement pending trouvé:',
+      `id=${latest.id} paymentId=${latest.paymentId} plan=${latest.plan}`,
+    );
+
+    return this.confirmPayment(userId, latest.paymentId);
   }
 
   async confirmPayment(userId: string, leekpayPaymentId: string) {
