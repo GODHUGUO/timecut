@@ -1,5 +1,18 @@
 <template>
-  <div class="space-y-6 pb-24">
+  <div>
+  <!-- Loader chargement initial des données -->
+  <div
+    v-if="isLoading"
+    class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0c0420]"
+  >
+    <div class="flex flex-col items-center gap-5">
+      <div class="w-14 h-14 border-4 border-[#7f13ec]/30 border-t-[#7f13ec] rounded-full animate-spin" />
+      <p class="text-white font-semibold text-base">Chargement de vos paramètres…</p>
+      <p class="text-gray-400 text-sm">Veuillez patienter quelques instants.</p>
+    </div>
+  </div>
+
+  <div v-if="!isLoading" class="space-y-6 pb-24">
     <div class="bg-[#1e1333] border border-[#7f13ec]/20 rounded-2xl p-6">
       <div class="flex items-center justify-between mb-6">
         <div>
@@ -183,6 +196,7 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup>
@@ -219,6 +233,7 @@ const ai = ref({
 
 const isSavingAi = ref(false)
 const aiSaveStatus = ref('') // 'saving' | 'saved' | ''
+const isLoading = ref(true)
 
 let autoSaveTimer = null
 
@@ -367,19 +382,25 @@ const saveAll = async () => {
 }
 
 onMounted(async () => {
-  unsubscribe = onAuthStateChanged(auth, (user) => {
-    profile.value.name = user?.displayName || ''
-    profile.value.email = user?.email || ''
-  })
-  await refreshSubscription()
-  await loadPreferences()
+  try {
+    unsubscribe = onAuthStateChanged(auth, (user) => {
+      profile.value.name = user?.displayName || ''
+      profile.value.email = user?.email || ''
+    })
+    await refreshSubscription()
+    await loadPreferences()
 
-  // Auto-save dès que l'utilisateur change une préférence IA
-  watch(
-    () => ({ ...ai.value }),
-    () => { autoSaveAiPreferences() },
-    { deep: true },
-  )
+    // Auto-save dès que l'utilisateur change une préférence IA
+    watch(
+      () => ({ ...ai.value }),
+      () => { autoSaveAiPreferences() },
+      { deep: true },
+    )
+  } catch (error) {
+    console.error('Erreur chargement settings :', error)
+  } finally {
+    isLoading.value = false
+  }
 })
 
 onUnmounted(() => {
