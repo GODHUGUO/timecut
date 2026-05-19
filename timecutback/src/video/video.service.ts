@@ -37,7 +37,7 @@ const PLAN_CONFIG = {
   free: {
     name: 'Gratuit',
     price: '0€',
-    monthlyMinutes: 10,
+    monthlyMinutes: 20,
     canUseAiSubtitles: false,
     canTranslateSubtitles: false,
   },

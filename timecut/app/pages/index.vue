@@ -219,7 +219,7 @@
                 <ul class="space-y-3 text-sm mb-8">
                   <li class="flex items-center gap-2 text-gray-300">
                     <span class="w-4 h-4 rounded-full bg-[#7f13ec]/20 text-[#7f13ec] flex items-center justify-center text-[10px] shrink-0">✓</span>
-                    10 min / mois
+                    20 min / mois
                   </li>
                   <li class="flex items-center gap-2 text-gray-300">
                     <span class="w-4 h-4 rounded-full bg-[#7f13ec]/20 text-[#7f13ec] flex items-center justify-center text-[10px] shrink-0">✓</span>
