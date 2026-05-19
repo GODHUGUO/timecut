@@ -248,7 +248,8 @@
             <div ref="planStarter" class="bg-[#191022] p-8 rounded-2xl border border-[#7f13ec]/40 flex flex-col">
               <div class="flex-1">
                 <h3 class="text-xl font-semibold mb-1">Starter</h3>
-                <p class="text-gray-500 text-sm mb-5">Pour les créateurs réguliers</p>
+                <p class="text-gray-500 text-sm mb-2">Pour les créateurs réguliers</p>
+                <p class="text-[#7f13ec] text-sm font-medium mb-5">Abonnement via "Mobile money et carte bancaire"</p>
                 <p class="text-4xl font-bold mb-1">4,99€<span class="text-lg font-normal text-gray-400"> / mois</span></p>
                 <!-- <p class="text-gray-600 text-xs mb-6">Résiliable à tout moment</p> -->
                 <ul class="space-y-3 text-sm mb-8">
@@ -293,7 +294,8 @@
               </div>
               <div class="flex-1">
                 <h3 class="text-xl font-semibold mb-1">Pro</h3>
-                <p class="text-gray-500 text-sm mb-5">Pour les pros du contenu</p>
+                <p class="text-gray-500 text-sm mb-2">Pour les pros du contenu</p>
+                <p class="text-[#7f13ec] text-sm font-medium mb-5">Abonnement via "Mobile money et carte bancaire"</p>
                 <p class="text-4xl font-bold mb-1">12,99€<span class="text-lg font-normal text-gray-400"> / mois</span></p>
                 <!-- <p class="text-gray-600 text-xs mb-6">Résiliable à tout moment</p> -->
                 <ul class="space-y-3 text-sm mb-8">
@@ -334,7 +336,7 @@
 
           </div>
 
-          <!-- <p class="text-center text-gray-600 text-xs mt-10">
+<!-- <p class="text-center text-gray-600 text-xs mt-10">
             Les minutes sont comptées sur la durée de la vidéo uploadée. La qualité d'export est identique à celle de la vidéo d'origine. Sans engagement, résiliable à tout moment.
           </p> -->
         </div>
@@ -343,7 +345,7 @@
       <!-- ═══════════════════════════════════════
            FINAL CTA
       ═══════════════════════════════════════ -->
-      <section class="py-16 px-6 text-center">
+      <section class="py-12 px-6 text-center">
         <div ref="cta" class="max-w-2xl mx-auto">
           <h2 class="text-4xl font-bold mb-6">Prêt à booster votre présence sur les réseaux ?</h2>
           <p class="text-xl text-gray-300 mb-8">Rejoignez des milliers de créateurs qui gagnent du temps avec TimeCut.</p>

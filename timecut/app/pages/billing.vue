@@ -1,5 +1,17 @@
 <template>
   <div>
+  <!-- Loader chargement initial des données -->
+  <div
+    v-if="isLoading"
+    class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0c0420]"
+  >
+    <div class="flex flex-col items-center gap-5">
+      <div class="w-14 h-14 border-4 border-[#7f13ec]/30 border-t-[#7f13ec] rounded-full animate-spin" />
+      <p class="text-white font-semibold text-base">Chargement de votre abonnement…</p>
+      <p class="text-gray-400 text-sm">Veuillez patienter quelques instants.</p>
+    </div>
+  </div>
+
   <!-- Loader paiement -->
   <div
     v-if="isPaying"
@@ -12,7 +24,7 @@
     </div>
   </div>
 
-  <div class="space-y-6 pb-10">
+  <div v-if="!isLoading" class="space-y-6 pb-10">
     <div>
       <h1 class="text-2xl font-bold text-white">Facturation et abonnement</h1>
       <p class="text-gray-400 text-sm mt-1">Gérez votre abonnement et consultez votre quota du mois.</p>
@@ -22,6 +34,28 @@
     <div v-if="paymentSuccess" class="flex items-center gap-3 bg-green-500/10 border border-green-500/30 text-green-400 rounded-xl px-5 py-4 text-sm font-medium">
       <Icon name="lucide:check-circle" class="w-5 h-5 shrink-0" />
       Paiement confirmé ! Votre abonnement a été activé avec succès.
+    </div>
+
+    <!-- Bandeau expiration imminente (< 3 jours) -->
+    <div v-if="isExpiringSoon" class="flex items-start gap-3 bg-amber-500/10 border border-amber-500/40 rounded-xl px-5 py-4">
+      <Icon name="lucide:alert-triangle" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+      <div class="flex-1">
+        <p class="text-amber-300 text-sm font-semibold">
+          Votre abonnement expire dans
+          {{ daysUntilExpiration === 0 ? 'moins de 24h' : `${daysUntilExpiration} jour${daysUntilExpiration > 1 ? 's' : ''}` }}.
+        </p>
+        <p class="text-gray-300 text-xs mt-1">
+          Renouvelez votre abonnement {{ currentPlanDetails.name }} avant le {{ renewalDateLabel }} pour conserver vos avantages.
+          Sans renouvellement, votre compte repassera automatiquement en plan gratuit.
+        </p>
+        <button
+          @click="updatePlanSelection(currentPlan)"
+          :disabled="isUpdatingPlan || isPaying"
+          class="mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Renouveler maintenant
+        </button>
+      </div>
     </div>
 
     <div class="bg-[#1e1333] border border-[#7f13ec]/20 rounded-2xl p-6">
@@ -43,20 +77,37 @@
             <h2 class="text-white text-xl font-bold">{{ currentPlanDetails.name }}</h2>
             <p class="text-gray-400 text-sm mt-0.5">
               {{ currentPlanDetails.monthlyPriceLabel }}
-              <span v-if="currentPlan !== 'free' && renewalDateLabel"> • Renouvellement le {{ renewalDateLabel }}</span>
+              <span v-if="currentPlan !== 'free' && renewalDateLabel"> • Expire le {{ renewalDateLabel }}</span>
+            </p>
+            <p v-if="currentPlan !== 'free' && daysUntilExpiration > 0" class="text-gray-500 text-xs mt-1">
+              <span :class="isExpiringSoon ? 'text-amber-400 font-semibold' : ''">
+                {{ daysUntilExpiration }} jour{{ daysUntilExpiration > 1 ? 's' : '' }} restant{{ daysUntilExpiration > 1 ? 's' : '' }}
+              </span>
+              avant la fin de votre abonnement.
             </p>
             <p class="text-gray-500 text-xs mt-2">
-              {{ subscription?.minutesRemaining || 0 }} min restantes sur {{ subscription?.minutesIncluded || currentPlanDetails.minutes }} min.
+              {{ subscription?.minutesRemaining || 0 }} min restantes sur {{ totalMinutesAvailable }} min.
+              <span v-if="subscription?.carryOverMinutes > 0" class="text-[#7f13ec]">
+                ({{ subscription.minutesIncluded }} du plan + {{ subscription.carryOverMinutes }} reportées)
+              </span>
             </p>
 
-            <div class="flex gap-3 mt-4">
+            <div class="flex flex-wrap gap-3 mt-4">
+              <button
+                v-if="currentPlan !== 'free'"
+                @click="updatePlanSelection(currentPlan)"
+                :disabled="isUpdatingPlan || isPaying"
+                class="px-4 py-2 bg-[#7f13ec] hover:bg-[#9333ea] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {{ isUpdatingPlan ? 'Mise à jour...' : 'Renouveler' }}
+              </button>
               <button
                 v-if="currentPlan !== 'pro'"
                 @click="updatePlanSelection(currentPlan === 'free' ? 'starter' : 'pro')"
                 :disabled="isUpdatingPlan || isPaying"
                 class="px-4 py-2 bg-[#7f13ec] hover:bg-[#9333ea] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {{ isUpdatingPlan ? 'Mise à jour...' : 'Upgrader' }}
+                {{ isUpdatingPlan ? 'Mise à jour...' : currentPlan === 'free' ? 'S\'abonner' : 'Passer à Pro' }}
               </button>
               <button
                 v-if="currentPlan !== 'free'"
@@ -82,7 +133,7 @@
             />
           </div>
           <p class="text-gray-400 text-xs">
-            <span class="text-white font-semibold">{{ subscription?.minutesUsed || 0 }} / {{ subscription?.minutesIncluded || currentPlanDetails.minutes }} min</span>
+            <span class="text-white font-semibold">{{ subscription?.minutesUsed || 0 }} / {{ totalMinutesAvailable }} min</span>
             utilisées ce mois-ci.
           </p>
           <p v-if="usagePercent >= 90" class="text-red-400 text-xs mt-2 flex items-center gap-1">
@@ -159,6 +210,9 @@
         <h3 class="text-white font-semibold text-base">Historique des paiements</h3>
       </div>
 
+
+
+
       <div class="grid grid-cols-4 px-4 pb-3 border-b border-[#7f13ec]/10">
         <span class="text-gray-500 text-xs uppercase tracking-widest">Date</span>
         <span class="text-gray-500 text-xs uppercase tracking-widest">Plan</span>
@@ -207,6 +261,7 @@ const { showPopup } = usePopup()
 const plans = PLAN_CATALOG
 const planKeys = PLAN_ORDER
 const isUpdatingPlan = ref(false)
+const isLoading = ref(true)
 const paymentSuccess = computed(() => route.query.payment === 'success')
 const invoices = ref([])
 
@@ -217,7 +272,6 @@ const usagePercent = computed(() => {
     100,
   )
 })
-
 const renewalDateLabel = computed(() => {
   if (!subscription.value?.billingPeriodEnd) return ''
   return new Date(subscription.value.billingPeriodEnd).toLocaleDateString('fr-FR', {
@@ -225,6 +279,13 @@ const renewalDateLabel = computed(() => {
     month: 'short',
     year: 'numeric',
   })
+})
+
+const daysUntilExpiration = computed(() => subscription.value?.daysUntilExpiration ?? 0)
+const isExpiringSoon = computed(() => subscription.value?.isExpiringSoon === true)
+const totalMinutesAvailable = computed(() => {
+  if (!subscription.value) return currentPlanDetails.value.minutes
+  return (subscription.value.minutesIncluded || 0) + (subscription.value.carryOverMinutes || 0)
 })
 
 const loadInvoices = async () => {
@@ -302,6 +363,8 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('Erreur chargement abonnement :', error)
+  } finally {
+    isLoading.value = false
   }
 })
 </script>

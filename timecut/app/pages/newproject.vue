@@ -6,19 +6,34 @@
         <p class="text-white text-sm mt-2">Générez des clips courts optimisés par l'IA en quelques secondes.</p>
       </div>
 
-      <div v-if="subscription" class="w-full max-w-lg mb-4">
+      <div v-if="subscription" class="w-full max-w-lg mb-4 space-y-3">
         <div class="flex items-center justify-between bg-[#7f13ec]/10 border border-[#7f13ec]/30 rounded-xl px-4 py-3">
           <div class="flex items-center gap-2">
             <Icon name="lucide:info" class="w-4 h-4 text-[#7f13ec] shrink-0" />
             <p class="text-gray-300 text-xs">
               Plan {{ currentPlanDetails.name }} :
               <span class="text-white font-semibold">{{ subscription.minutesRemaining }} min</span> restante(s) sur
-              <span class="text-white font-semibold">{{ subscription.minutesIncluded }} min</span> ce mois.
+              <span class="text-white font-semibold">{{ (subscription.minutesIncluded || 0) + (subscription.carryOverMinutes || 0) }} min</span> ce mois.
+              <span v-if="subscription.carryOverMinutes > 0" class="text-[#7f13ec]">
+                (+{{ subscription.carryOverMinutes }} min reportées)
+              </span>
             </p>
           </div>
           <NuxtLink to="/billing" class="shrink-0 ml-3 px-3 py-1.5 bg-[#7f13ec] hover:bg-[#9333ea] text-white text-xs font-medium rounded-lg transition-colors">
             Voir les offres
           </NuxtLink>
+        </div>
+
+        <!-- Badge Accès prioritaire pour les payants -->
+        <div
+          v-if="isPaidUser"
+          class="flex items-center gap-2 bg-linear-to-r from-amber-500/15 to-yellow-500/10 border border-amber-400/40 rounded-xl px-4 py-2.5"
+        >
+          <Icon name="lucide:zap" class="w-4 h-4 text-amber-400 shrink-0" />
+          <p class="text-xs">
+            <span class="text-amber-300 font-semibold">Accès prioritaire activé</span>
+            <span class="text-gray-400"> · Tes traitements passent en priorité dans la file.</span>
+          </p>
         </div>
       </div>
 
@@ -188,6 +203,14 @@
             <span class="font-semibold text-white">
               ~{{ queueWaitSeconds < 60 ? `${queueWaitSeconds}s` : `${Math.ceil(queueWaitSeconds / 60)} min` }}
             </span>.
+          </p>
+          <p v-if="isPaidUser" class="text-amber-300 text-xs flex items-center gap-1">
+            <Icon name="lucide:zap" class="w-3 h-3" />
+            Tu bénéficies de l'accès prioritaire — tu seras servi avant les utilisateurs gratuits.
+          </p>
+          <p v-else class="text-gray-400 text-xs italic">
+            Astuce : les abonnés Starter et Pro passent en priorité.
+            <NuxtLink to="/billing" class="text-[#7f13ec] hover:underline">Voir les offres</NuxtLink>
           </p>
           <p class="text-gray-400 text-xs italic">Ton traitement démarrera automatiquement dès qu'un emplacement se libère.</p>
         </div>
@@ -443,6 +466,11 @@ const requiredMinutes = computed(() => {
 const hasEnoughMinutes = computed(() => {
   if (!subscription.value || !uploadedFile.value) return false
   return subscription.value.minutesRemaining >= requiredMinutes.value && subscription.value.minutesRemaining > 0
+})
+
+const isPaidUser = computed(() => {
+  const plan = subscription.value?.currentPlan
+  return plan === 'starter' || plan === 'pro'
 })
 
 const triggerFileInput = () => fileInput.value?.click()
