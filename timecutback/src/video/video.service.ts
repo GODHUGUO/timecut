@@ -11,6 +11,7 @@ import {
   ProcessingQueueService,
   QueueStatus,
   QueueType,
+  Priority,
 } from '../processing/processing-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AIService } from '../ai/ai.service';
@@ -63,10 +64,13 @@ type SubscriptionSummary = {
   minutesIncluded: number;
   minutesUsed: number;
   minutesRemaining: number;
+  carryOverMinutes: number;
   canUseAiSubtitles: boolean;
   canTranslateSubtitles: boolean;
   billingPeriodStart: Date;
   billingPeriodEnd: Date;
+  daysUntilExpiration: number;
+  isExpiringSoon: boolean;
 };
 
 @Injectable()
@@ -81,8 +85,8 @@ export class VideoService {
     private readonly aiService: AIService,
   ) {}
 
-  getQueueStatus(type: QueueType): QueueStatus {
-    return this.processingQueue.getStatus(type);
+  getQueueStatus(type: QueueType, priority: Priority = 'normal'): QueueStatus {
+    return this.processingQueue.getStatus(type, priority);
   }
 
   private getPlanKey(plan: string | null | undefined): PlanKey {
@@ -128,10 +132,18 @@ export class VideoService {
       return subscription;
     }
 
+    // Abonnement expiré : repasser en plan free et reset des minutes.
+    // L'utilisateur devra re-payer pour réactiver son plan payant.
+    // Les minutes reportées sont perdues si l'abonnement n'est pas renouvelé à temps.
+    this.logger.log(
+      `Subscription expired for userId=${subscription.userId} (was ${subscription.currentPlan}). Downgrading to free.`,
+    );
     return this.prisma.userSubscription.update({
       where: { id: subscription.id },
       data: {
+        currentPlan: 'free',
         monthlyMinutesUsed: 0,
+        carryOverMinutes: 0,
         billingPeriodStart: new Date(),
       },
     });
@@ -140,24 +152,42 @@ export class VideoService {
   private buildSubscriptionSummary(subscription: {
     currentPlan: string;
     monthlyMinutesUsed: number;
+    carryOverMinutes?: number;
     billingPeriodStart: Date;
   }): SubscriptionSummary {
     const currentPlan = this.getPlanKey(subscription.currentPlan);
     const plan = PLAN_CONFIG[currentPlan];
+    const carryOverMinutes = Math.max(subscription.carryOverMinutes ?? 0, 0);
     const minutesUsed = Math.max(subscription.monthlyMinutesUsed, 0);
-    const minutesRemaining = Math.max(plan.monthlyMinutes - minutesUsed, 0);
+    // Le total disponible inclut les minutes du plan + celles reportées du cycle précédent
+    const totalAvailable = plan.monthlyMinutes + carryOverMinutes;
+    const minutesRemaining = Math.max(totalAvailable - minutesUsed, 0);
+    const billingPeriodEnd = this.getNextBillingPeriodStart(
+      subscription.billingPeriodStart,
+    );
+
+    // Jours restants avant expiration (0 si déjà expiré)
+    const msUntilExpiration = billingPeriodEnd.getTime() - Date.now();
+    const daysUntilExpiration = Math.max(
+      Math.ceil(msUntilExpiration / (1000 * 60 * 60 * 24)),
+      0,
+    );
+    // Le plan paid expire dans moins de 3 jours
+    const isExpiringSoon =
+      currentPlan !== 'free' && daysUntilExpiration <= 3;
 
     return {
       currentPlan,
       minutesIncluded: plan.monthlyMinutes,
       minutesUsed,
       minutesRemaining,
+      carryOverMinutes,
       canUseAiSubtitles: plan.canUseAiSubtitles,
       canTranslateSubtitles: plan.canTranslateSubtitles,
       billingPeriodStart: subscription.billingPeriodStart,
-      billingPeriodEnd: this.getNextBillingPeriodStart(
-        subscription.billingPeriodStart,
-      ),
+      billingPeriodEnd,
+      daysUntilExpiration,
+      isExpiringSoon,
     };
   }
 
@@ -256,9 +286,16 @@ export class VideoService {
 
     const effectiveDuration = totalDuration;
     const queueType: QueueType = shouldGenerateSubtitles ? 'heavy' : 'light';
-    this.logger.log(`[QUEUE] Enqueuing ${queueType} job for user ${userId}`);
+    // Les utilisateurs payants (starter/pro) passent devant les utilisateurs gratuits
+    const priority: Priority =
+      subscription.currentPlan === 'free' ? 'normal' : 'high';
+    this.logger.log(
+      `[QUEUE] Enqueuing ${queueType}/${priority} job for user ${userId} (plan: ${subscription.currentPlan})`,
+    );
 
-    const queueResult = await this.processingQueue.enqueue(queueType, async () => {
+    const queueResult = await this.processingQueue.enqueue(
+      queueType,
+      async () => {
       let finalUrls: string[];
       let subtitles = { text: '', srtPath: '' };
 
@@ -427,7 +464,9 @@ export class VideoService {
       });
 
       return { finalUrls, subtitles };
-    });
+      },
+      priority,
+    );
 
     return {
       clips: queueResult.finalUrls,

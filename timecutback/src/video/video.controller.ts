@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { VideoService } from './video.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
-import { QueueType } from '../processing/processing-queue.service';
+import { QueueType, Priority } from '../processing/processing-queue.service';
 
 @Controller('video')
 export class VideoController {
@@ -76,9 +76,20 @@ export class VideoController {
 
   @Get('queue-status')
   @UseGuards(FirebaseAuthGuard)
-  getQueueStatus(@Query('type') type: string) {
+  async getQueueStatus(
+    @Req() req: any,
+    @Query('type') type: string,
+  ) {
     const queueType: QueueType = type === 'heavy' ? 'heavy' : 'light';
-    return this.videoService.getQueueStatus(queueType);
+    const userId = this.videoService.getUserIdFromRequest(req);
+    const subscription = await this.videoService.getUserSubscriptionSummary(userId);
+    const priority: Priority =
+      subscription.currentPlan === 'free' ? 'normal' : 'high';
+    return {
+      ...this.videoService.getQueueStatus(queueType, priority),
+      userPriority: priority,
+      userPlan: subscription.currentPlan,
+    };
   }
 
   @Post('process')

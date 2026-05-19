@@ -9,8 +9,18 @@ import { createHmac, timingSafeEqual } from 'crypto';
 const LEEKPAY_API_URL = 'https://leekpay.fr/api/v1';
 
 const PLAN_PRICES = {
-  starter: { amount: 3.99, currency: 'EUR', name: 'Starter' },
-  pro: { amount: 12.99, currency: 'EUR', name: 'Pro' },
+  starter: {
+    amount: 4.99,
+    currency: 'EUR',
+    name: 'Starter',
+    monthlyMinutes: 60,
+  },
+  pro: {
+    amount: 12.99,
+    currency: 'EUR',
+    name: 'Pro',
+    monthlyMinutes: 200,
+  },
 } as const;
 
 type PlanKey = keyof typeof PLAN_PRICES;
@@ -336,17 +346,45 @@ export class PaymentService {
   }
 
   private async activateSubscription(userId: string, plan: string) {
+    // Calculer le report des minutes restantes si l'utilisateur renouvelle un plan
+    // payant encore actif. Pas de report si plan free ou si déjà expiré.
+    let carryOver = 0;
+    const existing = await this.prisma.userSubscription.findUnique({
+      where: { userId },
+    });
+
+    if (existing) {
+      const isCurrentPlanPaid =
+        existing.currentPlan === 'starter' || existing.currentPlan === 'pro';
+      const periodEnd = new Date(existing.billingPeriodStart);
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+      const isStillActive = periodEnd > new Date();
+
+      if (isCurrentPlanPaid && isStillActive) {
+        const currentPlanKey = existing.currentPlan as PlanKey;
+        const currentPlanMinutes = PLAN_PRICES[currentPlanKey]?.monthlyMinutes ?? 0;
+        const totalAvailable = currentPlanMinutes + existing.carryOverMinutes;
+        const minutesRemaining = Math.max(
+          totalAvailable - existing.monthlyMinutesUsed,
+          0,
+        );
+        carryOver = minutesRemaining;
+      }
+    }
+
     await this.prisma.userSubscription.upsert({
       where: { userId },
       create: {
         userId,
         currentPlan: plan,
         monthlyMinutesUsed: 0,
+        carryOverMinutes: 0,
         billingPeriodStart: new Date(),
       },
       update: {
         currentPlan: plan,
         monthlyMinutesUsed: 0,
+        carryOverMinutes: carryOver,
         billingPeriodStart: new Date(),
       },
     });

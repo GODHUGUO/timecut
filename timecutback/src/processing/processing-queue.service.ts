@@ -1,12 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 export type QueueType = 'light' | 'heavy';
+export type Priority = 'high' | 'normal';
 
 export interface QueueStatus {
   type: QueueType;
   activeJobs: number;
   maxConcurrent: number;
   waitingJobs: number;
+  waitingHighPriority: number;
+  waitingNormalPriority: number;
   slotsAvailable: boolean;
   averageJobDurationSeconds: number;
   estimatedWaitSeconds: number;
@@ -22,7 +25,14 @@ export class ProcessingQueueService {
   };
 
   private active: Record<QueueType, number> = { light: 0, heavy: 0 };
-  private waiting: Record<QueueType, (() => void)[]> = { light: [], heavy: [] };
+  private waitingHigh: Record<QueueType, (() => void)[]> = {
+    light: [],
+    heavy: [],
+  };
+  private waitingNormal: Record<QueueType, (() => void)[]> = {
+    light: [],
+    heavy: [],
+  };
 
   // Moyenne mobile des 10 dernières durées de job
   private recentDurations: Record<QueueType, number[]> = {
@@ -30,8 +40,12 @@ export class ProcessingQueueService {
     heavy: [180],
   };
 
-  async enqueue<T>(type: QueueType, task: () => Promise<T>): Promise<T> {
-    await this.acquire(type);
+  async enqueue<T>(
+    type: QueueType,
+    task: () => Promise<T>,
+    priority: Priority = 'normal',
+  ): Promise<T> {
+    await this.acquire(type, priority);
     const startTime = Date.now();
 
     try {
@@ -42,15 +56,25 @@ export class ProcessingQueueService {
     }
   }
 
-  getStatus(type: QueueType): QueueStatus {
+  getStatus(type: QueueType, priority: Priority = 'normal'): QueueStatus {
     const activeJobs = this.active[type];
-    const waitingJobs = this.waiting[type].length;
+    const waitingHighPriority = this.waitingHigh[type].length;
+    const waitingNormalPriority = this.waitingNormal[type].length;
+    const waitingJobs = waitingHighPriority + waitingNormalPriority;
     const maxConcurrent = this.LIMITS[type];
     const slotsAvailable = activeJobs < maxConcurrent;
 
     const averageJobDurationSeconds = this.getAverageDuration(type);
-    const queueLength = activeJobs + waitingJobs;
-    const aheadOfNewJob = Math.max(queueLength - maxConcurrent + 1, 0);
+
+    // Calcul du nombre de jobs à traiter AVANT le nouveau job selon sa priorité
+    // - Priorité high : passe devant les normal mais derrière les autres high
+    // - Priorité normal : passe derrière tous les autres (high + normal déjà en attente)
+    const aheadInQueue =
+      priority === 'high'
+        ? waitingHighPriority
+        : waitingHighPriority + waitingNormalPriority;
+    const queueLength = activeJobs + aheadInQueue + 1;
+    const aheadOfNewJob = Math.max(queueLength - maxConcurrent, 0);
     const estimatedWaitSeconds = slotsAvailable
       ? 0
       : Math.round((aheadOfNewJob * averageJobDurationSeconds) / maxConcurrent);
@@ -60,40 +84,47 @@ export class ProcessingQueueService {
       activeJobs,
       maxConcurrent,
       waitingJobs,
+      waitingHighPriority,
+      waitingNormalPriority,
       slotsAvailable,
       averageJobDurationSeconds: Math.round(averageJobDurationSeconds),
       estimatedWaitSeconds,
     };
   }
 
-  private acquire(type: QueueType): Promise<void> {
+  private acquire(type: QueueType, priority: Priority): Promise<void> {
     return new Promise((resolve) => {
       if (this.active[type] < this.LIMITS[type]) {
         this.active[type]++;
         this.logger.log(
-          `[${type}] Slot acquired immediately. Active: ${this.active[type]}/${this.LIMITS[type]}`,
+          `[${type}/${priority}] Slot acquired immediately. Active: ${this.active[type]}/${this.LIMITS[type]}`,
         );
         resolve();
       } else {
-        this.logger.log(
-          `[${type}] Queue full. Waiting. Position: ${this.waiting[type].length + 1}`,
-        );
-        this.waiting[type].push(() => {
+        const job = () => {
           this.active[type]++;
           resolve();
-        });
+        };
+        const queue =
+          priority === 'high' ? this.waitingHigh[type] : this.waitingNormal[type];
+        queue.push(job);
+        this.logger.log(
+          `[${type}/${priority}] Queue full. Waiting. High: ${this.waitingHigh[type].length}, Normal: ${this.waitingNormal[type].length}`,
+        );
       }
     });
   }
 
   private release(type: QueueType): void {
     this.active[type]--;
-    const next = this.waiting[type].shift();
+    // Servir d'abord les jobs prioritaires
+    const next =
+      this.waitingHigh[type].shift() ?? this.waitingNormal[type].shift();
     if (next) {
       next();
     }
     this.logger.log(
-      `[${type}] Slot released. Active: ${this.active[type]}/${this.LIMITS[type]}, Waiting: ${this.waiting[type].length}`,
+      `[${type}] Slot released. Active: ${this.active[type]}/${this.LIMITS[type]}, High waiting: ${this.waitingHigh[type].length}, Normal waiting: ${this.waitingNormal[type].length}`,
     );
   }
 
