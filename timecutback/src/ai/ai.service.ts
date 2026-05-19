@@ -493,33 +493,41 @@ export class AIService {
     mediaDuration: number,
   ): TranscriptSegment[] {
     const configuredMinDuration = Number(
-      process.env.TCHAVI_MIN_SUBTITLE_SECONDS ?? 1.5,
+      process.env.TCHAVI_MIN_SUBTITLE_SECONDS ?? 0.8,
     );
     const minDurationSeconds =
       Number.isFinite(configuredMinDuration) && configuredMinDuration > 0
         ? configuredMinDuration
-        : 1.5;
+        : 0.8;
     const safeMediaDuration =
       Number.isFinite(mediaDuration) && mediaDuration > 0
         ? mediaDuration
         : undefined;
 
-    return segments.map((segment) => {
+    return segments.map((segment, index) => {
       const start = Math.max(segment.start, 0);
       const originalEnd = Math.max(segment.end, start);
-      let end = Math.max(originalEnd, start + minDurationSeconds);
+      const nextStart = segments[index + 1]?.start;
 
-      if (safeMediaDuration) {
-        end = Math.min(end, safeMediaDuration);
-      }
+      // Limite supérieure absolue : le début du segment suivant (pour éviter
+      // les chevauchements qui décalent visuellement les sous-titres).
+      const upperBound = Math.min(
+        nextStart ?? Number.POSITIVE_INFINITY,
+        safeMediaDuration ?? Number.POSITIVE_INFINITY,
+      );
 
+      // On essaie d'avoir au moins minDurationSeconds, mais on ne dépasse JAMAIS
+      // l'upperBound (qui correspond au prochain segment ou à la fin du média).
+      const desiredEnd = Math.max(originalEnd, start + minDurationSeconds);
+      let end = Math.min(desiredEnd, upperBound);
+
+      // Si l'upperBound a forcé end à être <= start (segment trop serré),
+      // on garde au minimum la durée originale.
       if (end <= start) {
-        const fallbackEnd = safeMediaDuration ?? start + minDurationSeconds;
-        return {
-          ...segment,
-          start: Math.max(0, fallbackEnd - minDurationSeconds),
-          end: fallbackEnd,
-        };
+        end = Math.min(
+          Math.max(originalEnd, start + 0.1),
+          safeMediaDuration ?? Number.POSITIVE_INFINITY,
+        );
       }
 
       return {
@@ -539,11 +547,43 @@ export class AIService {
       mediaDuration,
     );
     const splitSegments = this.splitLongSubtitleSegments(normalizedSegments);
+    const dedupedSegments = this.removeOverlaps(splitSegments);
 
-    return splitSegments.map((segment) => ({
+    return dedupedSegments.map((segment) => ({
       ...segment,
       text: this.wrapSubtitleText(segment.text),
     }));
+  }
+
+  /**
+   * Élimine les chevauchements entre sous-titres consécutifs.
+   * Si segment[i].end > segment[i+1].start, on aligne segment[i].end sur segment[i+1].start.
+   * Évite que deux sous-titres s'affichent en même temps.
+   */
+  private removeOverlaps(
+    segments: TranscriptSegment[],
+  ): TranscriptSegment[] {
+    if (segments.length <= 1) return segments;
+
+    const result: TranscriptSegment[] = [];
+
+    for (let i = 0; i < segments.length; i++) {
+      const current = { ...segments[i] };
+      const next = segments[i + 1];
+
+      if (next && current.end > next.start) {
+        current.end = Math.max(current.start, next.start);
+      }
+
+      // Skip segments dont la durée est devenue nulle ou négative
+      if (current.end <= current.start) {
+        continue;
+      }
+
+      result.push(current);
+    }
+
+    return result;
   }
 
   private splitLongSubtitleSegments(
@@ -562,14 +602,24 @@ export class AIService {
       }
 
       const duration = Math.max(segment.end - segment.start, 0.1);
-      const chunkDuration = duration / chunks.length;
+      // Distribution proportionnelle à la longueur du texte (nombre de caractères).
+      // Le mot "extraordinaire" prend plus de temps à dire que "ok", donc le
+      // sous-titre doit s'afficher plus longtemps proportionnellement.
+      const totalChars = chunks.reduce(
+        (sum, chunk) => sum + Math.max(chunk.length, 1),
+        0,
+      );
 
+      let accumulatedTime = 0;
       chunks.forEach((chunk, index) => {
-        const start = segment.start + chunkDuration * index;
+        const chunkChars = Math.max(chunk.length, 1);
+        const chunkDuration = (duration * chunkChars) / totalChars;
+        const start = segment.start + accumulatedTime;
+        accumulatedTime += chunkDuration;
         const end =
           index === chunks.length - 1
             ? segment.end
-            : segment.start + chunkDuration * (index + 1);
+            : segment.start + accumulatedTime;
 
         result.push({
           start,
