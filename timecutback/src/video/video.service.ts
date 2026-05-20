@@ -173,8 +173,7 @@ export class VideoService {
       0,
     );
     // Le plan paid expire dans moins de 3 jours
-    const isExpiringSoon =
-      currentPlan !== 'free' && daysUntilExpiration <= 3;
+    const isExpiringSoon = currentPlan !== 'free' && daysUntilExpiration <= 3;
 
     return {
       currentPlan,
@@ -296,174 +295,191 @@ export class VideoService {
     const queueResult = await this.processingQueue.enqueue(
       queueType,
       async () => {
-      let finalUrls: string[];
-      let subtitles = { text: '', srtPath: '' };
+        let finalUrls: string[];
+        let subtitles = { text: '', srtPath: '' };
 
-      if (!shouldGenerateSubtitles) {
-      // ─── FLUX SANS SOUS-TITRES : découpage local ffmpeg + upload Cloudinary ───
-      this.logger.log('>>> FLUX SANS SOUS-TITRES: Découpage local avec ffmpeg');
-      const tempDir = path.join('./uploads', `video_tmp_${Date.now()}`);
-      fs.mkdirSync(tempDir, { recursive: true });
-      const localVideoPath = path.join(tempDir, 'source.mp4');
+        if (!shouldGenerateSubtitles) {
+          // ─── FLUX SANS SOUS-TITRES : découpage local ffmpeg + upload Cloudinary ───
+          this.logger.log(
+            '>>> FLUX SANS SOUS-TITRES: Découpage local avec ffmpeg',
+          );
+          const tempDir = path.join('./uploads', `video_tmp_${Date.now()}`);
+          fs.mkdirSync(tempDir, { recursive: true });
+          const localVideoPath = path.join(tempDir, 'source.mp4');
 
-      try {
-        const sourceUrl = this.storageService.getFullVideoUrl(publicId);
-        this.logger.log(`Downloading source video: ${sourceUrl}`);
-        await this.storageService.downloadClipFromUrl(sourceUrl, localVideoPath);
-
-        this.logger.log(`Cutting video into clips with ffmpeg segment muxer`);
-        const localClipPaths = await this.processingService.cutClipsLocally(
-          localVideoPath,
-          effectiveDuration,
-          clipDuration,
-          tempDir,
-        );
-        this.logger.log(`Cut ${localClipPaths.length} clips locally`);
-
-        finalUrls = await Promise.all(
-          localClipPaths.map(async (clipPath, idx) => {
-            const url = await this.storageService.upload({
-              fieldname: 'file',
-              originalname: `clip_${idx}.mp4`,
-              encoding: '7bit',
-              mimetype: 'video/mp4',
-              size: 0,
-              path: clipPath,
-              filename: `clip_${idx}.mp4`,
-            });
-            this.logger.log(`Clip ${idx} uploaded: ${url}`);
-            return url;
-          }),
-        );
-      } finally {
-        this.safeDeleteDir(tempDir);
-      }
-
-      this.logger.log(`Nombre de clips: ${finalUrls.length}`);
-      this.logger.log(`Premier URL: ${finalUrls[0]}`);
-    } else {
-      // ─── FLUX AVEC SOUS-TITRES ───
-      this.logger.log('>>> FLUX AVEC SOUS-TITRES: Traitement de chaque clip');
-
-      const sourceUrl = this.storageService.getFullVideoUrl(publicId);
-      const tempBaseDir = path.join('./uploads', `video_sub_tmp_${Date.now()}`);
-      fs.mkdirSync(tempBaseDir, { recursive: true });
-      const localVideoPath = path.join(tempBaseDir, 'source.mp4');
-
-      this.logger.log(`Downloading source video for subtitles: ${sourceUrl}`);
-      await this.storageService.downloadClipFromUrl(sourceUrl, localVideoPath);
-
-      this.logger.log(`Cutting video into clips with ffmpeg segment muxer`);
-      const localClipPaths = await this.processingService.cutClipsLocally(
-        localVideoPath,
-        effectiveDuration,
-        clipDuration,
-        tempBaseDir,
-      );
-      this.logger.log(`Cut ${localClipPaths.length} clips locally`);
-
-      const CONCURRENT_CLIPS = 7;
-
-      // Sémaphore : max CONCURRENT_CLIPS clips en traitement simultané
-      let active = 0;
-      const queue: (() => void)[] = [];
-      const acquire = () =>
-        new Promise<void>((resolve) => {
-          if (active < CONCURRENT_CLIPS) {
-            active++;
-            resolve();
-          } else
-            queue.push(() => {
-              active++;
-              resolve();
-            });
-        });
-      const release = () => {
-        active--;
-        if (queue.length > 0) queue.shift()!();
-      };
-
-      const processedClips: {
-        url: string;
-        text: string;
-        srtContent: string;
-        clipDuration: number;
-      }[] = await Promise.all(
-        localClipPaths.map(async (clipPath, idx) => {
-          await acquire();
           try {
-            return await this.processLocalClipWithSubtitles(
-              clipPath,
-              idx,
-              preferences,
+            const sourceUrl = this.storageService.getFullVideoUrl(publicId);
+            this.logger.log(`Downloading source video: ${sourceUrl}`);
+            await this.storageService.downloadClipFromUrl(
+              sourceUrl,
+              localVideoPath,
+            );
+
+            this.logger.log(
+              `Cutting video into clips with ffmpeg segment muxer`,
+            );
+            const localClipPaths = await this.processingService.cutClipsLocally(
+              localVideoPath,
+              effectiveDuration,
+              clipDuration,
+              tempDir,
+            );
+            this.logger.log(`Cut ${localClipPaths.length} clips locally`);
+
+            finalUrls = await Promise.all(
+              localClipPaths.map(async (clipPath, idx) => {
+                const url = await this.storageService.upload({
+                  fieldname: 'file',
+                  originalname: `clip_${idx}.mp4`,
+                  encoding: '7bit',
+                  mimetype: 'video/mp4',
+                  size: 0,
+                  path: clipPath,
+                  filename: `clip_${idx}.mp4`,
+                });
+                this.logger.log(`Clip ${idx} uploaded: ${url}`);
+                return url;
+              }),
             );
           } finally {
-            release();
+            this.safeDeleteDir(tempDir);
           }
-        }),
-      );
 
-      this.safeDeleteDir(tempBaseDir);
+          this.logger.log(`Nombre de clips: ${finalUrls.length}`);
+          this.logger.log(`Premier URL: ${finalUrls[0]}`);
+        } else {
+          // ─── FLUX AVEC SOUS-TITRES ───
+          this.logger.log(
+            '>>> FLUX AVEC SOUS-TITRES: Traitement de chaque clip',
+          );
 
-      finalUrls = processedClips.map((c) => c.url);
+          const sourceUrl = this.storageService.getFullVideoUrl(publicId);
+          const tempBaseDir = path.join(
+            './uploads',
+            `video_sub_tmp_${Date.now()}`,
+          );
+          fs.mkdirSync(tempBaseDir, { recursive: true });
+          const localVideoPath = path.join(tempBaseDir, 'source.mp4');
 
-      // Construire un SRT global fusionné avec timestamps décalés
-      const mergedSrt = this.mergeSrtContents(processedClips);
-      let srtUrl = '';
+          this.logger.log(
+            `Downloading source video for subtitles: ${sourceUrl}`,
+          );
+          await this.storageService.downloadClipFromUrl(
+            sourceUrl,
+            localVideoPath,
+          );
 
-      if (mergedSrt) {
-        const tmpSrtPath = path.join(
-          './uploads',
-          `global_srt_${Date.now()}.srt`,
-        );
-        try {
-          fs.writeFileSync(tmpSrtPath, mergedSrt, 'utf-8');
-          srtUrl = await this.storageService.uploadRaw(tmpSrtPath);
-        } finally {
-          this.safeDeleteFile(tmpSrtPath);
+          this.logger.log(`Cutting video into clips with ffmpeg segment muxer`);
+          const localClipPaths = await this.processingService.cutClipsLocally(
+            localVideoPath,
+            effectiveDuration,
+            clipDuration,
+            tempBaseDir,
+          );
+          this.logger.log(`Cut ${localClipPaths.length} clips locally`);
+
+          const CONCURRENT_CLIPS = 7;
+
+          // Sémaphore : max CONCURRENT_CLIPS clips en traitement simultané
+          let active = 0;
+          const queue: (() => void)[] = [];
+          const acquire = () =>
+            new Promise<void>((resolve) => {
+              if (active < CONCURRENT_CLIPS) {
+                active++;
+                resolve();
+              } else
+                queue.push(() => {
+                  active++;
+                  resolve();
+                });
+            });
+          const release = () => {
+            active--;
+            if (queue.length > 0) queue.shift()!();
+          };
+
+          const processedClips: {
+            url: string;
+            text: string;
+            srtContent: string;
+            clipDuration: number;
+          }[] = await Promise.all(
+            localClipPaths.map(async (clipPath, idx) => {
+              await acquire();
+              try {
+                return await this.processLocalClipWithSubtitles(
+                  clipPath,
+                  idx,
+                  preferences,
+                );
+              } finally {
+                release();
+              }
+            }),
+          );
+
+          this.safeDeleteDir(tempBaseDir);
+
+          finalUrls = processedClips.map((c) => c.url);
+
+          // Construire un SRT global fusionné avec timestamps décalés
+          const mergedSrt = this.mergeSrtContents(processedClips);
+          let srtUrl = '';
+
+          if (mergedSrt) {
+            const tmpSrtPath = path.join(
+              './uploads',
+              `global_srt_${Date.now()}.srt`,
+            );
+            try {
+              fs.writeFileSync(tmpSrtPath, mergedSrt, 'utf-8');
+              srtUrl = await this.storageService.uploadRaw(tmpSrtPath);
+            } finally {
+              this.safeDeleteFile(tmpSrtPath);
+            }
+          }
+
+          subtitles = {
+            text: processedClips
+              .map((c) => c.text)
+              .join(' ')
+              .trim(),
+            srtPath: srtUrl,
+          };
         }
-      }
 
-        subtitles = {
-          text: processedClips
-            .map((c) => c.text)
-            .join(' ')
-            .trim(),
-          srtPath: srtUrl,
-        };
-      }
+        // ÉTAPE 3 : Créer les enregistrements Clip en DB
+        await this.prisma.clip.createMany({
+          data: finalUrls.map((url) => ({
+            url,
+            duration: clipDuration,
+            videoId: video.id,
+          })),
+        });
 
-      // ÉTAPE 3 : Créer les enregistrements Clip en DB
-      await this.prisma.clip.createMany({
-        data: finalUrls.map((url) => ({
-          url,
-          duration: clipDuration,
-          videoId: video.id,
-        })),
-      });
+        this.logger.log(`>>> RETURNING ${finalUrls.length} clip URLs`);
+        this.logger.log(`First URL: ${finalUrls[0]}`);
+        this.logger.log(
+          `Subtitles burned into returned clips: ${shouldGenerateSubtitles}`,
+        );
 
-      this.logger.log(`>>> RETURNING ${finalUrls.length} clip URLs`);
-      this.logger.log(`First URL: ${finalUrls[0]}`);
-      this.logger.log(
-        `Subtitles burned into returned clips: ${shouldGenerateSubtitles}`,
-      );
-
-      // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
-      await this.prisma.userSubscription.update({
-        where: { userId },
-        data: {
-          monthlyMinutesUsed: {
-            increment: minutesToConsume,
+        // ÉTAPE 4 : Mettre à jour la subscription (minutesUsed)
+        await this.prisma.userSubscription.update({
+          where: { userId },
+          data: {
+            monthlyMinutesUsed: {
+              increment: minutesToConsume,
+            },
           },
-        },
-      });
+        });
 
-      // ÉTAPE 5 : Supprimer la vidéo source de Cloudinary (fire & forget)
-      this.storageService.deleteCloudinaryAsset(publicId).catch((err) => {
-        this.logger.warn(`Failed to delete source video ${publicId}: ${err}`);
-      });
+        // ÉTAPE 5 : Supprimer la vidéo source de Cloudinary (fire & forget)
+        this.storageService.deleteCloudinaryAsset(publicId).catch((err) => {
+          this.logger.warn(`Failed to delete source video ${publicId}: ${err}`);
+        });
 
-      return { finalUrls, subtitles };
+        return { finalUrls, subtitles };
       },
       priority,
     );

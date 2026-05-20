@@ -249,7 +249,7 @@
               <div class="flex-1">
                 <h3 class="text-xl font-semibold mb-1">Starter</h3>
                 <p class="text-gray-500 text-sm mb-2">Pour les créateurs réguliers</p>
-                <p class="text-[#7f13ec] text-sm font-medium mb-5">Abonnement via "Mobile money et carte bancaire"</p>
+                <p class="text-[#7f13ec] text-sm font-medium mb-5">Abonnement via "Mobile money"</p>
                 <p class="text-4xl font-bold mb-1">4,99€<span class="text-lg font-normal text-gray-400"> / mois</span></p>
                 <!-- <p class="text-gray-600 text-xs mb-6">Résiliable à tout moment</p> -->
                 <ul class="space-y-3 text-sm mb-8">
@@ -295,7 +295,7 @@
               <div class="flex-1">
                 <h3 class="text-xl font-semibold mb-1">Pro</h3>
                 <p class="text-gray-500 text-sm mb-2">Pour les pros du contenu</p>
-                <p class="text-[#7f13ec] text-sm font-medium mb-5">Abonnement via "Mobile money et carte bancaire"</p>
+                <p class="text-[#7f13ec] text-sm font-medium mb-5">Abonnement via "Mobile money"</p>
                 <p class="text-4xl font-bold mb-1">12,99€<span class="text-lg font-normal text-gray-400"> / mois</span></p>
                 <!-- <p class="text-gray-600 text-xs mb-6">Résiliable à tout moment</p> -->
                 <ul class="space-y-3 text-sm mb-8">
