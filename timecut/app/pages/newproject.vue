@@ -219,7 +219,7 @@
           <div class="flex items-center justify-between text-xs">
             <div class="flex items-center gap-2 text-white">
               <span class="w-2 h-2 rounded-full bg-[#7f13ec] animate-pulse inline-block" />
-              Traitement en cours...
+              {{ progressLabel || 'Traitement en cours...' }}
             </div>
             <span class="text-[#7f13ec] font-semibold">{{ progress }}%</span>
           </div>
@@ -439,6 +439,7 @@ const subtitleMode = ref('none')
 
 const isProcessing = ref(false)
 const progress = ref(0)
+const progressLabel = ref('')
 const clipUrls = ref([])
 const showModal = ref(false)
 const isDownloading = ref(false)
@@ -664,9 +665,12 @@ const startProcessing = async () => {
 
   isProcessing.value = true
   progress.value = 0
+  progressLabel.value = 'Préparation...'
   clipUrls.value = []
   showModal.value = false
   isInQueue.value = false
+
+  let processInterval = null
 
   try {
     const headers = await getAuthHeaders()
@@ -675,7 +679,8 @@ const startProcessing = async () => {
     const signRes = await $fetch(`${apiBase}/video/sign-upload`, { headers })
     const { signature, timestamp, cloudName, apiKey, folder } = signRes
 
-    // Étape 2 : Uploader directement sur Cloudinary
+    // Étape 2 : Uploader directement sur Cloudinary (0 → 50 % = vraie progression)
+    progressLabel.value = 'Téléversement de la vidéo...'
     const formData = new FormData()
     formData.append('file', uploadedFile.value)
     formData.append('signature', signature)
@@ -683,12 +688,11 @@ const startProcessing = async () => {
     formData.append('api_key', apiKey)
     formData.append('folder', folder)
 
-    const cloudRes = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
-      { method: 'POST', body: formData },
-    )
-    const cloudData = await cloudRes.json()
-    if (!cloudRes.ok) throw new Error(cloudData?.error?.message || 'Erreur upload Cloudinary')
+    const cloudData = await uploadToCloudinary(cloudName, formData, (uploadRatio) => {
+      // L'upload représente la première moitié de la barre
+      progress.value = Math.min(50, Math.round(uploadRatio * 50))
+    })
+    progress.value = 50
 
     // Étape 3 : Vérifier l'état de la file d'attente avant l'envoi au backend
     const queueType = subtitleMode.value === 'ai' ? 'heavy' : 'light'
@@ -701,6 +705,15 @@ const startProcessing = async () => {
     }
 
     // Étape 4 : Envoyer le publicId au backend pour traitement
+    // Le backend ne renvoie qu'à la fin : on fait avancer la barre lentement
+    // de 50 → 95 % pour montrer que le découpage est bien en cours.
+    progressLabel.value = 'Découpage de la vidéo en cours...'
+    processInterval = setInterval(() => {
+      if (progress.value < 95) {
+        progress.value += Math.max(1, Math.round((95 - progress.value) * 0.04))
+      }
+    }, 600)
+
     // Rafraîchir le token car l'upload Cloudinary peut prendre du temps
     const freshHeaders = await getAuthHeaders()
     const processRes = await fetch(`${apiBase}/video/process`, {
@@ -715,6 +728,8 @@ const startProcessing = async () => {
       }),
     })
 
+    clearInterval(processInterval)
+    processInterval = null
     stopQueuePolling()
     isInQueue.value = false
 
@@ -723,26 +738,58 @@ const startProcessing = async () => {
 
     clipUrls.value = data.clips || []
 
-    const interval = setInterval(() => {
-      progress.value += Math.floor(Math.random() * 8) + 2
-      if (progress.value >= 100) {
-        progress.value = 100
-        clearInterval(interval)
-        setTimeout(async () => {
-          isProcessing.value = false
-          progress.value = 0
-          showModal.value = true
-          await refreshSubscription()
-        }, 1000)
-      }
-    }, 400)
+    // Étape 5 : finalisation (95 → 100 %)
+    progressLabel.value = 'Finalisation...'
+    progress.value = 100
+    setTimeout(async () => {
+      isProcessing.value = false
+      progress.value = 0
+      progressLabel.value = ''
+      showModal.value = true
+      await refreshSubscription()
+    }, 800)
   } catch (error) {
     console.error('Erreur upload :', error)
     showPopup(error.message || "Erreur lors de l'envoi", 'error')
+    if (processInterval) clearInterval(processInterval)
     stopQueuePolling()
     isInQueue.value = false
     isProcessing.value = false
+    progress.value = 0
+    progressLabel.value = ''
   }
+}
+
+// Upload sur Cloudinary via XMLHttpRequest pour suivre la progression réelle
+// (fetch n'expose pas la progression d'upload).
+const uploadToCloudinary = (cloudName, formData, onProgress) => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`)
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && typeof onProgress === 'function') {
+        onProgress(event.loaded / event.total)
+      }
+    }
+
+    xhr.onload = () => {
+      let data = {}
+      try {
+        data = JSON.parse(xhr.responseText)
+      } catch {
+        // réponse non-JSON
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data)
+      } else {
+        reject(new Error(data?.error?.message || 'Erreur upload Cloudinary'))
+      }
+    }
+
+    xhr.onerror = () => reject(new Error('Erreur réseau pendant le téléversement'))
+    xhr.send(formData)
+  })
 }
 
 onMounted(async () => {
