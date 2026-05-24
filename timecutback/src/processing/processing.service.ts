@@ -30,14 +30,33 @@ export class ProcessingService {
     const segmentPattern = path.join(outputDir, 'clip_%d.mp4');
 
     // Découpage en UNE seule passe avec le segment muxer ffmpeg.
-    // -c copy = stream copy (aucune recompression, qualité 100% identique).
+    //
+    // IMPORTANT : on NE PEUT PAS utiliser "-c copy" (stream copy) ici.
+    // Le segment muxer en stream copy ne peut découper que sur les keyframes
+    // (I-frames) déjà présentes dans la source. Beaucoup de vidéos (téléphone,
+    // capture d'écran, vidéos IA) ont des keyframes espacées, donc ffmpeg coupe
+    // au mauvais endroit (ex : 2 clips de 15s avec chevauchement au lieu de
+    // 10s / 10s / 5s).
+    //
+    // On réencode donc en forçant une keyframe exactement à chaque multiple de
+    // clipDuration, ce qui garantit un découpage aux durées demandées.
     await new Promise<void>((resolve, reject) => {
       ffmpeg(inputPath)
         .outputOptions([
-          '-c copy',
-          '-map 0',
+          '-c:v libx264',
+          '-preset veryfast',
+          '-crf 23',
+          '-pix_fmt yuv420p',
+          '-c:a aac',
+          '-b:a 128k',
+          // Force une keyframe à chaque frontière de segment (0, clip, 2*clip, ...)
+          `-force_key_frames expr:gte(t,n_forced*${clipDuration})`,
+          '-map 0:v:0',
+          '-map 0:a:0?',
           '-f segment',
           `-segment_time ${clipDuration}`,
+          // Aligne la coupe sur les keyframes forcées ci-dessus
+          '-segment_time_delta 0.05',
           '-reset_timestamps 1',
           '-avoid_negative_ts make_zero',
           '-movflags +faststart',
@@ -102,7 +121,14 @@ export class ProcessingService {
         .setStartTime(startOffset)
         .setDuration(duration)
         .outputOptions([
-          '-c copy',
+          // Réencodage (pas de "-c copy") pour une coupe à la seconde exacte,
+          // sans dépendre de la position des keyframes de la source.
+          '-c:v libx264',
+          '-preset veryfast',
+          '-crf 23',
+          '-pix_fmt yuv420p',
+          '-c:a aac',
+          '-b:a 128k',
           '-avoid_negative_ts make_zero',
           '-movflags +faststart',
         ])

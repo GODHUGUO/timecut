@@ -248,7 +248,7 @@ export class AdminService {
               sub.updatedAt > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
                 ? 'Active'
                 : 'Inactive',
-            minutesUsed: sub.monthlyMinutesUsed,
+            minutesUsed: Math.round(sub.monthlyMinutesUsed * 10) / 10,
             minutesTotal,
             lastActive: sub.updatedAt,
           };
@@ -259,7 +259,7 @@ export class AdminService {
             email: '',
             plan: sub.currentPlan,
             status: 'Inactive',
-            minutesUsed: sub.monthlyMinutesUsed,
+            minutesUsed: Math.round(sub.monthlyMinutesUsed * 10) / 10,
             minutesTotal,
             lastActive: sub.updatedAt,
           };
@@ -296,14 +296,14 @@ export class AdminService {
             name:
               fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'Unknown',
             plan: sub.currentPlan,
-            minutesUsed: sub.monthlyMinutesUsed,
+            minutesUsed: Math.round(sub.monthlyMinutesUsed * 10) / 10,
             initial: displayName[0].toUpperCase(),
           };
         } catch {
           return {
             name: 'Unknown',
             plan: sub.currentPlan,
-            minutesUsed: sub.monthlyMinutesUsed,
+            minutesUsed: Math.round(sub.monthlyMinutesUsed * 10) / 10,
             initial: 'U',
           };
         }

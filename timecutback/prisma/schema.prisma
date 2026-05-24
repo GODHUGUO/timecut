@@ -30,8 +30,8 @@ model UserSubscription {
   id                 Int      @id @default(autoincrement())
   userId             String   @unique
   currentPlan        String   @default("free")
-  monthlyMinutesUsed Int      @default(0)
-  carryOverMinutes   Int      @default(0)
+  monthlyMinutesUsed Float    @default(0)
+  carryOverMinutes   Float    @default(0)
   billingPeriodStart DateTime @default(now())
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

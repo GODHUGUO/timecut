@@ -162,6 +162,10 @@ export class VideoService {
     // Le total disponible inclut les minutes du plan + celles reportées du cycle précédent
     const totalAvailable = plan.monthlyMinutes + carryOverMinutes;
     const minutesRemaining = Math.max(totalAvailable - minutesUsed, 0);
+
+    // Le quota est désormais débité à la seconde près (minutes fractionnaires).
+    // On arrondit à 1 décimale pour un affichage propre côté client.
+    const round1 = (n: number) => Math.round(n * 10) / 10;
     const billingPeriodEnd = this.getNextBillingPeriodStart(
       subscription.billingPeriodStart,
     );
@@ -178,9 +182,9 @@ export class VideoService {
     return {
       currentPlan,
       minutesIncluded: plan.monthlyMinutes,
-      minutesUsed,
-      minutesRemaining,
-      carryOverMinutes,
+      minutesUsed: round1(minutesUsed),
+      minutesRemaining: round1(minutesRemaining),
+      carryOverMinutes: round1(carryOverMinutes),
       canUseAiSubtitles: plan.canUseAiSubtitles,
       canTranslateSubtitles: plan.canTranslateSubtitles,
       billingPeriodStart: subscription.billingPeriodStart,
@@ -267,7 +271,10 @@ export class VideoService {
       );
     }
 
-    const minutesToConsume = Math.max(Math.ceil(totalDuration / 60), 1);
+    // Consommation à la seconde près : on débite la durée réelle convertie en
+    // minutes fractionnaires (ex : 20s -> 0,333 min) au lieu d'arrondir à la
+    // minute entière supérieure.
+    const minutesToConsume = totalDuration / 60;
     if (minutesToConsume > subscription.minutesRemaining) {
       throw new BadRequestException(
         `Quota insuffisant : il vous reste ${subscription.minutesRemaining} min sur ${subscription.minutesIncluded} min ce mois-ci.`,
