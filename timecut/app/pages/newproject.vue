@@ -569,42 +569,29 @@ const handleSubtitleSelect = () => {
   subtitleMode.value = 'ai'
 }
 
-const downloadAll = async () => {
+const downloadAll = () => {
   if (isDownloading.value) return
 
   isDownloading.value = true
   downloadedClips.value = new Set()
   currentDownloadIndex.value = -1
 
-  const totalClips = clipUrls.value.length
+  // IMPORTANT : on déclenche les téléchargements immédiatement, dans le geste
+  // du clic, sans fetch ni délai. C'est ce qui permet au navigateur d'afficher
+  // le bandeau "Autoriser plusieurs téléchargements ?" et de tous les lancer.
+  // fl_attachment:clip_N force le téléchargement et nomme le fichier côté Cloudinary.
+  clipUrls.value.forEach((url, index) => {
+    const downloadUrl = url.replace('/upload/', `/upload/fl_attachment:clip_${index + 1}/`)
 
-  for (let index = 0; index < totalClips; index += 1) {
-    currentDownloadIndex.value = index
-    const url = clipUrls.value[index]
-    const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/')
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = `clip_${index + 1}.mp4`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
 
-    try {
-      const response = await fetch(downloadUrl)
-      const blob = await response.blob()
-      const blobUrl = URL.createObjectURL(blob)
-
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.download = `clip_${index + 1}.mp4`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(blobUrl)
-
-      downloadedClips.value = new Set([...downloadedClips.value, index])
-
-      if (index < totalClips - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-      }
-    } catch (error) {
-      console.error(`Erreur lors du téléchargement du clip ${index + 1}:`, error)
-    }
-  }
+    downloadedClips.value = new Set([...downloadedClips.value, index])
+  })
 
   currentDownloadIndex.value = -1
   isDownloading.value = false
