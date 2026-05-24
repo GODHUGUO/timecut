@@ -186,9 +186,9 @@
         </button>
 
 
-        <p v-if="uploadedFile && requiredMinutes > 0" class="text-gray-400 text-xs text-center">
-          Cette vidéo consommera {{ requiredMinutes }} min de quota.
-        </p>
+        <!-- <p v-if="uploadedFile && requiredMinutes > 0" class="text-gray-400 text-xs text-center">
+          Cette vidéo consommera {{ requiredMinutesLabel }} min de quota.
+        </p> -->
 
         <div v-if="isInQueue" class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 space-y-2">
           <div class="flex items-center gap-2">
@@ -458,9 +458,15 @@ const waitlistError = ref('')
 const showValidationModal = ref(false)
 const validationMessage = ref('')
 
+// Consommation réelle, à la seconde près (minutes fractionnaires).
 const requiredMinutes = computed(() => {
   if (!videoDurationSeconds.value) return 0
-  return Math.max(Math.ceil(videoDurationSeconds.value / 60), 1)
+  return videoDurationSeconds.value / 60
+})
+
+// Libellé d'affichage : on arrondit à 1 décimale pour rester lisible.
+const requiredMinutesLabel = computed(() => {
+  return (Math.round(requiredMinutes.value * 10) / 10).toString()
 })
 
 const hasEnoughMinutes = computed(() => {
@@ -569,29 +575,42 @@ const handleSubtitleSelect = () => {
   subtitleMode.value = 'ai'
 }
 
-const downloadAll = () => {
+const downloadAll = async () => {
   if (isDownloading.value) return
 
   isDownloading.value = true
   downloadedClips.value = new Set()
   currentDownloadIndex.value = -1
 
-  // IMPORTANT : on déclenche les téléchargements immédiatement, dans le geste
-  // du clic, sans fetch ni délai. C'est ce qui permet au navigateur d'afficher
-  // le bandeau "Autoriser plusieurs téléchargements ?" et de tous les lancer.
-  // fl_attachment:clip_N force le téléchargement et nomme le fichier côté Cloudinary.
-  clipUrls.value.forEach((url, index) => {
-    const downloadUrl = url.replace('/upload/', `/upload/fl_attachment:clip_${index + 1}/`)
+  const totalClips = clipUrls.value.length
 
-    const link = document.createElement('a')
-    link.href = downloadUrl
-    link.download = `clip_${index + 1}.mp4`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  for (let index = 0; index < totalClips; index += 1) {
+    currentDownloadIndex.value = index
+    const url = clipUrls.value[index]
+    const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/')
 
-    downloadedClips.value = new Set([...downloadedClips.value, index])
-  })
+    try {
+      const response = await fetch(downloadUrl)
+      const blob = await response.blob()
+      const blobUrl = URL.createObjectURL(blob)
+
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = `clip_${index + 1}.mp4`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(blobUrl)
+
+      downloadedClips.value = new Set([...downloadedClips.value, index])
+
+      if (index < totalClips - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
+    } catch (error) {
+      console.error(`Erreur lors du téléchargement du clip ${index + 1}:`, error)
+    }
+  }
 
   currentDownloadIndex.value = -1
   isDownloading.value = false
