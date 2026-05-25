@@ -43,13 +43,30 @@ export class AIService {
     process.env.TCHAVI_AUDIO_CHUNK_SECONDS ?? 480,
   );
   private client: OpenAI | null = null;
+  private tmpCounter = 0;
+
+  /**
+   * Génère un suffixe unique même sous forte concurrence.
+   * `Date.now()` seul provoquait des collisions de noms de fichiers quand
+   * plusieurs clips étaient traités dans la même milliseconde (jusqu'à 7 en
+   * parallèle), ce qui faisait planter ffmpeg ("Error opening output file ...
+   * Invalid argument", code 234).
+   */
+  private uniqueSuffix(): string {
+    this.tmpCounter = (this.tmpCounter + 1) % Number.MAX_SAFE_INTEGER;
+    const rand = Math.random().toString(36).slice(2, 8);
+    return `${Date.now()}_${this.tmpCounter}_${rand}`;
+  }
 
   async extractAudio(videoPath: string): Promise<string> {
     if (!fs.existsSync(this.outputDir)) {
       fs.mkdirSync(this.outputDir, { recursive: true });
     }
 
-    const audioPath = path.join(this.outputDir, `audio_${Date.now()}.mp3`);
+    const audioPath = path.join(
+      this.outputDir,
+      `audio_${this.uniqueSuffix()}.mp3`,
+    );
 
     return new Promise((resolve, reject) => {
       ffmpeg(videoPath)
@@ -86,7 +103,10 @@ export class AIService {
         transcription.segments,
         transcription.text,
       );
-      const srtPath = path.join(this.outputDir, `subtitles_${Date.now()}.srt`);
+      const srtPath = path.join(
+        this.outputDir,
+        `subtitles_${this.uniqueSuffix()}.srt`,
+      );
 
       const finalSegments =
         translatedSegments.length > 0
@@ -179,7 +199,7 @@ export class AIService {
       const srtContent = this.buildSrt(segments, text);
       const srtPath = path.join(
         this.outputDir,
-        `clip_${clipIndex}_subtitles_${Date.now()}.srt`,
+        `clip_${clipIndex}_subtitles_${this.uniqueSuffix()}.srt`,
       );
       fs.writeFileSync(srtPath, srtContent, 'utf8');
 
@@ -210,7 +230,7 @@ export class AIService {
       return [audioPath];
     }
 
-    const chunkPrefix = `audio_chunk_${Date.now()}`;
+    const chunkPrefix = `audio_chunk_${this.uniqueSuffix()}`;
     const chunkPattern = path.join(this.outputDir, `${chunkPrefix}_%03d.mp3`);
 
     await new Promise<void>((resolve, reject) => {
