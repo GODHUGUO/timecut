@@ -146,6 +146,27 @@
               </p>
             </div>
 
+            <!-- Acceptation des conditions (inscription uniquement) -->
+            <div v-if="!isLogin">
+              <label class="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  v-model="acceptTerms"
+                  type="checkbox"
+                  @change="validateAcceptTerms"
+                  class="mt-0.5 w-4 h-4 shrink-0 accent-[#7f13ec] cursor-pointer"
+                />
+                <span class="text-gray-400 text-xs sm:text-sm leading-snug">
+                  J'accepte les
+                  <NuxtLink to="/cgu" target="_blank" class="text-[#7f13ec] hover:underline">conditions d'utilisation</NuxtLink>
+                  et la
+                  <NuxtLink to="/confidentialite" target="_blank" class="text-[#7f13ec] hover:underline">politique de confidentialité</NuxtLink>.
+                </span>
+              </label>
+              <p v-if="acceptTermsError" class="text-red-400 text-xs mt-1 px-1">
+                {{ acceptTermsError }}
+              </p>
+            </div>
+
             <div v-if="isLogin" class="text-right px-1">
               <button
                 type="button"
@@ -282,6 +303,7 @@ const lastName = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const acceptTerms = ref(false)
 const loading = ref(false)
 const errorMsg = ref('')
 
@@ -330,6 +352,13 @@ const lastNameError = ref('')
 const emailError = ref('')
 const passwordError = ref('')
 const confirmError = ref('')
+const acceptTermsError = ref('')
+
+const validateAcceptTerms = () => {
+  acceptTermsError.value = acceptTerms.value
+    ? ''
+    : "Vous devez accepter les conditions d'utilisation"
+}
 
 const validateFirstName = () => {
   firstNameError.value = !firstName.value.trim() ? 'Le prénom est requis' : ''
@@ -375,7 +404,8 @@ const formIsValid = computed(() => {
     lastName.value.trim() && !lastNameError.value &&
     email.value.trim() && !emailError.value &&
     password.value && !passwordError.value &&
-    confirmPassword.value && !confirmError.value
+    confirmPassword.value && !confirmError.value &&
+    acceptTerms.value
   )
 })
 
@@ -385,10 +415,18 @@ watch(isLogin, () => {
   emailError.value = ''
   passwordError.value = ''
   confirmError.value = ''
+  acceptTermsError.value = ''
+  acceptTerms.value = false
 })
 
 // ── Google & Submit ──
 const loginWithGoogle = async () => {
+  // En mode inscription, l'acceptation des conditions est obligatoire
+  if (!isLogin.value) {
+    validateAcceptTerms()
+    if (acceptTermsError.value) return
+  }
+
   const provider = new GoogleAuthProvider()
   try {
     loading.value = true
@@ -409,7 +447,10 @@ const handleSubmit = async () => {
   }
   validateEmail()
   validatePassword()
-  if (!isLogin.value) validateConfirmPassword()
+  if (!isLogin.value) {
+    validateConfirmPassword()
+    validateAcceptTerms()
+  }
 
   if (!formIsValid.value) return
 

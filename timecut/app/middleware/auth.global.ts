@@ -3,7 +3,7 @@ import { onAuthStateChanged, type User } from 'firebase/auth'
 export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server) return
 
-  const publicPages = ['/', '/login', '/pricing', '/contact']
+  const publicPages = ['/', '/login', '/pricing', '/contact', '/confidentialite', '/cgu']
 
   const isPublicPage = publicPages.includes(to.path)
 

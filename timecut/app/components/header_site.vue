@@ -12,7 +12,9 @@
       <nav class="hidden md:flex space-x-8 text-gray-200">
         <a href="#features" class="hover:text-[#7f13ec] transition">Fonctionnalités</a>
         <a href="#how-it-works" class="hover:text-[#7f13ec] transition">Comment ça marche</a>
+        <a href="#mobile-money" class="hover:text-[#7f13ec] transition">Mobile Money</a>
         <a href="#pricing" class="hover:text-[#7f13ec] transition">Tarifs</a>
+        <a href="#faq" class="hover:text-[#7f13ec] transition">FAQ</a>
       </nav>
 
       <!-- CTA desktop -->
@@ -47,7 +49,9 @@
       <nav class="flex flex-col space-y-3">
         <a @click="menuOpen = false" href="#features" class="text-gray-200 hover:text-[#7f13ec] transition py-2">Fonctionnalités</a>
         <a @click="menuOpen = false" href="#how-it-works" class="text-gray-200 hover:text-[#7f13ec] transition py-2">Comment ça marche</a>
+        <a @click="menuOpen = false" href="#mobile-money" class="text-gray-200 hover:text-[#7f13ec] transition py-2">Mobile Money</a>
         <a @click="menuOpen = false" href="#pricing" class="text-gray-200 hover:text-[#7f13ec] transition py-2">Tarifs</a>
+        <a @click="menuOpen = false" href="#faq" class="text-gray-200 hover:text-[#7f13ec] transition py-2">FAQ</a>
       </nav>
 
       <!-- CTA mobile -->

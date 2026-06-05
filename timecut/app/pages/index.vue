@@ -200,6 +200,81 @@
       </section>
 
       <!-- ═══════════════════════════════════════
+           MOBILE MONEY / DIFFÉRENCIATEUR
+      ═══════════════════════════════════════ -->
+      <section id="mobile-money" class="py-24 px-6">
+        <div class="container mx-auto max-w-5xl">
+          <div ref="momoWrap" class="bg-gradient-to-br from-[#1e1333] to-[#191022] border border-[#7f13ec]/30 rounded-3xl p-8 lg:p-12">
+            <div class="grid lg:grid-cols-2 gap-10 items-center">
+
+              <!-- Texte -->
+              <div class="space-y-5">
+                <span class="bg-[#7f13ec]/20 text-[#7f13ec] px-4 py-1 rounded-full text-sm inline-block font-medium">
+                  Pensé pour les créateurs en Afrique
+                </span>
+                <h2 class="text-3xl lg:text-4xl font-bold leading-tight">
+                  Payez en <span class="text-[#7f13ec]">Mobile Money</span>, sans carte bancaire internationale
+                </h2>
+                <p class="text-gray-300 leading-relaxed">
+                  Pas besoin de Visa ou Mastercard pour vous abonner. Activez Starter ou Pro directement
+                  depuis votre Mobile Money , un atout pensé pour l'Afrique, là où les autres
+                  outils de clipping vous bloquent au paiement.
+                </p>
+                <ul class="space-y-3">
+                  <li class="flex items-center gap-3 text-gray-300">
+                    <span class="w-5 h-5 rounded-full bg-[#7f13ec]/20 text-[#7f13ec] flex items-center justify-center text-xs shrink-0">✓</span>
+                    Paiement Mobile Money, sans carte bancaire
+                  </li>
+                  <li class="flex items-center gap-3 text-gray-300">
+                    <span class="w-5 h-5 rounded-full bg-[#7f13ec]/20 text-[#7f13ec] flex items-center justify-center text-xs shrink-0">✓</span>
+                    Interface 100 % en français
+                  </li>
+                  <li class="flex items-center gap-3 text-gray-300">
+                    <span class="w-5 h-5 rounded-full bg-[#7f13ec]/20 text-[#7f13ec] flex items-center justify-center text-xs shrink-0">✓</span>
+                    Des tarifs accessibles, à partir de 4,99 €/mois
+                  </li>
+                  <li class="flex items-center gap-3 text-gray-300">
+                    <span class="w-5 h-5 rounded-full bg-[#7f13ec]/20 text-[#7f13ec] flex items-center justify-center text-xs shrink-0">✓</span>
+                    Sous-titres traduits pour toucher un public mondial
+                  </li>
+                </ul>
+                <NuxtLink to="#pricing" class="inline-flex">
+                  <button class="bg-[#7f13ec] hover:bg-[#a855f7] text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-105">
+                    Voir les offres Mobile Money
+                  </button>
+                </NuxtLink>
+              </div>
+
+              <!-- Carte visuelle -->
+              <div class="bg-[#191022] border border-[#7f13ec]/20 rounded-2xl p-6 space-y-5">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-[#7f13ec]/20 flex items-center justify-center">
+                    <Icon name="lucide:smartphone" class="w-5 h-5 text-[#7f13ec]" />
+                  </div>
+                  <div>
+                    <p class="text-white font-semibold">Abonnement Mobile Money</p>
+                    <p class="text-gray-500 text-xs">Activation après confirmation du paiement</p>
+                  </div>
+                </div>
+                <div class="bg-[#2a1a44] rounded-xl p-4 flex items-center justify-between">
+                  <span class="text-gray-300 text-sm">Plan Starter</span>
+                  <span class="text-white font-semibold">4,99 € / mois</span>
+                </div>
+                <div class="bg-[#7f13ec]/10 border border-[#7f13ec]/30 rounded-xl p-4 flex items-center justify-between">
+                  <span class="text-gray-300 text-sm">Plan Pro</span>
+                  <span class="text-white font-semibold">12,99 € / mois</span>
+                </div>
+                <p class="text-gray-500 text-xs text-center pt-1">
+                  Aucune carte bancaire requise · Paiement via Mobile Money
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════
            PRICING
       ═══════════════════════════════════════ -->
       <section id="pricing" class="py-24 px-6 bg-[#191022]/50">
@@ -343,6 +418,40 @@
       </section>
 
       <!-- ═══════════════════════════════════════
+           FAQ
+      ═══════════════════════════════════════ -->
+      <section id="faq" class="py-24 px-6 bg-[#191022]/50">
+        <div class="container mx-auto max-w-3xl">
+          <h2 ref="faqTitle" class="text-4xl font-bold text-center mb-4">Questions fréquentes</h2>
+          <p class="text-center text-gray-400 mb-12">Tout ce qu'il faut savoir avant de vous lancer.</p>
+
+          <div class="space-y-3">
+            <div
+              v-for="(item, i) in faqs"
+              :key="i"
+              class="bg-[#191022] border border-[#7f13ec]/20 rounded-2xl overflow-hidden"
+            >
+              <button
+                type="button"
+                @click="openFaq = openFaq === i ? null : i"
+                class="w-full flex items-center justify-between gap-4 text-left px-6 py-5 hover:bg-[#7f13ec]/5 transition"
+              >
+                <span class="font-medium text-white">{{ item.q }}</span>
+                <Icon
+                  name="lucide:chevron-down"
+                  class="w-5 h-5 text-[#7f13ec] shrink-0 transition-transform duration-300"
+                  :class="{ 'rotate-180': openFaq === i }"
+                />
+              </button>
+              <div v-show="openFaq === i" class="px-6 pb-5 text-gray-400 leading-relaxed">
+                {{ item.a }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════
            FINAL CTA
       ═══════════════════════════════════════ -->
       <section class="py-12 px-6 text-center">
@@ -369,6 +478,43 @@ import { ref, onMounted } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
+// ── FAQ ─────────────────────────────────────────────
+const openFaq = ref(0)
+const faqs = [
+  {
+    q: 'Comment TimeCut découpe-t-il ma vidéo ?',
+    a: 'Vous choisissez la durée des clips, et TimeCut découpe automatiquement votre vidéo en plusieurs clips de cette durée, avec les sous-titres incrustés.'
+  },
+  {
+    q: 'Les sous-titres sont-ils ajoutés automatiquement ?',
+    a: 'Les sous-titres sont disponibles avec les offres payantes (Starter et Pro). Lorsque vous activez l\'option sous-titres, l\'audio est transcrit automatiquement et les sous-titres sont incrustés dans chaque clip. Vous pouvez aussi les faire traduire (français, espagnol, arabe, etc.).'
+  },
+  {
+    q: 'Mes vidéos sont-elles conservées sur vos serveurs ?',
+    a: 'Votre vidéo source est supprimée automatiquement dès que vos clips sont générés. Seuls les clips générés sont conservés, pour que vous puissiez les télécharger.'
+  },
+  {
+    q: 'Utilisez-vous mes vidéos pour entraîner des modèles d\'IA ?',
+    a: 'Non. TimeCut n\'entraîne aucun modèle d\'IA avec vos vidéos, et nos prestataires d\'IA n\'utilisent pas vos contenus pour entraîner leurs modèles.'
+  },
+  {
+    q: 'Comment puis-je payer mon abonnement ?',
+    a: 'Par Mobile Money, sans carte bancaire internationale. Un atout pensé pour les créateurs en Afrique.'
+  },
+  {
+    q: 'Que se passe-t-il si mon quota mensuel est épuisé ?',
+    a: 'Une recharge est possible pour continuer à générer des clips sans attendre le renouvellement mensuel de votre quota.'
+  },
+  {
+    q: 'Y a-t-il une offre gratuite ?',
+    a: 'Oui : 20 minutes de vidéo traitée par mois, gratuitement, pour découvrir TimeCut.'
+  },
+  {
+    q: 'Puis-je être remboursé ?',
+    a: 'Les abonnements et recharges ne sont pas remboursables. Nous vous conseillons de tester l\'offre gratuite avant de souscrire à un plan payant.'
+  }
+]
+
 // ── Hero refs ───────────────────────────────────────
 const heroLine1    = ref(null)
 const heroLine2    = ref(null)
@@ -392,10 +538,12 @@ const howTitle       = ref(null)
 const step1          = ref(null)
 const step2          = ref(null)
 const step3          = ref(null)
+const momoWrap       = ref(null)
 const pricingTitle   = ref(null)
 const planFree       = ref(null)
 const planStarter    = ref(null)
 const planPro        = ref(null)
+const faqTitle       = ref(null)
 const cta            = ref(null)
 
 onMounted(() => {
@@ -447,6 +595,11 @@ onMounted(() => {
     { opacity: 1, x: 0, duration: 0.7, stagger: 0.22, ease: 'power3.out',
       scrollTrigger: { trigger: step1.value, start: 'top 85%' } })
 
+  // ── Mobile Money ──────────────────────────────────
+  gsap.fromTo(momoWrap.value, { opacity: 0, y: 50 },
+    { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out',
+      scrollTrigger: { trigger: momoWrap.value, start: 'top 85%' } })
+
   // ── Pricing ───────────────────────────────────────
   gsap.fromTo(pricingTitle.value, { opacity: 0, y: 40 },
     { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out',
@@ -456,6 +609,11 @@ onMounted(() => {
     { opacity: 0, y: 60 },
     { opacity: 1, y: 0, duration: 0.7, stagger: 0.15, ease: 'power3.out',
       scrollTrigger: { trigger: planFree.value, start: 'top 85%' } })
+
+  // ── FAQ ───────────────────────────────────────────
+  gsap.fromTo(faqTitle.value, { opacity: 0, y: 40 },
+    { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out',
+      scrollTrigger: { trigger: faqTitle.value, start: 'top 85%' } })
 
   // ── CTA final ─────────────────────────────────────
   gsap.fromTo(cta.value, { opacity: 0, y: 50, scale: 0.94 },

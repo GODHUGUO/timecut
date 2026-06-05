@@ -3,13 +3,14 @@
     <div class="container mx-auto px-6 ">
       
       <!-- Grid -->
-      <div class="grid gap-10 text-gray-300 max-w-5xl mx-auto text-center md:text-left md:grid-cols-3 ">
-        
+      <div class="grid gap-10 text-gray-300 max-w-5xl mx-auto text-center md:text-left md:grid-cols-4 ">
+
         <!-- Colonne 1 -->
         <div class="space-y-3">
           <h4 class="text-white font-bold text-lg">TimeCut</h4>
           <p class="text-sm">
-            Transformez vos longues vidéos en clips courts pour les réseaux sociaux.
+            Transformez vos longues vidéos en clips courts sous-titrés pour les réseaux sociaux.
+            Paiement Mobile Money.
           </p>
         </div>
 
@@ -24,9 +25,19 @@
 
         <!-- Colonne 3 -->
         <div class="space-y-3">
-          <h4 class="text-white font-semibold">Connexion</h4>
+          <h4 class="text-white font-semibold">Légal</h4>
           <ul class="space-y-2 text-sm">
-            <li> <NuxtLink to="/login" class="hover:text-[#7f13ec]">Se connecter</NuxtLink></li>
+            <li><NuxtLink to="/confidentialite" class="hover:text-[#7f13ec]">Confidentialité</NuxtLink></li>
+            <li><NuxtLink to="/cgu" class="hover:text-[#7f13ec]">Conditions d'utilisation</NuxtLink></li>
+          </ul>
+        </div>
+
+        <!-- Colonne 4 -->
+        <div class="space-y-3">
+          <h4 class="text-white font-semibold">Support</h4>
+          <ul class="space-y-2 text-sm">
+            <li><NuxtLink to="/contact" class="hover:text-[#7f13ec]">Contact</NuxtLink></li>
+            <li><NuxtLink to="/login" class="hover:text-[#7f13ec]">Se connecter</NuxtLink></li>
           </ul>
         </div>
 
