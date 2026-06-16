@@ -157,6 +157,34 @@
           </p>
         </div>
 
+        <div>
+          <label class="block text-white text-sm mb-3">Format des clips</label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              v-for="opt in formatOptions"
+              :key="opt.value"
+              @click="format = opt.value"
+              class="flex flex-col items-start gap-2 p-4 rounded-xl border-2 transition-all text-left"
+              :class="format === opt.value
+                ? 'border-[#7f13ec] bg-[#7f13ec]/10'
+                : 'border-[#7f13ec]/20 bg-[#1e1333] hover:border-[#7f13ec]/40'"
+            >
+              <div class="flex items-center justify-between w-full">
+                <div class="w-8 h-8 rounded-lg bg-[#2a1a44] flex items-center justify-center">
+                  <Icon :name="opt.icon" class="w-4 h-4 text-[#7f13ec]" />
+                </div>
+                <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center" :class="format === opt.value ? 'border-[#7f13ec]' : 'border-gray-600'">
+                  <div v-if="format === opt.value" class="w-2 h-2 rounded-full bg-[#7f13ec]" />
+                </div>
+              </div>
+              <div>
+                <p class="text-white text-sm font-medium">{{ opt.label }}</p>
+                <p class="text-gray-500 text-xs mt-0.5">{{ opt.hint }}</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
         <!-- <button
           @click="startProcessing"
           :disabled="isProcessing || !uploadedFile || !hasEnoughMinutes"
@@ -436,6 +464,29 @@ const clipDuration = ref('')
 const minutesInput = ref('')
 const isDragging = ref(false)
 const subtitleMode = ref('none')
+// Format de sortie des clips : 'original' | 'vertical_crop' | 'vertical_blur'
+const format = ref('original')
+
+const formatOptions = [
+  {
+    value: 'original',
+    label: 'Original',
+    hint: 'Garde le format de la vidéo',
+    icon: 'lucide:monitor',
+  },
+  {
+    value: 'vertical_crop',
+    label: 'Short 9:16 — recadré',
+    hint: 'Vertical plein cadre (bords coupés)',
+    icon: 'lucide:smartphone',
+  },
+  {
+    value: 'vertical_blur',
+    label: 'Short 9:16 — fond flou',
+    hint: 'Vertical, image entière sur fond flou',
+    icon: 'lucide:smartphone',
+  },
+]
 
 const isProcessing = ref(false)
 const progress = ref(0)
@@ -725,6 +776,7 @@ const startProcessing = async () => {
         filename: uploadedFile.value.name,
         clipDuration: clipDuration.value,
         subtitleMode: subtitleMode.value,
+        format: format.value,
       }),
     })
 

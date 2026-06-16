@@ -268,7 +268,6 @@
                   Aucune carte bancaire requise · Paiement via Mobile Money
                 </p>
               </div>
-
             </div>
           </div>
         </div>

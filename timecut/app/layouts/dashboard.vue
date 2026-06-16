@@ -28,6 +28,19 @@
         </NuxtLink>
 
         <NuxtLink
+          to="/reformat"
+          @click="closeMobileMenu"
+          class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+          :class="{
+            'bg-[#7f13ec] text-white': $route.path === '/reformat',
+            'text-white hover:text-white hover:bg-[#7f13ec]/20': $route.path !== '/reformat',
+          }"
+        >
+          <Icon name="lucide:crop" class="w-5 h-5 mr-3" :class="{ 'text-white': $route.path === '/reformat', 'text-[#7f13ec]': $route.path !== '/reformat' }" />
+          <span>Reformater</span>
+        </NuxtLink>
+
+        <NuxtLink
           to="/projects"
           @click="closeMobileMenu"
           class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors"
@@ -181,6 +194,7 @@ onUnmounted(() => {
 const pageTitle = computed(() => {
   const path = route.path
   if (path === '/newproject') return 'Nouveau projet'
+  if (path === '/reformat') return 'Reformater une vidéo'
   if (path === '/projects') return 'Mes projets'
   if (path === '/billing') return 'Facturation'
   if (path === '/settings') return 'Paramètres'
