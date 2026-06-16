@@ -101,6 +101,7 @@ export class VideoController {
     @Body('filename') filename: string,
     @Body('clipDuration') clipDuration: number,
     @Body('subtitleMode') subtitleMode: string,
+    @Body('format') format: string,
   ) {
     const userId = this.videoService.getUserIdFromRequest(req);
     return this.videoService.processVideo(
@@ -110,6 +111,26 @@ export class VideoController {
       Number(clipDuration),
       userId,
       subtitleMode,
+      format,
+    );
+  }
+
+  @Post('reformat')
+  @UseGuards(FirebaseAuthGuard)
+  async reformatVideo(
+    @Req() req: any,
+    @Body('publicId') publicId: string,
+    @Body('duration') duration: number,
+    @Body('filename') filename: string,
+    @Body('format') format: string,
+  ) {
+    const userId = this.videoService.getUserIdFromRequest(req);
+    return this.videoService.reformatUserVideo(
+      publicId,
+      Number(duration),
+      filename,
+      format,
+      userId,
     );
   }
 }

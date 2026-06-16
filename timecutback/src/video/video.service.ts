@@ -6,7 +6,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
-import { ProcessingService } from '../processing/processing.service';
+import {
+  ProcessingService,
+  VideoFormat,
+  isVideoFormat,
+} from '../processing/processing.service';
 import {
   ProcessingQueueService,
   QueueStatus,
@@ -211,6 +215,7 @@ export class VideoService {
     clipDuration: number,
     userId: string,
     subtitleMode?: string,
+    format?: string,
   ): Promise<{
     clips: string[];
     subtitleMode: string;
@@ -260,6 +265,10 @@ export class VideoService {
         `La duree du clip (${clipDuration}s) ne peut pas depasser la duree totale de la video (${Math.floor(totalDuration)}s).`,
       );
     }
+
+    const normalizedFormat: VideoFormat = isVideoFormat(format)
+      ? format
+      : 'original';
 
     const subscription = await this.getUserSubscriptionSummary(userId);
     const normalizedSubtitleMode = subtitleMode === 'ai' ? 'ai' : 'none';
@@ -330,6 +339,7 @@ export class VideoService {
               effectiveDuration,
               clipDuration,
               tempDir,
+              normalizedFormat,
             );
             this.logger.log(`Cut ${localClipPaths.length} clips locally`);
 
@@ -382,6 +392,7 @@ export class VideoService {
             effectiveDuration,
             clipDuration,
             tempBaseDir,
+            normalizedFormat,
           );
           this.logger.log(`Cut ${localClipPaths.length} clips locally`);
 
@@ -499,6 +510,108 @@ export class VideoService {
       targetSubtitleLanguage: preferences.targetSubtitleLanguage,
       subtitles: queueResult.subtitles,
     };
+  }
+
+  /**
+   * Reformate une vidéo ENTIÈRE (sans découpage) vers un format vertical.
+   * Réservé aux abonnés payants (Starter/Pro) — ne débite PAS le quota de minutes.
+   */
+  async reformatUserVideo(
+    publicId: string,
+    cloudDuration: number,
+    filename: string,
+    format: string,
+    userId: string,
+  ): Promise<{ url: string; format: VideoFormat }> {
+    this.logger.log(`=== REFORMAT VIDEO ===`);
+    this.logger.log(`publicId: ${publicId}`);
+    this.logger.log(`format: "${format}"`);
+    this.logger.log(`userId: ${userId}`);
+    this.logger.log(`======================`);
+
+    if (!isVideoFormat(format) || format === 'original') {
+      throw new BadRequestException(
+        'Format de sortie invalide. Choisissez un format vertical (9:16).',
+      );
+    }
+    const targetFormat: VideoFormat = format;
+
+    if (
+      !Number.isFinite(cloudDuration) ||
+      cloudDuration <= 0 ||
+      cloudDuration > 7200
+    ) {
+      throw new BadRequestException('Duree de video invalide.');
+    }
+
+    const expectedPrefix = `timecut/${userId}/`;
+    if (!publicId.startsWith(expectedPrefix)) {
+      throw new BadRequestException('publicId invalide ou non autorise.');
+    }
+
+    if (!filename || typeof filename !== 'string' || filename.length > 255) {
+      throw new BadRequestException('Nom de fichier invalide.');
+    }
+
+    const subscription = await this.getUserSubscriptionSummary(userId);
+    if (subscription.currentPlan === 'free') {
+      throw new BadRequestException(
+        'Le reformatage de vidéo est réservé aux abonnements Starter et Pro.',
+      );
+    }
+
+    // Re-encodage complet : on passe par la file lourde, en priorité haute
+    // (tous les utilisateurs de cette fonctionnalité sont payants).
+    const url = await this.processingQueue.enqueue(
+      'heavy',
+      async () => {
+        const tempDir = path.join('./uploads', `reformat_tmp_${Date.now()}`);
+        fs.mkdirSync(tempDir, { recursive: true });
+        const localInputPath = path.join(tempDir, 'source.mp4');
+        const localOutputPath = path.join(tempDir, 'reformatted.mp4');
+
+        try {
+          const sourceUrl = this.storageService.getFullVideoUrl(publicId);
+          this.logger.log(`Downloading source video: ${sourceUrl}`);
+          await this.storageService.downloadClipFromUrl(
+            sourceUrl,
+            localInputPath,
+          );
+
+          this.logger.log(`Reformatting video to ${targetFormat}`);
+          await this.processingService.reformatVideo(
+            localInputPath,
+            targetFormat,
+            localOutputPath,
+          );
+
+          const finalUrl = await this.storageService.upload({
+            fieldname: 'file',
+            originalname: 'reformatted.mp4',
+            encoding: '7bit',
+            mimetype: 'video/mp4',
+            size: 0,
+            path: localOutputPath,
+            filename: 'reformatted.mp4',
+          });
+          this.logger.log(`Reformatted video uploaded: ${finalUrl}`);
+
+          // Supprimer la vidéo source de Cloudinary (fire & forget)
+          this.storageService.deleteCloudinaryAsset(publicId).catch((err) => {
+            this.logger.warn(
+              `Failed to delete source video ${publicId}: ${err}`,
+            );
+          });
+
+          return finalUrl;
+        } finally {
+          this.safeDeleteDir(tempDir);
+        }
+      },
+      'high',
+    );
+
+    return { url, format: targetFormat };
   }
 
   /**

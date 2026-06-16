@@ -8,6 +8,25 @@ type SrtSegment = {
   text: string;
 };
 
+// Formats de sortie supportés.
+// - original     : on garde le ratio de la source (comportement historique)
+// - vertical_crop: 9:16 plein cadre, recadré au centre (les bords sont coupés)
+// - vertical_blur: 9:16 avec l'image entière centrée sur un fond flou zoomé
+export type VideoFormat = 'original' | 'vertical_crop' | 'vertical_blur';
+
+export const ALLOWED_VIDEO_FORMATS: VideoFormat[] = [
+  'original',
+  'vertical_crop',
+  'vertical_blur',
+];
+
+export function isVideoFormat(value: unknown): value is VideoFormat {
+  return (
+    typeof value === 'string' &&
+    (ALLOWED_VIDEO_FORMATS as string[]).includes(value)
+  );
+}
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const ffmpeg = require('fluent-ffmpeg') as typeof import('fluent-ffmpeg');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -20,14 +39,46 @@ ffmpeg.setFfprobePath(ffprobeStatic.path);
 
 @Injectable()
 export class ProcessingService {
+  /**
+   * Construit le filtregraphe ffmpeg (au format -filter_complex) qui convertit
+   * la vidéo vers le format demandé. Renvoie `null` pour 'original' (aucune
+   * transformation). Le pad de sortie s'appelle toujours `[vout]`.
+   *
+   * Utilise un seul filtregraphe à partir de [0:v:0] :
+   * - vertical_crop : on agrandit pour couvrir 1080x1920 puis on recadre au centre.
+   * - vertical_blur : un fond flou zoomé + l'image entière centrée par-dessus.
+   */
+  private buildFormatComplexFilter(format: VideoFormat): string | null {
+    if (format === 'vertical_crop') {
+      return (
+        '[0:v:0]scale=1080:1920:force_original_aspect_ratio=increase,' +
+        'crop=1080:1920,setsar=1[vout]'
+      );
+    }
+
+    if (format === 'vertical_blur') {
+      return (
+        '[0:v:0]split=2[bg][fg];' +
+        '[bg]scale=1080:1920:force_original_aspect_ratio=increase,' +
+        'crop=1080:1920,boxblur=20:5[bgb];' +
+        '[fg]scale=1080:1920:force_original_aspect_ratio=decrease[fgb];' +
+        '[bgb][fgb]overlay=(W-w)/2:(H-h)/2,setsar=1[vout]'
+      );
+    }
+
+    return null;
+  }
+
   async cutClipsLocally(
     inputPath: string,
     totalDuration: number,
     clipDuration: number,
     outputDir: string,
+    format: VideoFormat = 'original',
   ): Promise<string[]> {
     const minTrailingClipSeconds = 1;
     const segmentPattern = path.join(outputDir, 'clip_%d.mp4');
+    const formatFilter = this.buildFormatComplexFilter(format);
 
     // Découpage en UNE seule passe avec le segment muxer ffmpeg.
     //
@@ -41,26 +92,50 @@ export class ProcessingService {
     // On réencode donc en forçant une keyframe exactement à chaque multiple de
     // clipDuration, ce qui garantit un découpage aux durées demandées.
     await new Promise<void>((resolve, reject) => {
-      ffmpeg(inputPath)
-        .outputOptions([
-          '-c:v libx264',
-          '-preset veryfast',
-          '-crf 23',
-          '-pix_fmt yuv420p',
-          '-c:a aac',
-          '-b:a 128k',
-          // Force une keyframe à chaque frontière de segment (0, clip, 2*clip, ...)
-          `-force_key_frames expr:gte(t,n_forced*${clipDuration})`,
+      const command = ffmpeg(inputPath);
+
+      const encodeOptions = [
+        '-c:v libx264',
+        '-preset veryfast',
+        '-crf 23',
+        '-pix_fmt yuv420p',
+        '-c:a aac',
+        '-b:a 128k',
+        // Force une keyframe à chaque frontière de segment (0, clip, 2*clip, ...)
+        `-force_key_frames expr:gte(t,n_forced*${clipDuration})`,
+      ];
+
+      const segmentOptions = [
+        '-f segment',
+        `-segment_time ${clipDuration}`,
+        // Aligne la coupe sur les keyframes forcées ci-dessus
+        '-segment_time_delta 0.05',
+        '-reset_timestamps 1',
+        '-avoid_negative_ts make_zero',
+        '-movflags +faststart',
+      ];
+
+      if (formatFilter) {
+        // Conversion de format : on filtre [0:v:0] -> [vout] puis on mappe la
+        // sortie filtrée + l'audio. Dès qu'on utilise -map, il faut tout mapper
+        // explicitement (le mapping auto est désactivé), d'où -map [vout].
+        command.complexFilter(formatFilter);
+        command.outputOptions([
+          ...encodeOptions,
+          '-map [vout]',
+          '-map 0:a:0?',
+          ...segmentOptions,
+        ]);
+      } else {
+        command.outputOptions([
+          ...encodeOptions,
           '-map 0:v:0',
           '-map 0:a:0?',
-          '-f segment',
-          `-segment_time ${clipDuration}`,
-          // Aligne la coupe sur les keyframes forcées ci-dessus
-          '-segment_time_delta 0.05',
-          '-reset_timestamps 1',
-          '-avoid_negative_ts make_zero',
-          '-movflags +faststart',
-        ])
+          ...segmentOptions,
+        ]);
+      }
+
+      command
         .output(segmentPattern)
         .on('end', () => resolve())
         .on('error', (err: Error, _stdout, stderr) => {
@@ -137,6 +212,47 @@ export class ProcessingService {
         .on('error', (err: Error) => reject(err))
         .run();
     });
+  }
+
+  /**
+   * Reformate une vidéo ENTIÈRE vers un format donné, sans la découper.
+   * Utilisé par la section « Reformater » (conversion horizontal -> vertical).
+   */
+  async reformatVideo(
+    inputPath: string,
+    format: VideoFormat,
+    outputPath: string,
+  ): Promise<string> {
+    const formatFilter = this.buildFormatComplexFilter(format);
+    if (!formatFilter) {
+      throw new Error(`Aucune transformation pour le format "${format}".`);
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(inputPath)
+        .complexFilter(formatFilter)
+        .outputOptions([
+          '-map [vout]',
+          '-map 0:a:0?',
+          '-c:v libx264',
+          '-preset veryfast',
+          '-crf 23',
+          '-pix_fmt yuv420p',
+          '-c:a aac',
+          '-b:a 128k',
+          '-movflags +faststart',
+        ])
+        .output(outputPath)
+        .on('end', () => resolve())
+        .on('error', (err: Error, _stdout, stderr) => {
+          console.error('FFmpeg reformat error:', err.message);
+          if (stderr) console.error('FFmpeg stderr:', stderr);
+          reject(err);
+        })
+        .run();
+    });
+
+    return outputPath;
   }
 
   async getMediaDuration(filePath: string): Promise<number> {
