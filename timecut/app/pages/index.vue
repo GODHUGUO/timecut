@@ -3,6 +3,39 @@
     <main class="pt-20 bg-[#191022] text-white overflow-x-hidden">
 
       <!-- ═══════════════════════════════════════
+           VIDÉO PROMO (premier bloc)
+      ═══════════════════════════════════════ -->
+      <section ref="promoSection" style="height: calc(100vh - 5rem)" class="relative w-full overflow-hidden">
+        <video
+          ref="promoVideo"
+          class="absolute inset-0 w-full h-full object-cover"
+          src="/timecut-promo.mp4"
+          loop
+          playsinline
+          preload="auto"
+        ></video>
+
+        <!-- Voile dégradé : lisibilité + fondu vers la section suivante -->
+        <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#191022]/30 via-transparent to-[#191022]"></div>
+
+        <!-- Bouton son -->
+        <button
+          type="button"
+          @click="toggleMute"
+          class="absolute bottom-6 right-6 z-10 flex items-center gap-2 bg-[#191022]/70 hover:bg-[#7f13ec] backdrop-blur-sm text-white px-4 py-2 rounded-full border border-[#7f13ec]/30 transition"
+        >
+          <Icon :name="isMuted ? 'lucide:volume-x' : 'lucide:volume-2'" class="w-4 h-4" />
+          <span class="text-sm">{{ isMuted ? 'Activer le son' : 'Couper le son' }}</span>
+        </button>
+
+        <!-- Indicateur de scroll -->
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center text-gray-300 pointer-events-none">
+          <span class="text-xs mb-1">Faites défiler</span>
+          <Icon name="lucide:chevrons-down" class="w-5 h-5 animate-bounce text-[#7f13ec]" />
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════
            HERO SECTION
       ═══════════════════════════════════════ -->
       <section class="bg-[#191022] flex px-6 mt-2 min-h-[90vh] items-center">
@@ -58,11 +91,11 @@
               <p class="text-gray-400 text-sm">Importez votre vidéo, saisissez la durée des clips, et recevez plusieurs courts prêts à l'emploi.</p>
             </div>
 
-            <!-- <div ref="feature2" class="feature-card bg-[#191022] p-8 rounded-2xl border border-[#7f13ec]/20 hover:border-[#7f13ec] transition">
-              <Icon name="lucide:refresh-cw" class="text-5xl mb-4 text-[#7f13ec]" />
-              <h3 class="text-xl font-semibold mb-3">Conversion du format</h3>
-              <p class="text-gray-400 text-sm">Passez automatiquement du 16:9 (YouTube) au 9:16 (TikTok/Reels) sans perte de qualité.</p>
-            </div> -->
+            <div ref="feature2" class="feature-card bg-[#191022] p-8 rounded-2xl border border-[#7f13ec]/20 hover:border-[#7f13ec] transition">
+              <Icon name="lucide:smartphone" class="text-5xl mb-4 text-[#7f13ec]" />
+              <h3 class="text-xl font-semibold mb-3">Format vertical (Short)</h3>
+              <p class="text-gray-400 text-sm">Passez du 16:9 (YouTube) au 9:16 vertical pour TikTok, Reels et Shorts — recadrage centré ou fond flou. Vous pouvez aussi reformater une vidéo entière, sans la découper.</p>
+            </div>
 
             <div ref="feature3" class="feature-card bg-[#191022] p-8 rounded-2xl border border-[#7f13ec]/20 hover:border-[#7f13ec] transition">
               <Icon name="lucide:file-text" class="text-5xl mb-4 text-[#7f13ec]" />
@@ -183,7 +216,7 @@
               <div class="bg-[#7f13ec] text-white w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 shadow-[0_0_20px_rgba(127,19,236,0.4)]">2</div>
               <div>
                 <h3 class="text-2xl font-semibold mb-2">Paramétrer le découpage</h3>
-                <p class="text-gray-400">Saisissez la durée des clips et choisissez la langue des sous-titres</p>
+                <p class="text-gray-400">Saisissez la durée des clips, choisissez le format (horizontal ou vertical 9:16) et la langue des sous-titres.</p>
               </div>
             </div>
 
@@ -473,7 +506,7 @@
 <script setup>
 definePageMeta({ layout: 'landingpage' })
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -483,6 +516,10 @@ const faqs = [
   {
     q: 'Comment TimeCut découpe-t-il ma vidéo ?',
     a: 'Vous choisissez la durée des clips, et TimeCut découpe automatiquement votre vidéo en plusieurs clips de cette durée, avec les sous-titres incrustés.'
+  },
+  {
+    q: 'Puis-je transformer une vidéo horizontale en format vertical (9:16) ?',
+    a: 'Oui. Au moment du découpage, choisissez le format vertical (9:16) pour vos clips — en recadrage centré ou avec un fond flou. Vous pouvez aussi utiliser la section « Reformater » pour convertir une vidéo entière au format vertical, sans la découper (réservée aux offres Starter et Pro).'
   },
   {
     q: 'Les sous-titres sont-ils ajoutés automatiquement ?',
@@ -513,6 +550,36 @@ const faqs = [
     a: 'Les abonnements et recharges ne sont pas remboursables. Nous vous conseillons de tester l\'offre gratuite avant de souscrire à un plan payant.'
   }
 ]
+
+// ── Vidéo promo ─────────────────────────────────────
+const promoSection = ref(null)
+const promoVideo   = ref(null)
+const isMuted      = ref(false)   // son activé par défaut
+
+let promoVisible  = false   // la vidéo est-elle suffisamment visible ?
+let promoObserver = null
+
+function tryPlayPromo() {
+  // Lecture automatique dès que la vidéo est visible (pas besoin de scroller)
+  if (!(promoVisible && promoVideo.value)) return
+  const v = promoVideo.value
+  v.muted = isMuted.value
+  v.play().catch(() => {
+    // Certains navigateurs bloquent la lecture AVEC son tant que
+    // l'utilisateur n'a pas cliqué : on bascule en muet pour que la
+    // vidéo démarre quand même (le bouton « Activer le son » reste dispo).
+    v.muted = true
+    isMuted.value = true
+    v.play().catch(() => {})
+  })
+}
+
+function toggleMute() {
+  if (!promoVideo.value) return
+  promoVideo.value.muted = !promoVideo.value.muted
+  isMuted.value = promoVideo.value.muted
+  if (!promoVideo.value.muted) promoVideo.value.play().catch(() => {})
+}
 
 // ── Hero refs ───────────────────────────────────────
 const heroLine1    = ref(null)
@@ -547,6 +614,20 @@ const cta            = ref(null)
 
 onMounted(() => {
   gsap.registerPlugin(ScrollTrigger)
+
+  // ── Vidéo promo : play au scroll, pause quand on la dépasse ──
+  promoObserver = new IntersectionObserver(
+    ([entry]) => {
+      promoVisible = entry.isIntersecting
+      if (promoVisible) {
+        tryPlayPromo()
+      } else if (promoVideo.value) {
+        promoVideo.value.pause()
+      }
+    },
+    { threshold: 0.35 }
+  )
+  if (promoSection.value) promoObserver.observe(promoSection.value)
 
   // ── Hero ──────────────────────────────────────────
   gsap.set([heroLine1.value, heroLine2.value, heroLine3.value, heroLine4.value], { opacity: 0, y: 70 })
@@ -618,6 +699,10 @@ onMounted(() => {
   gsap.fromTo(cta.value, { opacity: 0, y: 50, scale: 0.94 },
     { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: 'power3.out',
       scrollTrigger: { trigger: cta.value, start: 'top 90%' } })
+})
+
+onUnmounted(() => {
+  if (promoObserver) promoObserver.disconnect()
 })
 </script>
 

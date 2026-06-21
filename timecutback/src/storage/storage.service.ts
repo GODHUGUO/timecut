@@ -29,11 +29,18 @@ export class StorageService {
   }
 
   async upload(file: MulterFile): Promise<string> {
+    // Le fichier est DÉJÀ un MP4 finalisé localement par ffmpeg (clip découpé,
+    // recadré, sous-titres incrustés, ou vidéo reformatée). On l'upload tel quel,
+    // SANS transformation entrante.
+    //
+    // `quality`/`fetch_format` déclenchaient une transformation SYNCHRONE que
+    // Cloudinary refuse sur les vidéos volumineuses :
+    //   « Video is too large to process synchronously, please use an eager
+    //     transformation with eager_async=true »
+    // Cette transformation est inutile ici (l'encodage est déjà fait), donc on
+    // la supprime au lieu de la passer en eager_async.
     const result = await cloudinary.uploader.upload(file.path, {
       resource_type: 'video',
-      // Conserver les sous-titres incrustés en évitant le ré-encodage agressif
-      quality: 'auto:good',
-      fetch_format: 'mp4',
     });
     return result.secure_url;
   }
