@@ -93,8 +93,8 @@
 
             <div ref="feature2" class="feature-card bg-[#191022] p-8 rounded-2xl border border-[#7f13ec]/20 hover:border-[#7f13ec] transition">
               <Icon name="lucide:smartphone" class="text-5xl mb-4 text-[#7f13ec]" />
-              <h3 class="text-xl font-semibold mb-3">Format vertical (Short)</h3>
-              <p class="text-gray-400 text-sm">Passez du 16:9 (YouTube) au 9:16 vertical pour TikTok, Reels et Shorts — recadrage centré ou fond flou. Vous pouvez aussi reformater une vidéo entière, sans la découper.</p>
+              <h3 class="text-xl font-semibold mb-3">Formatage horizontal → vertical</h3>
+              <p class="text-gray-400 text-sm">Changez le format de votre vidéo en un clic : passez du 16:9 horizontal (YouTube) au 9:16 vertical pour TikTok, Reels et Shorts — recadrage centré ou fond flou. Vous pouvez aussi reformater une vidéo entière, sans la découper.</p>
             </div>
 
             <div ref="feature3" class="feature-card bg-[#191022] p-8 rounded-2xl border border-[#7f13ec]/20 hover:border-[#7f13ec] transition">
@@ -237,7 +237,7 @@
       ═══════════════════════════════════════ -->
       <section id="mobile-money" class="py-24 px-6">
         <div class="container mx-auto max-w-5xl">
-          <div ref="momoWrap" class="bg-gradient-to-br from-[#1e1333] to-[#191022] border border-[#7f13ec]/30 rounded-3xl p-8 lg:p-12">
+          <div ref="momoWrap" class="bg-linear-to-br from-[#1e1333] to-[#191022] border border-[#7f13ec]/30 rounded-3xl p-8 lg:p-12">
             <div class="grid lg:grid-cols-2 gap-10 items-center">
 
               <!-- Texte -->
