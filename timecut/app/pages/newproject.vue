@@ -75,29 +75,6 @@
             placeholder="Ex. 60, 120, 300..."
             class="w-full bg-[#1e1333] border border-[#7f13ec]/20 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#7f13ec] transition-colors"
           />
-          <div class="mt-3 bg-[#1e1333] border border-[#7f13ec]/10 rounded-xl p-4">
-            <p class="text-white text-xs mb-2">Convertisseur : entrez les minutes pour obtenir les secondes</p>
-            <div class="flex items-center gap-3">
-              <input
-                v-model="minutesInput"
-                type="number"
-                min="1"
-                placeholder="Ex. 1, 2, 5..."
-                class="w-full bg-[#2a1a44] border border-[#7f13ec]/20 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#7f13ec] transition-colors"
-              />
-              <span class="text-white text-sm shrink-0">min =</span>
-              <span class="text-[#7f13ec] font-bold text-sm shrink-0 w-16">
-                {{ minutesInput ? minutesInput * 60 : '—' }} sec
-              </span>
-              <button
-                v-if="minutesInput"
-                @click="clipDuration = String(minutesInput * 60)"
-                class="shrink-0 px-3 py-2 bg-[#7f13ec] hover:bg-[#9333ea] text-white text-xs font-medium rounded-lg transition-colors"
-              >
-                Utiliser
-              </button>
-            </div>
-          </div>
         </div>
 
         <div>
@@ -461,7 +438,6 @@ const fileInput = ref(null)
 const uploadedFile = ref(null)
 const videoDurationSeconds = ref(0)
 const clipDuration = ref('')
-const minutesInput = ref('')
 const isDragging = ref(false)
 const subtitleMode = ref('none')
 // Format de sortie des clips : 'original' | 'vertical_crop' | 'vertical_blur'
