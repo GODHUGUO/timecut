@@ -4,7 +4,7 @@
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
-  <CustomPopup />
+  <CustomPopup/>
 </template>
 
 <style>

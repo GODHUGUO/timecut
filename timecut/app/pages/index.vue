@@ -9,7 +9,7 @@
         <video
           ref="promoVideo"
           class="absolute inset-0 w-full h-full object-cover"
-          src="/timecut-promo.mp4"
+          :src="promoSrc"
           loop
           playsinline
           preload="auto"
@@ -506,7 +506,7 @@
 <script setup>
 definePageMeta({ layout: 'landingpage' })
 
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -556,8 +556,32 @@ const promoSection = ref(null)
 const promoVideo   = ref(null)
 const isMuted      = ref(false)   // son activé par défaut
 
+// Source de la vidéo promo selon l'appareil :
+// - téléphone (écran étroit) : version verticale 9:16
+// - tablette / ordinateur    : version horizontale 16:9
+// On part sur l'horizontale par défaut (rendu SSR), puis on ajuste au montage.
+const PROMO_SRC_DESKTOP = '/timecut-promo.mp4'
+const PROMO_SRC_MOBILE  = '/timecut-promo-vertical.mp4'
+const promoSrc = ref(PROMO_SRC_DESKTOP)
+
 let promoVisible  = false   // la vidéo est-elle suffisamment visible ?
 let promoObserver = null
+let promoMobileMq = null    // MediaQueryList « écran étroit »
+
+// Choisit la bonne source selon la largeur d'écran et relance la lecture.
+function applyPromoSource() {
+  const nextSrc = promoMobileMq && promoMobileMq.matches
+    ? PROMO_SRC_MOBILE
+    : PROMO_SRC_DESKTOP
+  if (nextSrc === promoSrc.value) return
+  promoSrc.value = nextSrc
+  // La source a changé : recharger l'élément <video> puis relancer la lecture.
+  nextTick(() => {
+    if (!promoVideo.value) return
+    promoVideo.value.load()
+    tryPlayPromo()
+  })
+}
 
 function tryPlayPromo() {
   // Lecture automatique dès que la vidéo est visible (pas besoin de scroller)
@@ -614,6 +638,13 @@ const cta            = ref(null)
 
 onMounted(() => {
   gsap.registerPlugin(ScrollTrigger)
+
+  // ── Vidéo promo : choix de la source selon l'appareil ──
+  // Seuil aligné sur le breakpoint Tailwind `md` (768px) : en dessous =
+  // téléphone -> version verticale ; au-dessus = tablette/ordinateur -> horizontale.
+  promoMobileMq = window.matchMedia('(max-width: 767px)')
+  applyPromoSource()
+  promoMobileMq.addEventListener('change', applyPromoSource)
 
   // ── Vidéo promo : play au scroll, pause quand on la dépasse ──
   promoObserver = new IntersectionObserver(
@@ -703,6 +734,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (promoObserver) promoObserver.disconnect()
+  if (promoMobileMq) promoMobileMq.removeEventListener('change', applyPromoSource)
 })
 </script>
 

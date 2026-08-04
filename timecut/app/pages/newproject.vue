@@ -708,17 +708,22 @@ const startProcessing = async () => {
 
     // Étape 2 : Uploader directement sur Cloudinary (0 → 50 % = vraie progression)
     progressLabel.value = 'Téléversement de la vidéo...'
-    const formData = new FormData()
-    formData.append('file', uploadedFile.value)
-    formData.append('signature', signature)
-    formData.append('timestamp', String(timestamp))
-    formData.append('api_key', apiKey)
-    formData.append('folder', folder)
+    const uploadFields = {
+      signature,
+      timestamp: String(timestamp),
+      api_key: apiKey,
+      folder,
+    }
 
-    const cloudData = await uploadToCloudinary(cloudName, formData, (uploadRatio) => {
-      // L'upload représente la première moitié de la barre
-      progress.value = Math.min(50, Math.round(uploadRatio * 50))
-    })
+    const cloudData = await uploadToCloudinary(
+      cloudName,
+      uploadFields,
+      uploadedFile.value,
+      (uploadRatio) => {
+        // L'upload représente la première moitié de la barre
+        progress.value = Math.min(50, Math.round(uploadRatio * 50))
+      },
+    )
     progress.value = 50
 
     // Étape 3 : Vérifier l'état de la file d'attente avant l'envoi au backend
@@ -788,16 +793,25 @@ const startProcessing = async () => {
   }
 }
 
-// Upload sur Cloudinary via XMLHttpRequest pour suivre la progression réelle
-// (fetch n'expose pas la progression d'upload).
-const uploadToCloudinary = (cloudName, formData, onProgress) => {
+// Taille d'un morceau : 6 Mo. Cloudinary impose un minimum de 5 Mo par morceau
+// (sauf le dernier). Des morceaux plus petits = envois plus fiables sur mobile.
+const CLOUDINARY_CHUNK_SIZE = 6 * 1024 * 1024
+
+// Envoie UN morceau du fichier vers Cloudinary (via XMLHttpRequest pour suivre
+// la progression). Les erreurs réseau/timeout sont marquées `retriable`.
+const sendCloudinaryChunk = (url, formData, contentRange, uploadId, onChunkProgress) => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`)
+    xhr.open('POST', url)
+    // 5 min par morceau : largement suffisant pour ~6 Mo, même sur connexion lente.
+    xhr.timeout = 5 * 60 * 1000
+    // En-têtes du protocole d'upload en morceaux de Cloudinary.
+    xhr.setRequestHeader('X-Unique-Upload-Id', uploadId)
+    xhr.setRequestHeader('Content-Range', contentRange)
 
     xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && typeof onProgress === 'function') {
-        onProgress(event.loaded / event.total)
+      if (event.lengthComputable && typeof onChunkProgress === 'function') {
+        onChunkProgress(event.loaded)
       }
     }
 
@@ -811,13 +825,89 @@ const uploadToCloudinary = (cloudName, formData, onProgress) => {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(data)
       } else {
-        reject(new Error(data?.error?.message || 'Erreur upload Cloudinary'))
+        // Erreur applicative Cloudinary (ex : fichier refusé) : NON réessayable.
+        reject(new Error(data?.error?.message || `Erreur Cloudinary (HTTP ${xhr.status}).`))
       }
     }
 
-    xhr.onerror = () => reject(new Error('Erreur réseau pendant le téléversement'))
+    xhr.onerror = () => {
+      const err = new Error('Coupure réseau pendant l’envoi d’un morceau.')
+      err.retriable = true
+      reject(err)
+    }
+
+    xhr.ontimeout = () => {
+      const err = new Error('Envoi d’un morceau trop lent (délai dépassé).')
+      err.retriable = true
+      reject(err)
+    }
+
     xhr.send(formData)
   })
+}
+
+// Upload en morceaux (« chunked ») directement sur Cloudinary.
+// Indispensable sur mobile : Chrome/Android échoue à envoyer un gros fichier
+// (ex : 71 Mo) en une seule requête, alors que des morceaux de ~6 Mo passent
+// sans problème. Chaque morceau est réessayé en cas de coupure. Cloudinary
+// réassemble le fichier et renvoie l'asset final dans la réponse du dernier
+// morceau. La signature (timestamp + folder) est identique pour tous les
+// morceaux : aucun changement backend nécessaire.
+const uploadToCloudinary = async (cloudName, fields, file, onProgress) => {
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`
+  const total = file.size
+  // Regroupe tous les morceaux d'un même fichier côté Cloudinary.
+  const uploadId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  const MAX_ATTEMPTS = 4
+
+  let start = 0
+  let uploadedBefore = 0 // octets déjà confirmés (morceaux terminés)
+  let finalResponse = null
+
+  while (start < total) {
+    const end = Math.min(start + CLOUDINARY_CHUNK_SIZE, total)
+    const chunk = file.slice(start, end)
+    const contentRange = `bytes ${start}-${end - 1}/${total}`
+
+    let attempt = 1
+    for (;;) {
+      // FormData recréé à chaque tentative (un corps déjà envoyé n'est pas réutilisable).
+      const formData = new FormData()
+      formData.append('file', chunk)
+      for (const [key, value] of Object.entries(fields)) {
+        formData.append(key, value)
+      }
+
+      try {
+        finalResponse = await sendCloudinaryChunk(
+          url,
+          formData,
+          contentRange,
+          uploadId,
+          (chunkLoaded) => {
+            if (typeof onProgress === 'function') {
+              onProgress(Math.min(1, (uploadedBefore + chunkLoaded) / total))
+            }
+          },
+        )
+        break // morceau envoyé : on passe au suivant
+      } catch (error) {
+        // Erreur non réseau (fichier refusé…) ou tentatives épuisées : on abandonne.
+        if (!error.retriable || attempt >= MAX_ATTEMPTS) throw error
+
+        progressLabel.value = `Connexion instable, reprise du téléversement (${attempt + 1}/${MAX_ATTEMPTS})...`
+        await new Promise((r) => setTimeout(r, 1500 * attempt))
+        progressLabel.value = 'Téléversement de la vidéo...'
+        attempt++
+      }
+    }
+
+    uploadedBefore = end
+    start = end
+    if (typeof onProgress === 'function') onProgress(Math.min(1, uploadedBefore / total))
+  }
+
+  return finalResponse
 }
 
 onMounted(async () => {
